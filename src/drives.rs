@@ -1,4 +1,3 @@
-use slint::StandardListViewItem;
 use slint::VecModel;
 use std::rc::Rc;
 use sysinfo::Disk;
@@ -6,14 +5,15 @@ use sysinfo::DiskExt;
 use sysinfo::SystemExt;
 
 use crate::globals::sysinfo_lock;
+use crate::ui::*;
 
 static HIDDEN_MOUNTS: [&str; 1] = ["/boot"];
 
-pub fn get_drives() -> Rc<VecModel<StandardListViewItem>> {
+pub fn get_drives() -> Rc<VecModel<SidebarItem>> {
     let mut system = sysinfo_lock();
     system.refresh_disks_list();
 
-    let drives: Rc<VecModel<StandardListViewItem>> = Rc::new(VecModel::default());
+    let drives: Rc<VecModel<SidebarItem>> = Rc::new(VecModel::default());
 
     for d in system.disks() {
         let drive_name = d.mount_point().to_str().unwrap();
@@ -21,7 +21,9 @@ pub fn get_drives() -> Rc<VecModel<StandardListViewItem>> {
             continue;
         }
         let final_format = "  ".to_owned() + &format_drive_name(drive_name);
-        drives.push(final_format.as_str().into());
+        drives.push(SidebarItem {
+            text: final_format.into(),
+        });
     }
     drives
 }

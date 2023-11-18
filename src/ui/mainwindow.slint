@@ -1,7 +1,11 @@
 import { TabWidget, StandardListView, ProgressIndicator} from "std-widgets.slint";
 
+export struct SidebarItem {
+    text: string,
+}
+
 export global SidebarItems {
-    in property <[StandardListViewItem]> drive_list: [];
+    in property <[SidebarItem]> drive_list: [];
 }
 
 export component StorageIndicator inherits ProgressIndicator {
@@ -13,7 +17,12 @@ export component StorageIndicator inherits ProgressIndicator {
 
 export component DriveList inherits StandardListView {
     width: 200px;
-    model: SidebarItems.drive-list;
+    //model: SidebarItems.drive-list;
+    for sbitem[i] in SidebarItems.drive-list: Text {
+        text: sbitem.text;
+        //height: 10px;
+        y: parent.y + (i*15px);
+    }
 }
 
 export component MainWindow {

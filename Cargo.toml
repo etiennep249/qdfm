@@ -10,7 +10,7 @@ license = "GPLv3"
 [dependencies]
 once_cell = "1.18.0"
 sysinfo = "0.29.10"
-slint = {version = "1.3.0", default-features=false, features=["std", "backend-winit", "renderer-software", "compat-1-2"]}
+slint = {version = "1.3.0", default-features=false, features=["std", "backend-winit", "renderer-skia-opengl", "compat-1-2"]} #Use vulkan when fixed
 
 [build-dependencies]
 slint-build = "1.3.0"
