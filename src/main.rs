@@ -1,15 +1,19 @@
+use qdfm::callbacks::sidebar::sidebar_item_clicked;
 use qdfm::drives;
 use qdfm::ui::*;
-use slint::VecModel;
-use std::rc::Rc;
 
 fn main() {
-    let main: MainWindow = MainWindow::new().unwrap();
+    let w: MainWindow = MainWindow::new().unwrap();
 
     //Initialization sequence
     {
-        let drives: Rc<VecModel<SidebarItem>> = drives::get_drives();
-        main.global::<SidebarItems>().set_drive_list(drives.into());
+        let drives = drives::get_drives();
+        w.global::<SidebarItems>().set_drive_list(drives.into());
     }
-    main.run().unwrap();
+    //Callbacks
+    {
+        w.global::<SidebarItems>()
+            .on_drive_clicked(sidebar_item_clicked);
+    }
+    w.run().unwrap();
 }

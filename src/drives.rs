@@ -1,3 +1,4 @@
+use slint::StandardListViewItem;
 use slint::VecModel;
 use std::rc::Rc;
 use sysinfo::Disk;
@@ -23,6 +24,7 @@ pub fn get_drives() -> Rc<VecModel<SidebarItem>> {
         let final_format = "  ".to_owned() + &format_drive_name(drive_name);
         drives.push(SidebarItem {
             text: final_format.into(),
+            internal_path: drive_name.into(),
         });
     }
     drives
@@ -37,10 +39,11 @@ fn is_hidden(s: &str) -> bool {
     false
 }
 
+#[inline]
 fn drive_pct(d: &Disk) -> u64 {
     100 - (100 * d.available_space() / d.total_space())
 }
-
+#[inline]
 fn drive_pct_formatted(d: &Disk) -> String {
     drive_pct(d).to_string() + "%"
 }
