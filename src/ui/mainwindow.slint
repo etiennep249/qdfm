@@ -1,4 +1,4 @@
-import { TabWidget, StandardListView, ProgressIndicator, ScrollView} from "std-widgets.slint";
+import { StandardListView, ProgressIndicator, ScrollView} from "std-widgets.slint";
 
 export struct SidebarItem {
     text: string,
@@ -8,6 +8,19 @@ export struct SidebarItem {
 export global SidebarItems {
     in property <[SidebarItem]> drive_list: [];
     callback drive_clicked(SidebarItem);
+}
+export struct TabItem {
+    text: string,
+    internal_path: string,
+    text_length: int,
+}
+
+export global TabsAdapter {
+    in-out property <[TabItem]> tabs: [{text: "/", internal_path: "/", text_length: 1}];
+    in-out property <int> current_tab: 0;
+    public function change_current_tab(item: TabItem) {
+        tabs[current-tab] = item;
+    }
 }
 
 export component StorageIndicator inherits ProgressIndicator {
@@ -54,8 +67,8 @@ export component DriveListItem {
 }
 
 export component DriveList {
-    width: 200px;
     in property <[SidebarItem]> model;
+    in property <length> _width <=> self.width;
 
     scrollview := ScrollView {
         VerticalLayout {
@@ -63,7 +76,7 @@ export component DriveList {
             spacing: 2px;
             for item[i] in model : DriveListItem {
                 clicked => {
-                    SidebarItems.drive-clicked(SidebarItems.drive-list[i]);
+                    SidebarItems.drive-clicked(item);
                 }
                 private property <length> offset: scrollview.viewport-y + i * (self.height + parent.spacing);
                 text: item.text;
@@ -73,21 +86,59 @@ export component DriveList {
     }
 }
 
+export component TabWidgetItem {
+    in property <TabItem> tab;
+    private property <length> fontsize: 14px;
+    width: 10px + (tab.text-length * fontsize);
+    Rectangle {
+        background: green;
+    }
+    Text {
+        text: tab.text;
+        font-size: fontsize;
+    }
+
+}
+export component TabWidgetBody inherits Rectangle{
+    background: blue;
+}
+
+export component TabWidget_ {
+    in property <[TabItem]> tabs;
+    in-out property <int> current_tab;    
+    VerticalLayout {
+        HorizontalLayout {
+            height: 40px;
+            for item[i] in tabs : TabWidgetItem {
+                tab: item;
+            }
+            tab_header_filler := Rectangle {
+                background: red;
+            }
+        }
+        TabWidgetBody {
+        }
+    }
+        
+}
+
 export component MainWindow {
+    private property <length> sidebar_length: 200px;
     HorizontalLayout {
-        width: 100%;
+        padding-left: 10px;
         VerticalLayout{
+            width: sidebar-length;
             Text {
                 text: "Drives";
             }
             DriveList {
+                _width: sidebar-length;
                 model: SidebarItems.drive-list;
-                }
-        }
-        TabWidget {
-            Tab {
-                title: "1";
             }
+        }
+        TabWidget_ {
+            tabs: TabsAdapter.tabs;
+            current-tab: TabsAdapter.current-tab;
         }
     }
 }

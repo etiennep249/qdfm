@@ -15,6 +15,7 @@ pub fn sysinfo_lock() -> MutexGuard<'static, System> {
     }
 }
 
+//REMOVE and use UI tabs instead?
 static TABS: Lazy<Mutex<Vec<Tab>>> = Lazy::new(|| {
     Mutex::new(vec![Tab {
         path: String::from("/"), // TODO: GET DEFAULT PATH OR LAST SAVed

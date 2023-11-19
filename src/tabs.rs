@@ -1,4 +1,7 @@
 use crate::globals::tabs_lock;
+use crate::ui::*;
+use slint::VecModel;
+use std::rc::Rc;
 
 #[derive(Clone)]
 pub struct Tab {
