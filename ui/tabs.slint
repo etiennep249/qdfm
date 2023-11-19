@@ -1,0 +1,66 @@
+import {FileManager, FileWidget} from "filemanager.slint";
+import { ScrollView } from "std-widgets.slint";
+
+export struct TabItem {
+    text: string,
+    internal_path: string,
+    text_length: int,
+}
+
+export global TabsAdapter {
+    in-out property <[TabItem]> tabs: [{text: "/", internal_path: "/", text_length: 1}];
+    in-out property <int> current_tab: 0;
+    public function change_current_tab(item: TabItem) {
+        tabs[current-tab] = item;
+        FileManager.path = item.internal-path;
+    }
+}
+
+export component TabWidgetItem {
+    in property <TabItem> tab;
+    private property <length> fontsize: 14px;
+    width: 10px + (tab.text-length * fontsize);
+    Rectangle {
+        background: green;
+    }
+    Text {
+        text: tab.text;
+        font-size: fontsize;
+    }
+
+}
+export component TabWidgetBody inherits Rectangle {
+    background: blue;
+    scrollview := ScrollView {
+        VerticalLayout {
+            alignment: start;
+            spacing: 2px;
+            for item[i] in FileManager.files : FileWidget {
+                /*clicked => {
+                    SidebarItems.drive-clicked(item);
+                }*/
+                private property <length> offset: scrollview.viewport-y + i * (self.height + parent.spacing);
+                file: item;
+                animate opacity { duration: 50ms; }
+            }
+        }
+    }
+}
+
+export component TabWidget_ {
+    in property <[TabItem]> tabs;
+    in-out property <int> current_tab;    
+    VerticalLayout {
+        HorizontalLayout {
+            height: 40px;
+            for item[i] in tabs : TabWidgetItem {
+                tab: item;
+            }
+            tab_header_filler := Rectangle {
+                background: red;
+            }
+        }
+        TabWidgetBody {}
+    }
+        
+}

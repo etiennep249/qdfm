@@ -1,0 +1,46 @@
+import {Settings} from "settings.slint";
+
+export struct FileItem {
+    path: string,
+    file_name: string,
+}
+//For current tab only
+export global FileManager {
+    in-out property <string> path;
+    in-out property <[FileItem]> files;
+}
+
+export component FileWidget inherits Rectangle {
+    in property <FileItem> file;
+    callback clicked <=> touch.clicked;
+    height: 30px;
+
+    rect := Rectangle {
+        border-radius: 4px;
+        border-width: 1px;
+        border-color: black;
+    }
+    HorizontalLayout {
+        padding-left: 2px;
+        padding-top: 2px;
+        padding-bottom: 2px;
+        padding-right: 2px;
+        spacing: 5px;
+
+        Text {
+            text: file.file-name;
+            horizontal-stretch: 1;
+            font-size: Settings.file-font-size;
+            vertical-alignment: center;
+        }
+
+        /*Image {
+            horizontal-stretch: 0;
+            visible: false;
+            source: Images.check;
+            colorize: Theme.palette.lemon-green;
+        }*/
+        
+    }
+    touch := TouchArea {}
+}

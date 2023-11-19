@@ -1,4 +1,3 @@
-use slint::StandardListViewItem;
 use slint::VecModel;
 use std::rc::Rc;
 use sysinfo::Disk;

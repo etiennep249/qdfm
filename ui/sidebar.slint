@@ -1,0 +1,68 @@
+import { ScrollView } from "std-widgets.slint";
+
+export struct SidebarItem {
+    text: string,
+    internal_path: string,
+}
+
+export global SidebarItems {
+    in property <[SidebarItem]> drive_list: [];
+    callback drive_clicked(SidebarItem);
+}
+
+export component DriveListItem {
+    in property <string> text;
+    callback clicked <=> touch.clicked;
+
+    min-height: 30px;
+
+    rect := Rectangle {
+        border-radius: 4px;
+        border-width: 1px;
+        border-color: black;
+    }
+    HorizontalLayout {
+        padding-left: 2px;
+        padding-top: 2px;
+        padding-bottom: 2px;
+        padding-right: 2px;
+        spacing: 5px;
+
+        Text {
+            horizontal-stretch: 1;
+            font-size: 14px;
+            text: text;
+            vertical-alignment: center;
+        }
+
+        /*i-icon := Image {
+            horizontal-stretch: 0;
+            visible: false;
+            source: Images.check;
+            colorize: Theme.palette.lemon-green;
+        }*/
+        
+    }
+    touch := TouchArea {}
+}
+
+export component DriveList {
+    in property <[SidebarItem]> model;
+    in property <length> _width <=> self.width;
+
+    scrollview := ScrollView {
+        VerticalLayout {
+            alignment: start;
+            spacing: 2px;
+            for item[i] in model : DriveListItem {
+                clicked => {
+                    SidebarItems.drive-clicked(item);
+                }
+                private property <length> offset: scrollview.viewport-y + i * (self.height + parent.spacing);
+                text: item.text;
+                animate opacity { duration: 50ms;  }
+            }
+        }
+    }
+}
+
