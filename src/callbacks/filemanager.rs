@@ -23,6 +23,7 @@ pub fn fileitem_doubleclicked(item: FileItem, mw: Rc<Weak<MainWindow>>) {
             internal_path: item.path,
             text: item.file_name.clone(),
             text_length: item.file_name.len() as i32,
+            selected: true,
         },
         mw,
         true,

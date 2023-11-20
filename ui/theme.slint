@@ -2,6 +2,10 @@ export struct ThemeImpl {
     //Background colors
     background_color_main: brush,
     background_color_sidebar: brush,
+    background_color_tabs: brush,
+    
+    selected_tab_color: brush,
+    unselected_tab_color: brush,
 
     //Unused
     hover_color_main: brush,
@@ -10,15 +14,18 @@ export struct ThemeImpl {
     //Text
     text_color_main: brush,
     text_color_sidebar_header: brush,
+    text_color_tabs: brush,
 
     //Fonts
     font_size_main: length,
     font_size_sidebar_item: length,
     font_size_sidebar_header: length,
+    font_size_tabs: length,
 
     //Misc. Colors
     arrow_color: brush,
     separator_color: brush,
+    red_color: brush,
 
     //Padding
     main_padding_left: length,
@@ -35,18 +42,25 @@ export global Theme {
     in property <ThemeImpl> dark: {
         background_color_main: #131416,
         background_color_sidebar: #131416,
+        background_color_tabs: #262626,
+
+        selected_tab_color: #131416,
+        unselected_tab_color: #262626,
 
         hover_color_main: #292929,
         hover_color_sidebar: #292929,
 
         text_color_main: #d0d0d0,
         text_color_sidebar_header: #d0d0d0,
+        text_color_tabs: #d0d0d0,
 
         font_size_sidebar_item: 14px,
         font_size_sidebar_header: 16px,
+        font_size_tabs: 14px,
 
         arrow_color: #d0d0d0,
         separator_color: #303335,
+        red_color: #ee5396,
 
         main_padding_left: 10px,
         main_padding_top: 5px,

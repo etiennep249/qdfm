@@ -7,13 +7,6 @@ import { Theme } from "theme.slint";
 
 export { FileManager, SidebarItems, TabsAdapter, Theme }
 
-//TODO: USE
-export component StorageIndicator inherits ProgressIndicator {
-    in property <percent> pct: 0%;
-    width: 100%;
-    height: 10px;
-    progress: pct;
-}
 
 export component Line inherits Path {
     in property <length> from_x;

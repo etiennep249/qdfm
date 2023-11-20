@@ -10,6 +10,7 @@ pub fn sidebar_item_clicked(item: SidebarItem, mw: Rc<Weak<MainWindow>>) {
             internal_path: item.internal_path,
             text: item.text.clone(),
             text_length: item.text.len() as i32,
+            selected: true,
         },
         mw,
         true,

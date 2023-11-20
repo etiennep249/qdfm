@@ -1,15 +1,17 @@
 import {FileManager, FileWidget} from "filemanager.slint";
 import { ScrollView } from "std-widgets.slint";
 import { Theme } from "theme.slint";
+import { Icons } from "icons.slint";
 
 export struct TabItem {
     text: string,
     internal_path: string,
     text_length: int,
+    selected: bool,
 }
 
 export global TabsAdapter {
-    in-out property <[TabItem]> tabs: [{text: "/", internal_path: "/", text_length: 1}];
+    in-out property <[TabItem]> tabs: [{text: "/", internal_path: "/", text_length: 1, selected: true}];
     in-out property <int> current_tab: 0;
     public function set_current_tab(item: TabItem) {
         tabs[current-tab] = item;
@@ -23,15 +25,31 @@ export global TabsAdapter {
 export component TabWidgetItem {
     in property <TabItem> tab;
     private property <length> fontsize: 14px;
-    width: 10px + (tab.text-length * fontsize);
+    private property <length> h <=> self.height;
+    min-width: 60px;
     Rectangle {
-        background: green;
+        background: tab.selected ? Theme.current.selected-tab-color : Theme.current.unselected-tab-color;
     }
-    Text {
-        text: tab.text;
-        font-size: fontsize;
+    HorizontalLayout {
+        padding-right: 3px;
+        spacing: 8px;
+        text := Text {
+            text: tab.text;
+            vertical-alignment: center;
+            font-size: Theme.current.font-size-tabs;
+            color: Theme.current.text-color-tabs;
+        }
+        Image {
+            source: Icons.cross;
+            colorize: Theme.current.red-color;
+            height: h*0.7;
+            width: h*0.7;
+            y: Theme.current.main-padding-top + 1px;
+        }
     }
-
+    TouchArea {
+        /*clicked => { }*/
+    }
 }
 export component TabWidgetBody inherits Rectangle {
     background: Theme.current.background-color-main;
@@ -60,7 +78,7 @@ export component TabWidget_ {
                 tab: item;
             }
             tab_header_filler := Rectangle {
-                background: red;
+                background: Theme.current.background-color-tabs;
             }
         }
         TabWidgetBody {}
