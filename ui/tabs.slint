@@ -36,9 +36,9 @@ export component TabWidgetBody inherits Rectangle {
             alignment: start;
             spacing: 2px;
             for item[i] in FileManager.files : FileWidget {
-                /*clicked => {
-                    SidebarItems.drive-clicked(item);
-                }*/
+                clicked => {
+                    FileManager.fileitem-clicked(item);
+                }
                 private property <length> offset: scrollview.viewport-y + i * (self.height + parent.spacing);
                 file: item;
                 animate opacity { duration: 50ms; }

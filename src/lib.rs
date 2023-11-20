@@ -4,5 +4,5 @@ pub mod ui {
 pub mod callbacks;
 pub mod core;
 pub mod drives;
-pub mod error_handling;
 pub mod globals;
+pub mod utils;

@@ -8,12 +8,13 @@ export struct FileItem {
 export global FileManager {
     in-out property <string> path;
     in-out property <[FileItem]> files;
+    callback fileitem_clicked(FileItem);
 }
 
 export component FileWidget inherits Rectangle {
     in property <FileItem> file;
-    callback clicked <=> touch.clicked;
     height: 30px;
+    callback clicked <=> touch.clicked;
 
     rect := Rectangle {
         border-radius: 4px;

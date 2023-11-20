@@ -1,4 +1,4 @@
-use crate::{error_handling::log_error, ui::*};
+use crate::{ui::*, utils::error_handling::log_error};
 use std::fs;
 
 pub fn generate_files_for_path(path: &str) -> Vec<FileItem> {
