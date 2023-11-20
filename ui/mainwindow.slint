@@ -1,6 +1,6 @@
 import { StandardListView, ProgressIndicator, ScrollView} from "std-widgets.slint";
 import { Settings } from "settings.slint";
-import { DriveList, SidebarItems } from "sidebar.slint";
+import { DriveList, SidebarItems , NavArrows} from "sidebar.slint";
 import { TabWidget_, TabsAdapter } from "tabs.slint";
 import { FileManager } from "filemanager.slint";
 
@@ -18,10 +18,14 @@ export component StorageIndicator inherits ProgressIndicator {
 
 export component MainWindow {
     private property <length> sidebar_length: 200px;
+    private property <length> nav_arrows_height: 30px;
     HorizontalLayout {
         padding-left: 10px;
         VerticalLayout{
             width: sidebar-length;
+            NavArrows {
+                _height: nav_arrows_height;
+            }
             Text {
                 text: "Drives";
             }

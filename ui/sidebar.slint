@@ -8,6 +8,8 @@ export struct SidebarItem {
 export global SidebarItems {
     in property <[SidebarItem]> drive_list: [];
     callback drive_clicked(SidebarItem);
+    callback left_arrow_clicked();
+    callback right_arrow_clicked();
 }
 
 export component DriveListItem {
@@ -66,3 +68,30 @@ export component DriveList {
     }
 }
 
+export component NavArrows {
+    in property <length> _height;
+    height: _height + 3px;//padding
+    Rectangle {
+        x: parent.x;
+        y: parent.y;
+        width: _height;
+        height: _height;
+        background: yellow;
+        //callback clicked <=> touchL.clicked;
+        Text {text: "<"; vertical-alignment: center;} /*Image todo*/
+        TouchArea {
+            clicked => { SidebarItems.left-arrow-clicked();}
+        }
+    }
+    Rectangle {
+        x: parent.x + _height + 1px;
+        y: parent.y;
+        width: _height;
+        height: _height;
+        background: purple;
+        Text {text: ">"; vertical-alignment: center;} /*Image todo*/
+        TouchArea {
+            clicked => { SidebarItems.right-arrow-clicked(); }
+        }
+    }
+}

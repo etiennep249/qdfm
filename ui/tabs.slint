@@ -10,9 +10,12 @@ export struct TabItem {
 export global TabsAdapter {
     in-out property <[TabItem]> tabs: [{text: "/", internal_path: "/", text_length: 1}];
     in-out property <int> current_tab: 0;
-    public function change_current_tab(item: TabItem) {
+    public function set_current_tab(item: TabItem) {
         tabs[current-tab] = item;
         FileManager.path = item.internal-path;
+    }
+    public function get_current_tab() -> TabItem{
+        return tabs[current_tab];
     }
 }
 
@@ -52,7 +55,7 @@ export component TabWidget_ {
     in-out property <int> current_tab;    
     VerticalLayout {
         HorizontalLayout {
-            height: 40px;
+            height: 30px;
             for item[i] in tabs : TabWidgetItem {
                 tab: item;
             }
