@@ -79,7 +79,6 @@ pub fn add_to_history(item: TabItem) {
         hist.0.pop_front();
     }
     hist.0.push_back(item);
-    println!("add_to_history: {:?}", hist);
 }
 pub fn get_prev_history(mw: Rc<Weak<MainWindow>>) -> Option<TabItem> {
     let mut hist = get_history();

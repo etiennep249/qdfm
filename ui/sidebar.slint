@@ -1,4 +1,5 @@
 import { ScrollView } from "std-widgets.slint";
+import { Theme } from "theme.slint";
 
 export struct SidebarItem {
     text: string,
@@ -19,9 +20,8 @@ export component DriveListItem {
     min-height: 30px;
 
     rect := Rectangle {
-        border-radius: 4px;
-        border-width: 1px;
-        border-color: black;
+        border-radius: 5px;
+        background: Theme.current.background-color-sidebar; // TODO: Selected
     }
     HorizontalLayout {
         padding-left: 2px;
@@ -32,8 +32,9 @@ export component DriveListItem {
 
         Text {
             horizontal-stretch: 1;
-            font-size: 14px;
+            font-size: Theme.current.font-size-sidebar-item;
             text: text;
+            color: Theme.current.text-color-main;
             vertical-alignment: center;
         }
 
@@ -62,7 +63,6 @@ export component DriveList {
                 }
                 private property <length> offset: scrollview.viewport-y + i * (self.height + parent.spacing);
                 text: item.text;
-                animate opacity { duration: 50ms;  }
             }
         }
     }

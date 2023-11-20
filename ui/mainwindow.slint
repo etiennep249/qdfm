@@ -3,9 +3,10 @@ import { Settings } from "settings.slint";
 import { DriveList, SidebarItems , NavArrows} from "sidebar.slint";
 import { TabWidget_, TabsAdapter } from "tabs.slint";
 import { FileManager } from "filemanager.slint";
+import { Theme } from "theme.slint";
 
 
-export { FileManager, SidebarItems, TabsAdapter }
+export { FileManager, SidebarItems, TabsAdapter, Theme }
 
 //TODO: USE
 export component StorageIndicator inherits ProgressIndicator {
@@ -15,10 +16,10 @@ export component StorageIndicator inherits ProgressIndicator {
     progress: pct;
 }
 
-
-export component MainWindow {
+export component MainWindow inherits Rectangle {
     private property <length> sidebar_length: 200px;
     private property <length> nav_arrows_height: 30px;
+    background: Theme.current.background-color-main;
     HorizontalLayout {
         padding-left: 10px;
         VerticalLayout{
@@ -28,6 +29,8 @@ export component MainWindow {
             }
             Text {
                 text: "Drives";
+                font-size: Theme.current.font-size-sidebar-header;
+                color: Theme.current.text-color-sidebar-header;
             }
             DriveList {
                 _width: sidebar-length;

@@ -22,19 +22,20 @@ macro_rules! enclose {
 fn main() {
     let w: MainWindow = MainWindow::new().unwrap();
     let weak = Rc::new(w.as_weak());
+
     //Initialization sequence
     {
+        let conf = config_lock();
         let drives = drives::get_drives();
         w.global::<SidebarItems>().set_drive_list(drives.into());
         w.global::<FileManager>().set_files(
             Rc::new(VecModel::from(generate_files_for_path(
-                config_lock()
-                    .get::<String>("default_path")
-                    .unwrap()
-                    .as_str(),
+                conf.get::<String>("default_path").unwrap().as_str(),
             )))
             .into(),
         );
+        w.global::<Theme>()
+            .invoke_setup(conf.get::<String>("theme").unwrap().into());
     }
     //Callbacks
     {

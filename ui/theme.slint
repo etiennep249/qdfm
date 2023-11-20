@@ -1,0 +1,49 @@
+export struct ThemeImpl {
+    background_color_main: brush,
+    background_color_sidebar: brush,
+    hover_color_main: brush,
+    hover_color_sidebar: brush,
+
+    //Text
+    text_color_main: brush,
+    text_color_sidebar_header: brush,
+
+    //Fonts
+    font_size_sidebar_item: length,
+    font_size_sidebar_header: length,
+    
+
+}
+
+export global Theme {
+    in property <ThemeImpl> dark: {
+        background_color_main: #131416,
+        background_color_sidebar: #131416,
+
+        hover_color_main: #292929,
+        hover_color_sidebar: #292929,
+
+        text_color_main: #d0d0d0,
+        text_color_sidebar_header: #d0d0d0,
+
+        font_size_sidebar_item: 14px,
+        font_size_sidebar_header: 16px,
+    };
+    in property <ThemeImpl> light: {
+        background_color_main: #FFFFFF,
+    };
+    in property <ThemeImpl> darker: {
+        background_color_main: #000000,
+    };
+    in-out property <ThemeImpl> current: dark;
+    public function setup(current_theme_str: string)  {
+        if (current-theme_str == "dark") {
+            current = dark;
+        }
+        else if (current-theme_str == "light") {
+            current = light;
+        }
+    }
+}
+
+

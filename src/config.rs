@@ -16,6 +16,7 @@ impl Config {
         HashMap::from([
             (String::from("max_nav_history"), String::from("6")),
             (String::from("default_path"), String::from("/")),
+            (String::from("theme"), String::from("dark")),
         ])
     }
     pub fn get<T: FromStr>(&self, k: &str) -> Option<T> {
