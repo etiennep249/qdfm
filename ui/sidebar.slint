@@ -1,5 +1,6 @@
 import { ScrollView } from "std-widgets.slint";
 import { Theme } from "theme.slint";
+import { Icons } from "icons.slint";
 
 export struct SidebarItem {
     text: string,
@@ -29,22 +30,22 @@ export component DriveListItem {
         padding-bottom: 2px;
         padding-right: 2px;
         spacing: 5px;
+        alignment: start;
 
+        Image {
+            horizontal-stretch: 0;
+            source: Icons.drive;
+            colorize: Theme.current.text-color-main;
+            height: Theme.current.font-size-sidebar-item + 10px;
+            width: Theme.current.font-size-sidebar-item + 10px;
+        }
         Text {
             horizontal-stretch: 1;
             font-size: Theme.current.font-size-sidebar-item;
             text: text;
             color: Theme.current.text-color-main;
             vertical-alignment: center;
-        }
-
-        /*i-icon := Image {
-            horizontal-stretch: 0;
-            visible: false;
-            source: Images.check;
-            colorize: Theme.palette.lemon-green;
-        }*/
-        
+        }      
     }
     touch := TouchArea {}
 }
@@ -70,26 +71,37 @@ export component DriveList {
 
 export component NavArrows {
     in property <length> _height;
+    private property <length> _padding_left: 2px;
+    private property <length> spacing: 5px;
     height: _height + 3px;//padding
+    x: -Theme.current.main-padding-left/2 + _padding-left;
     Rectangle {
         x: parent.x;
         y: parent.y;
         width: _height;
         height: _height;
-        background: yellow;
-        //callback clicked <=> touchL.clicked;
-        Text {text: "<"; vertical-alignment: center;} /*Image todo*/
+        Image {
+            source: Icons.left-arrow;
+            colorize: Theme.current.arrow-color;
+            height: Theme.current.font-size-sidebar-header + 10px;
+            width: Theme.current.font-size-sidebar-header + 10px;
+        }
         TouchArea {
             clicked => { SidebarItems.left-arrow-clicked();}
         }
     }
     Rectangle {
-        x: parent.x + _height + 1px;
+        x: parent.x + _height + spacing;
         y: parent.y;
         width: _height;
         height: _height;
-        background: purple;
-        Text {text: ">"; vertical-alignment: center;} /*Image todo*/
+        Image {
+            source: Icons.right-arrow;
+            colorize: Theme.current.arrow-color;
+            height: Theme.current.font-size-sidebar-header + 10px;
+            width: Theme.current.font-size-sidebar-header + 10px;
+        }
+
         TouchArea {
             clicked => { SidebarItems.right-arrow-clicked(); }
         }

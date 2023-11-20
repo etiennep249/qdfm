@@ -20,7 +20,7 @@ pub fn get_drives() -> Rc<VecModel<SidebarItem>> {
         if is_hidden(drive_name) {
             continue;
         }
-        let final_format = "  ".to_owned() + &format_drive_name(drive_name);
+        let final_format = format_drive_name(drive_name);
         drives.push(SidebarItem {
             text: final_format.into(),
             internal_path: drive_name.into(),

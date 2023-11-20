@@ -1,5 +1,4 @@
 import { StandardListView, ProgressIndicator, ScrollView} from "std-widgets.slint";
-import { Settings } from "settings.slint";
 import { DriveList, SidebarItems , NavArrows} from "sidebar.slint";
 import { TabWidget_, TabsAdapter } from "tabs.slint";
 import { FileManager } from "filemanager.slint";
@@ -16,14 +15,38 @@ export component StorageIndicator inherits ProgressIndicator {
     progress: pct;
 }
 
+export component Line inherits Path {
+    in property <length> from_x;
+    in property <length> from_y;
+    in property <length> to_x;
+    in property <length> to_y;
+    in property <brush> color;
+    width: 1px;
+    height: (to_y - from_y);
+    x: from_x;
+    y: from_y;
+    stroke-width: 1px;
+    stroke: color;
+    MoveTo {
+        x: 0;
+        y: 0;
+    }
+    LineTo {
+        x: (to_x - from_x)/1px;
+        y: 1000;
+    }
+    Close{}
+}
+
 export component MainWindow inherits Rectangle {
-    private property <length> sidebar_length: 200px;
     private property <length> nav_arrows_height: 30px;
     background: Theme.current.background-color-main;
     HorizontalLayout {
-        padding-left: 10px;
+        padding-left: Theme.current.main-padding-left;
+        padding-top: Theme.current.main-padding-top;
         VerticalLayout{
-            width: sidebar-length;
+            width: Theme.current.sidebar-width;
+            spacing: 5px;
             NavArrows {
                 _height: nav_arrows_height;
             }
@@ -33,7 +56,7 @@ export component MainWindow inherits Rectangle {
                 color: Theme.current.text-color-sidebar-header;
             }
             DriveList {
-                _width: sidebar-length;
+                _width: Theme.current.sidebar-width;
                 model: SidebarItems.drive-list;
             }
         }
@@ -42,4 +65,12 @@ export component MainWindow inherits Rectangle {
             current-tab: TabsAdapter.current-tab;
         }
     }
+    //Sidebar separator
+    Line {
+        from-x: Theme.current.sidebar-width;
+        from-y: Theme.current.main-padding-top;
+        to-x: Theme.current.sidebar-width;
+        to-y: parent.height - Theme.current.main-padding-bot;
+        color: Theme.current.separator-color;
+    } 
 }

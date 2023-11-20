@@ -1,4 +1,4 @@
-import {Settings} from "settings.slint";
+import { Theme } from "theme.slint";
 
 export struct FileItem {
     path: string,
@@ -17,9 +17,8 @@ export component FileWidget inherits Rectangle {
     callback clicked <=> touch.clicked;
 
     rect := Rectangle {
-        border-radius: 4px;
-        border-width: 1px;
-        border-color: black;
+        /*border-width: 1px;
+        border-color: black;*/
     }
     HorizontalLayout {
         padding-left: 2px;
@@ -31,7 +30,8 @@ export component FileWidget inherits Rectangle {
         Text {
             text: file.file-name;
             horizontal-stretch: 1;
-            font-size: Settings.file-font-size;
+            font-size: Theme.current.font-size-main;
+            color: Theme.current.text-color-main;
             vertical-alignment: center;
         }
 

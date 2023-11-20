@@ -1,5 +1,6 @@
 import {FileManager, FileWidget} from "filemanager.slint";
 import { ScrollView } from "std-widgets.slint";
+import { Theme } from "theme.slint";
 
 export struct TabItem {
     text: string,
@@ -33,7 +34,7 @@ export component TabWidgetItem {
 
 }
 export component TabWidgetBody inherits Rectangle {
-    background: blue;
+    background: Theme.current.background-color-main;
     scrollview := ScrollView {
         VerticalLayout {
             alignment: start;
@@ -44,7 +45,6 @@ export component TabWidgetBody inherits Rectangle {
                 }
                 private property <length> offset: scrollview.viewport-y + i * (self.height + parent.spacing);
                 file: item;
-                animate opacity { duration: 50ms; }
             }
         }
     }
