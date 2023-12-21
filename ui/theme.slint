@@ -21,6 +21,7 @@ export struct ThemeImpl {
     font_size_sidebar_item: length,
     font_size_sidebar_header: length,
     font_size_tabs: length,
+    font_size_crumbs: length,
 
     //Misc. Colors
     arrow_color: brush,
@@ -57,6 +58,7 @@ export global Theme {
         font_size_sidebar_item: 14px,
         font_size_sidebar_header: 16px,
         font_size_tabs: 14px,
+        font_size_crumbs: 18px,
 
         arrow_color: #d0d0d0,
         separator_color: #303335,
@@ -64,7 +66,7 @@ export global Theme {
 
         main_padding_left: 10px,
         main_padding_top: 5px,
-    main_padding_bot: 5px,
+        main_padding_bot: 5px,
 
         sidebar_width: 200px,
     };
@@ -75,13 +77,17 @@ export global Theme {
         background_color_main: #000000,
     };
     in-out property <ThemeImpl> current: dark;
-    public function setup(current_theme_str: string)  {
+    in-out property <length> width; 
+    in-out property <length> height; 
+    public function setup(current_theme_str: string, _w: int, _h: int)  {
         if (current-theme_str == "dark") {
             current = dark;
         }
         else if (current-theme_str == "light") {
             current = light;
         }
+        width = _w*1px;
+        height = _h*1px;
     }
 }
 

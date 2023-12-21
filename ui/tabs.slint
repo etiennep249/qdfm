@@ -1,5 +1,5 @@
 import {FileManager, FileWidget} from "filemanager.slint";
-import { ScrollView } from "std-widgets.slint";
+import { ScrollView , LineEdit} from "std-widgets.slint";
 import { Theme } from "theme.slint";
 import { Icons } from "icons.slint";
 
@@ -13,6 +13,8 @@ export struct TabItem {
 export global TabsAdapter {
     in-out property <[TabItem]> tabs: [{text: "/", internal_path: "/", text_length: 1, selected: true}];
     in-out property <int> current_tab: 0;
+    in-out property <[TabItem]> breadcrumbs;
+    callback breadcrumb_clicked(TabItem);
     public function set_current_tab(item: TabItem) {
         tabs[current-tab] = item;
         FileManager.path = item.internal-path;
@@ -51,18 +53,70 @@ export component TabWidgetItem {
         /*clicked => { }*/
     }
 }
+
+export component BreadcrumbItem {
+    callback clicked <=> touch.clicked;
+    in property <TabItem> tabItem;
+    HorizontalLayout {
+        slash := Text {
+            text: "/";
+            width: 10px;
+            font-size: Theme.current.font-size-crumbs;
+            vertical-alignment: center;
+            color: Theme.current.text-color-tabs;
+        }
+        rect := Rectangle {
+            item := Text {
+                text: tabItem.text;
+                font-size: Theme.current.font-size-crumbs;
+                vertical-alignment: center;
+                color: Theme.current.text-color-tabs;
+            }
+            width: item.width;
+            touch := TouchArea {}
+        }
+    }
+
+    
+}
+
+export component PathAndCrumbs inherits Rectangle {
+    height: 30px; 
+    HorizontalLayout {
+        for item[i] in TabsAdapter.breadcrumbs : BreadcrumbItem {
+            clicked => {
+                TabsAdapter.breadcrumb-clicked(item);
+            }
+            tabItem: item; 
+        }
+    }
+
+    LineEdit {
+        font-size: 14px;
+        width: parent.width;
+        height: parent.height;
+        visible: false;
+    }
+}
+
+
 export component TabWidgetBody inherits Rectangle {
     background: Theme.current.background-color-main;
-    scrollview := ScrollView {
-        VerticalLayout {
-            alignment: start;
-            spacing: 2px;
-            for item[i] in FileManager.files : FileWidget {
-                clicked => {
-                    FileManager.fileitem-clicked(item);
+    VerticalLayout {
+        PathAndCrumbs{
+            max-width: Theme.width;
+        }
+        scrollview := ScrollView {
+            VerticalLayout {
+                alignment: start;
+                spacing: 2px;
+                for item[i] in FileManager.files : FileWidget {
+                    clicked => {
+                        FileManager.fileitem-clicked(item);
+                    }
+                    //private property <length> offset: scrollview.viewport-y + i * (self.height + parent.spacing);
+                    file: item;
                 }
-                private property <length> offset: scrollview.viewport-y + i * (self.height + parent.spacing);
-                file: item;
             }
         }
     }

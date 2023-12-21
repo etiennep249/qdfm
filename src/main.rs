@@ -1,5 +1,6 @@
 use qdfm::callbacks::filemanager::*;
 use qdfm::callbacks::sidebar::*;
+use qdfm::callbacks::tabs::breadcrumb_clicked;
 use qdfm::core::generate_files_for_path;
 use qdfm::drives;
 use qdfm::globals::config_lock;
@@ -35,7 +36,26 @@ fn main() {
             .into(),
         );
         w.global::<Theme>()
-            .invoke_setup(conf.get::<String>("theme").unwrap().into());
+            .invoke_setup(conf.get::<String>("theme").unwrap().into(), 3840, 2160); //Change these
+
+        //tmp
+        w.global::<TabsAdapter>().set_breadcrumbs(
+            [
+                TabItem {
+                    internal_path: "".into(),
+                    text: "test1".into(),
+                    selected: false,
+                    text_length: 1,
+                },
+                TabItem {
+                    internal_path: "".into(),
+                    text: "test2".into(),
+                    selected: false,
+                    text_length: 1,
+                },
+            ]
+            .into(),
+        );
     }
     //Callbacks
     {
@@ -48,6 +68,8 @@ fn main() {
             .on_right_arrow_clicked(enclose! { (weak) move || right_arrow_clicked(weak.clone())});
         w.global::<FileManager>()
             .on_fileitem_clicked(enclose! { (weak) move |i| fileitem_clicked(i, weak.clone())});
+        w.global::<TabsAdapter>()
+            .on_breadcrumb_clicked(enclose! { (weak) move |i| breadcrumb_clicked(i, weak.clone())});
     }
     w.run().unwrap();
 }
