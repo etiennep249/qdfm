@@ -32,9 +32,12 @@ export struct ThemeImpl {
     main_padding_left: length,
     main_padding_top: length,
     main_padding_bot: length,
+    main_padding_right: length,
 
     //Sizes
     sidebar_width: length,
+    tab_height: length,
+    breadcrumbs_height: length,
     
 
 }
@@ -67,8 +70,11 @@ export global Theme {
         main_padding_left: 10px,
         main_padding_top: 5px,
         main_padding_bot: 5px,
+        main_padding_right: 5px,
 
         sidebar_width: 200px,
+        tab_height: 30px,
+        breadcrumbs_height: 30px,
     };
     in property <ThemeImpl> light: {
         background_color_main: #FFFFFF,

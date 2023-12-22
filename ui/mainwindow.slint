@@ -3,33 +3,13 @@ import { DriveList, SidebarItems , NavArrows} from "sidebar.slint";
 import { TabWidget_, TabsAdapter } from "tabs.slint";
 import { FileManager } from "filemanager.slint";
 import { Theme } from "theme.slint";
+import { HSeparator} from "utils.slint";
 
 
 export { FileManager, SidebarItems, TabsAdapter, Theme }
 
 
-export component Line inherits Path {
-    in property <length> from_x;
-    in property <length> from_y;
-    in property <length> to_x;
-    in property <length> to_y;
-    in property <brush> color;
-    width: 1px;
-    height: (to_y - from_y);
-    x: from_x;
-    y: from_y;
-    stroke-width: 1px;
-    stroke: color;
-    MoveTo {
-        x: 0;
-        y: 0;
-    }
-    LineTo {
-        x: (to_x - from_x)/1px;
-        y: 1000;
-    }
-    Close{}
-}
+
 
 export component MainWindow inherits Rectangle {
     private property <length> nav_arrows_height: 30px;
@@ -37,6 +17,8 @@ export component MainWindow inherits Rectangle {
     HorizontalLayout {
         padding-left: Theme.current.main-padding-left;
         padding-top: Theme.current.main-padding-top;
+        padding-right: Theme.current.main-padding-right;
+        padding-bottom: Theme.current.main-padding-bot;
         VerticalLayout{
             width: Theme.current.sidebar-width;
             spacing: 5px;
@@ -59,11 +41,10 @@ export component MainWindow inherits Rectangle {
         }
     }
     //Sidebar separator
-    Line {
-        from-x: Theme.current.sidebar-width;
-        from-y: Theme.current.main-padding-top;
-        to-x: Theme.current.sidebar-width;
-        to-y: parent.height - Theme.current.main-padding-bot;
+    HSeparator {
         color: Theme.current.separator-color;
+        x: Theme.current.sidebar-width;
+        y: 0;
+        height: parent.height - Theme.current.main-padding-bot;
     } 
 }

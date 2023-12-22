@@ -38,22 +38,14 @@ fn main() {
         w.global::<Theme>()
             .invoke_setup(conf.get::<String>("theme").unwrap().into(), 3840, 2160); //Change these
 
-        //tmp
+        //Temp, default breadcrumbs path
         w.global::<TabsAdapter>().set_breadcrumbs(
-            [
-                TabItem {
-                    internal_path: "".into(),
-                    text: "test1".into(),
-                    selected: false,
-                    text_length: 1,
-                },
-                TabItem {
-                    internal_path: "".into(),
-                    text: "test2".into(),
-                    selected: false,
-                    text_length: 1,
-                },
-            ]
+            [TabItem {
+                internal_path: "/".into(),
+                text: "".into(),
+                selected: false,
+                text_length: 1,
+            }]
             .into(),
         );
     }

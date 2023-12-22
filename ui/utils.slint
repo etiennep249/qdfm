@@ -1,0 +1,38 @@
+/*
+    Parameters: x, y, height, color
+    Drawn from (x,y) down to (x, y+height)
+*/
+export component HSeparator inherits Path {
+    in property <brush> color;
+    width: 1px;
+    stroke-width: 1px;
+    stroke: color;
+    MoveTo {
+        x: 0;
+        y: 0;
+    }
+    LineTo {
+        x: 0;
+        y: parent.height/1px;
+    }
+    Close{}
+}
+/*
+    Parameters: x, y, width, color
+    Drawn form (x,y) to (x+width, y)
+*/
+export component VSeparator inherits Path {
+    in property <brush> color;
+    height: 1px;
+    stroke-width: 1px;
+    stroke: color;
+    MoveTo {
+        x: 0;
+        y: 0;
+    }
+    LineTo {
+        x: parent.width/1px;
+        y: 0;
+    }
+    Close{}
+}

@@ -10,6 +10,8 @@ use std::rc::Rc;
 use std::sync::Mutex;
 use std::sync::MutexGuard;
 
+use super::tabs::get_breadcrumbs_for;
+
 //For now, there is no double click handler, CHANGE TO DOUBLE CLICK WHEN/IF IT'S IMPLEMENTED
 pub fn fileitem_clicked(item: FileItem, mw: Rc<Weak<MainWindow>>) {
     if check_for_dclick() {
@@ -37,6 +39,7 @@ pub fn set_current_tab_file(item: TabItem, mw: Rc<Weak<MainWindow>>, remember: b
         if remember {
             add_to_history(tabs.invoke_get_current_tab());
         }
+        tabs.set_breadcrumbs(Rc::new(VecModel::from(get_breadcrumbs_for(&item))).into());
         tabs.invoke_set_current_tab(item);
         w.global::<FileManager>()
             .set_files(Rc::new(VecModel::from(files)).into());
