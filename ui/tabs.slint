@@ -2,7 +2,8 @@ import {FileManager, FileWidget} from "filemanager.slint";
 import { ScrollView , LineEdit} from "std-widgets.slint";
 import { Theme } from "theme.slint";
 import { Icons } from "icons.slint";
-import { VSeparator } from "utils.slint";
+import { VSeparator, MainAdapter } from "utils.slint";
+import { ColumnHeaders } from "colheaders.slint";
 
 export struct TabItem {
     text: string,
@@ -15,12 +16,14 @@ export global TabsAdapter {
     in-out property <[TabItem]> tabs: [{text: "/", internal_path: "/", text_length: 1, selected: true}];
     in-out property <int> current_tab: 0;
     in-out property <[TabItem]> breadcrumbs;
+    in-out property <bool> path_shown: false;
     callback breadcrumb_clicked(TabItem);
+    callback breadcrumb_accepted(string);
     public function set_current_tab(item: TabItem) {
         tabs[current-tab] = item;
         FileManager.path = item.internal-path;
     }
-    public function get_current_tab() -> TabItem{
+    public function get_current_tab() -> TabItem {
         return tabs[current_tab];
     }
 }
@@ -83,22 +86,34 @@ export component BreadcrumbItem {
 }
 
 export component PathAndCrumbs inherits Rectangle {
-    height: Theme.current.breadcrumbs-height; 
-    HorizontalLayout {
+    height: Theme.current.breadcrumbs-height;
+    bcrumbs_layout := HorizontalLayout {
         for item[i] in TabsAdapter.breadcrumbs : BreadcrumbItem {
             clicked => {
                 TabsAdapter.breadcrumb-clicked(item);
             }
             tabItem: item; 
         }
+        crumbsArea := TouchArea {
+            enabled: !TabsAdapter.path-shown;
+            clicked => {
+                TabsAdapter.path-shown = true;
+            }
+        }
+        visible: !TabsAdapter.path_shown;
     }
-
-    LineEdit {
+    ledit := LineEdit {
         font-size: 14px;
         width: parent.width;
         height: parent.height;
-        visible: false;
+        text: TabsAdapter.tabs[TabsAdapter.current-tab].internal-path;
+        accepted(s) => {
+            TabsAdapter.breadcrumb-accepted(s);
+        }
+        visible: TabsAdapter.path-shown;
     }
+    
+
     //Separator
     VSeparator {
         x: 0;
@@ -112,9 +127,10 @@ export component PathAndCrumbs inherits Rectangle {
 export component TabWidgetBody inherits Rectangle {
     background: Theme.current.background-color-main;
     VerticalLayout {
-        PathAndCrumbs{
+        crumbs := PathAndCrumbs{
             max-width: Theme.width;
         }
+        ColumnHeaders {}
         scrollview := ScrollView {
             VerticalLayout {
                 alignment: start;

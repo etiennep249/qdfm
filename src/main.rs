@@ -1,13 +1,10 @@
-use qdfm::callbacks::filemanager::*;
-use qdfm::callbacks::sidebar::*;
-use qdfm::callbacks::tabs::breadcrumb_clicked;
+use qdfm::callbacks::*;
 use qdfm::core::generate_files_for_path;
 use qdfm::drives;
 use qdfm::globals::config_lock;
 use qdfm::ui::*;
 use slint::VecModel;
 use std::rc::Rc;
-
 //https://github.com/rust-lang/rfcs/issues/2407#issuecomment-385291238
 //Replace with https://github.com/rust-lang/rfcs/pull/3512
 //When/if it gets merged
@@ -23,7 +20,6 @@ macro_rules! enclose {
 fn main() {
     let w: MainWindow = MainWindow::new().unwrap();
     let weak = Rc::new(w.as_weak());
-
     //Initialization sequence
     {
         let conf = config_lock();
@@ -37,6 +33,8 @@ fn main() {
         );
         w.global::<Theme>()
             .invoke_setup(conf.get::<String>("theme").unwrap().into(), 3840, 2160); //Change these
+        w.global::<ColumnHeadersAdapter>()
+            .set_headers(Rc::new(conf.get_headers()).into());
 
         //Temp, default breadcrumbs path
         w.global::<TabsAdapter>().set_breadcrumbs(
@@ -52,16 +50,28 @@ fn main() {
     //Callbacks
     {
         let sidebaritems = w.global::<SidebarItems>();
-        sidebaritems
-            .on_drive_clicked(enclose! { (weak) move |i| sidebar_item_clicked(i, weak.clone())});
-        sidebaritems
-            .on_left_arrow_clicked(enclose! { (weak) move || left_arrow_clicked(weak.clone())});
-        sidebaritems
-            .on_right_arrow_clicked(enclose! { (weak) move || right_arrow_clicked(weak.clone())});
-        w.global::<FileManager>()
-            .on_fileitem_clicked(enclose! { (weak) move |i| fileitem_clicked(i, weak.clone())});
-        w.global::<TabsAdapter>()
-            .on_breadcrumb_clicked(enclose! { (weak) move |i| breadcrumb_clicked(i, weak.clone())});
+        sidebaritems.on_drive_clicked(
+            enclose! { (weak) move |i| sidebar::sidebar_item_clicked(i, weak.clone())},
+        );
+        sidebaritems.on_left_arrow_clicked(
+            enclose! { (weak) move || sidebar::left_arrow_clicked(weak.clone())},
+        );
+        sidebaritems.on_right_arrow_clicked(
+            enclose! { (weak) move || sidebar::right_arrow_clicked(weak.clone())},
+        );
+        w.global::<FileManager>().on_fileitem_clicked(
+            enclose! { (weak) move |i| filemanager::fileitem_clicked(i, weak.clone())},
+        );
+        let tabs_adapter = w.global::<TabsAdapter>();
+        tabs_adapter.on_breadcrumb_clicked(
+            enclose! { (weak) move |i| tabs::breadcrumb_clicked(i, weak.clone())},
+        );
+        tabs_adapter.on_breadcrumb_accepted(
+            enclose! { (weak) move |s| tabs::breadcrumb_accepted(s, weak.clone())},
+        );
+        w.global::<ColumnHeadersAdapter>().on_header_clicked(
+            enclose! { (weak) move |header| headers::on_header_click(header, weak.clone())},
+        );
     }
     w.run().unwrap();
 }

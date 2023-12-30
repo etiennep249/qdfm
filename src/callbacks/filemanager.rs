@@ -32,10 +32,14 @@ pub fn fileitem_doubleclicked(item: FileItem, mw: Rc<Weak<MainWindow>>) {
     );
 }
 
-pub fn set_current_tab_file(item: TabItem, mw: Rc<Weak<MainWindow>>, remember: bool) {
+pub fn set_current_tab_file(mut item: TabItem, mw: Rc<Weak<MainWindow>>, remember: bool) {
     let files = core::generate_files_for_path(item.internal_path.as_str());
+    if item.internal_path == "/" {
+        item.text = "/".into();
+    }
     mw.upgrade_in_event_loop(move |w| {
         let tabs = w.global::<TabsAdapter>();
+        tabs.set_path_shown(false);
         if remember {
             add_to_history(tabs.invoke_get_current_tab());
         }

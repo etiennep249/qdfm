@@ -7,7 +7,7 @@ export struct FileItem {
 //For current tab only
 export global FileManager {
     in-out property <string> path;
-    in-out property <[FileItem]> files;
+    in-out property <[FileItem]> files; /*The actual files listed*/
     callback fileitem_clicked(FileItem);
 }
 

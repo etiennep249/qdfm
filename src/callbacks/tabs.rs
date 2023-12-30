@@ -1,4 +1,7 @@
-use crate::ui::*;
+use crate::{
+    ui::*,
+    utils::{error_handling::user_notice, is_directory_valid},
+};
 
 use slint::{SharedString, Weak};
 use std::rc::Rc;
@@ -27,4 +30,22 @@ pub fn get_breadcrumbs_for(item: &TabItem) -> Vec<TabItem> {
             r
         })
         .collect()
+}
+
+pub fn breadcrumb_accepted(mut s: SharedString, mw: Rc<Weak<MainWindow>>) {
+    if !is_directory_valid(&s) {
+        user_notice("Invalid path!");
+        return;
+    }
+    s = match s.strip_suffix("/") {
+        Some(s) => s.into(),
+        None => s,
+    };
+    let item = TabItem {
+        text: s.rsplit("/").next().unwrap().into(),
+        internal_path: s,
+        selected: true,
+        text_length: -1,
+    };
+    set_current_tab_file(item, mw, true);
 }

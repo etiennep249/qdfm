@@ -1,0 +1,55 @@
+import {Icons} from "icons.slint";
+import {Theme} from "theme.slint";
+
+export struct Header {
+    inner_value: int,
+    display: string,
+    width_pct: length,
+    sort: int,
+}
+
+export global ColumnHeadersAdapter {
+    in-out property <[Header]> headers;
+    callback header_clicked(Header);
+}
+
+export component ColumnItem {
+    in property <Header> header;
+    HorizontalLayout {
+        Rectangle {
+            Text {
+                vertical-alignment: center;
+                horizontal-alignment: left;
+                width: 100%;
+                text: header.display;
+                font-size: Theme.current.font-size-header;
+            }
+            TouchArea {
+                clicked => {
+                    ColumnHeadersAdapter.header_clicked(header);
+                }
+            }
+        }
+        Image {
+            source: header.sort == 1 ? Icons.up-arrow : Icons.down-arrow;
+            colorize: Theme.current.header-arrows-color;
+            height: 20px;
+            width: 20px;
+            visible: header.sort == 0 ? false : true;
+        }
+
+    }
+}
+
+
+export component ColumnHeaders inherits Rectangle {
+    height: 22px;
+    HorizontalLayout {
+        padding-top: 2px;
+        alignment: stretch;
+        for header[i] in ColumnHeadersAdapter.headers : ColumnItem {
+            header: header;
+            horizontal-stretch: header.width-pct/1px;
+        }
+    }
+}

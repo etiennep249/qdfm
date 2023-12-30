@@ -3,13 +3,11 @@ import { DriveList, SidebarItems , NavArrows} from "sidebar.slint";
 import { TabWidget_, TabsAdapter } from "tabs.slint";
 import { FileManager } from "filemanager.slint";
 import { Theme } from "theme.slint";
-import { HSeparator} from "utils.slint";
+import { HSeparator, MainAdapter } from "utils.slint";
+import { ColumnHeadersAdapter } from "colheaders.slint";
 
 
-export { FileManager, SidebarItems, TabsAdapter, Theme }
-
-
-
+export { FileManager, SidebarItems, TabsAdapter, Theme, MainAdapter, ColumnHeadersAdapter }
 
 export component MainWindow inherits Rectangle {
     private property <length> nav_arrows_height: 30px;
@@ -19,7 +17,7 @@ export component MainWindow inherits Rectangle {
         padding-top: Theme.current.main-padding-top;
         padding-right: Theme.current.main-padding-right;
         padding-bottom: Theme.current.main-padding-bot;
-        VerticalLayout{
+        l := VerticalLayout{
             width: Theme.current.sidebar-width;
             spacing: 5px;
             NavArrows {
