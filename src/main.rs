@@ -3,7 +3,7 @@ use qdfm::core::generate_files_for_path;
 use qdfm::drives;
 use qdfm::globals::config_lock;
 use qdfm::ui::*;
-use slint::VecModel;
+use slint::{Model, VecModel};
 use std::rc::Rc;
 //https://github.com/rust-lang/rfcs/issues/2407#issuecomment-385291238
 //Replace with https://github.com/rust-lang/rfcs/pull/3512
@@ -71,6 +71,9 @@ fn main() {
         );
         w.global::<ColumnHeadersAdapter>().on_header_clicked(
             enclose! { (weak) move |header| headers::on_header_click(header, weak.clone())},
+        );
+        w.global::<ColumnHeadersAdapter>().on_adjust_size(
+            enclose! { (weak) move |header, offset, original| headers::on_header_resize(header, offset, original, weak.clone())},
         );
     }
     w.run().unwrap();

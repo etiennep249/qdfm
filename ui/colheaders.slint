@@ -11,33 +11,61 @@ export struct Header {
 export global ColumnHeadersAdapter {
     in-out property <[Header]> headers;
     callback header_clicked(Header);
+    callback adjust_size(Header, length, length);
+}
+
+//Inspired from StandardTableView component
+export component HeaderSeparator inherits Rectangle {
+    in property <Header> header;
+    width: 1px;
+    animate background {duration: 150ms;}
+
+    touch := TouchArea {
+        width: 10px;
+        mouse-cursor: ew-resize;
+        moved => {
+            if (self.pressed) {
+                ColumnHeadersAdapter.adjust_size(header, self.mouse-x - self.pressed-x, parent.x +1px);
+            }
+        }
+    }
+    states [
+        hover when touch.has-hover : {
+            background: Theme.current.separator-color;
+        }
+    ]
 }
 
 export component ColumnItem {
     in property <Header> header;
-    HorizontalLayout {
-        Rectangle {
-            Text {
-                vertical-alignment: center;
-                horizontal-alignment: left;
-                width: 100%;
-                text: header.display;
-                font-size: Theme.current.font-size-header;
-            }
-            TouchArea {
-                clicked => {
-                    ColumnHeadersAdapter.header_clicked(header);
+    in property <int> index;
+    touch := TouchArea {
+        HorizontalLayout {
+            Rectangle {
+                text := Text {
+                    vertical-alignment: center;
+                    horizontal-alignment: left;
+                    width: 100%;
+                    text: header.display;
+                    font-size: Theme.current.font-size-header;
                 }
             }
+            img := Image {
+                source: header.sort == 1 ? Icons.up-arrow : Icons.down-arrow;
+                colorize: Theme.current.header-arrows-color;
+                height: 20px;
+                width: 20px;
+                visible: header.sort == 0 ? false : true;
+            } 
         }
-        Image {
-            source: header.sort == 1 ? Icons.up-arrow : Icons.down-arrow;
-            colorize: Theme.current.header-arrows-color;
-            height: 20px;
-            width: 20px;
-            visible: header.sort == 0 ? false : true;
+        clicked => {
+            ColumnHeadersAdapter.header_clicked(header);
         }
-
+    }
+    HeaderSeparator {
+        visible: index != ColumnHeadersAdapter.headers.length - 1;
+        x: touch.width - 1px;
+        header: header;
     }
 }
 
@@ -49,6 +77,7 @@ export component ColumnHeaders inherits Rectangle {
         alignment: stretch;
         for header[i] in ColumnHeadersAdapter.headers : ColumnItem {
             header: header;
+            index: i;
             horizontal-stretch: header.width-pct/1px;
         }
     }
