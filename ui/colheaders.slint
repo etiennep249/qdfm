@@ -6,6 +6,7 @@ export struct Header {
     display: string,
     width_pct: length,
     sort: int,
+    alignment: int,//0-left, 1-center, 2-right
 }
 
 export global ColumnHeadersAdapter {
@@ -44,7 +45,7 @@ export component ColumnItem {
             Rectangle {
                 text := Text {
                     vertical-alignment: center;
-                    horizontal-alignment: left;
+                    horizontal-alignment: header.alignment == 0 ? left : header.alignment == 1 ? center : right;
                     width: 100%;
                     text: header.display;
                     font-size: Theme.current.font-size-header;

@@ -1,5 +1,6 @@
 pub mod doubleclicks;
 pub mod error_handling;
+pub mod types;
 
 //Returns true if s is a valid directory
 pub fn is_directory_valid(s: &str) -> bool {

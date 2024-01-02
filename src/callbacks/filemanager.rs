@@ -2,7 +2,10 @@ use crate::core;
 use crate::globals::config_lock;
 use crate::ui::*;
 use crate::utils::doubleclicks::check_for_dclick;
+use crate::utils::types;
+use crate::utils::types::i32_to_i64;
 use once_cell::sync::OnceCell;
+use slint::SharedString;
 use slint::VecModel;
 use slint::Weak;
 use std::collections::VecDeque;
@@ -37,19 +40,23 @@ pub fn set_current_tab_file(mut item: TabItem, mw: Rc<Weak<MainWindow>>, remembe
     if item.internal_path == "/" {
         item.text = "/".into();
     }
-    mw.upgrade_in_event_loop(move |w| {
-        let tabs = w.global::<TabsAdapter>();
-        tabs.set_path_shown(false);
-        if remember {
-            add_to_history(tabs.invoke_get_current_tab());
-        }
-        tabs.set_breadcrumbs(Rc::new(VecModel::from(get_breadcrumbs_for(&item))).into());
-        tabs.invoke_set_current_tab(item);
-        w.global::<FileManager>()
-            .set_files(Rc::new(VecModel::from(files)).into());
-    })
-    .unwrap();
+
+    let w = mw.unwrap();
+    let tabs = w.global::<TabsAdapter>();
+    tabs.set_path_shown(false);
+    if remember {
+        add_to_history(tabs.invoke_get_current_tab());
+    }
+    tabs.set_breadcrumbs(Rc::new(VecModel::from(get_breadcrumbs_for(&item))).into());
+    tabs.invoke_set_current_tab(item);
+    w.global::<FileManager>()
+        .set_files(Rc::new(VecModel::from(files)).into());
 }
+
+pub fn format_size(i: _i64) -> SharedString {
+    types::format_size(i32_to_i64((i.a, i.b)))
+}
+
 /*
 *   ====HISTORY===
 *

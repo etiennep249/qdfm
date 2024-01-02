@@ -23,7 +23,7 @@ impl Config {
             (
                 //<name>:<width_percent>:<0/1/2 not_selected/ascending/descending>
                 String::from("headers"),
-                String::from("name:70:0,size:15:0,date:15:1"),
+                String::from("name:70:1,size:15:0,date:15:0"),
             ),
         ])
     }
@@ -52,18 +52,21 @@ impl Config {
                         inner_value: 0,
                         display: "Name".into(),
                         width_pct: pct,
+                        alignment: 0,
                         sort,
                     },
                     "size" => Header {
                         inner_value: 1,
                         display: "Size".into(),
                         width_pct: pct,
+                        alignment: 2,
                         sort,
                     },
                     "date" => Header {
                         inner_value: 2,
                         display: "Date".into(),
                         width_pct: pct,
+                        alignment: 0,
                         sort,
                     },
                     _ => panic!("Could not parse headers from configuration"),

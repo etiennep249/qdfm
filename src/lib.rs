@@ -9,3 +9,6 @@ pub mod globals;
 pub mod key_events;
 pub mod sort;
 pub mod utils;
+
+#[cfg(test)]
+pub mod tests;

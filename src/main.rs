@@ -3,7 +3,7 @@ use qdfm::core::generate_files_for_path;
 use qdfm::drives;
 use qdfm::globals::config_lock;
 use qdfm::ui::*;
-use slint::{Model, VecModel};
+use slint::VecModel;
 use std::rc::Rc;
 //https://github.com/rust-lang/rfcs/issues/2407#issuecomment-385291238
 //Replace with https://github.com/rust-lang/rfcs/pull/3512
@@ -21,6 +21,7 @@ fn main() {
     let w: MainWindow = MainWindow::new().unwrap();
     let weak = Rc::new(w.as_weak());
     //Initialization sequence
+    //TODO: Optimize this
     {
         let conf = config_lock();
         let drives = drives::get_drives();
@@ -31,6 +32,8 @@ fn main() {
             )))
             .into(),
         );
+        w.global::<FileManager>()
+            .on_format_size(move |i| filemanager::format_size(i));
         w.global::<Theme>()
             .invoke_setup(conf.get::<String>("theme").unwrap().into(), 3840, 2160); //Change these
         w.global::<ColumnHeadersAdapter>()
