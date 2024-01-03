@@ -44,9 +44,8 @@ export component FileItemConditional inherits Rectangle {
 
 export component FileWidget {
     in property <FileItem> file;
-    height: 30px;
-    callback clicked <=> touch.clicked;
-    touch := TouchArea {
+    height: file.date.b == -1 ? 0 : 30px;
+    if file.date.b != -1 : touch := TouchArea {
         HorizontalLayout {
             padding-left: 2px;
             padding-top: 2px;
@@ -59,6 +58,9 @@ export component FileWidget {
                 file: file;
                 horizontal-stretch: header.width-pct/1px;
             }
+        }
+        clicked => {
+            FileManager.fileitem-clicked(file);
         }
     }
 }

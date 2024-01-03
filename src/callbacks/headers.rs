@@ -18,6 +18,8 @@ pub fn on_header_click(header: Header, mw: Rc<Weak<MainWindow>>) {
     //Sort
     match header.inner_value {
         0 => sort::sort_by_name(mw.clone(), new_sort == 1, true),
+        1 => sort::sort_by_size(mw.clone(), new_sort == 1, true),
+        2 => sort::sort_by_date(mw.clone(), new_sort == 1, true),
         _ => {}
     };
 

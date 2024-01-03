@@ -10,8 +10,9 @@ license = "GPLv3"
 [dependencies]
 once_cell = "1.18.0"
 sysinfo = "0.29.10"
+#Do we need std in slint?
 slint = {version = "1.3.2", default-features=false, features=["std", "backend-winit", "renderer-skia-opengl", "compat-1-2"]} #Use vulkan when fixed
-chrono = {version = "*", default-features=false, features=["alloc"]}
+chrono = {version = "*", default-features=false, features=["alloc", "clock"]}
 
 [build-dependencies]
 slint-build = "1.3.2"
@@ -21,9 +22,6 @@ opt-level = 'z'
 lto = true
 codegen-units = 1
 panic = 'abort'
-#strip = true #ADD this
-debug = true #REMOVE THIS
+strip = true #ADD this
+#debug = true #AND REMOVE THIS for profiling
 
-# AND THIS
-[target.x86_64-unknown-linux-gnu]
-rustflags = ["-Clink-arg=-fuse-ld=lld", "-Clink-arg=-Wl,--no-rosegment"]

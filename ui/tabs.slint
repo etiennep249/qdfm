@@ -1,5 +1,5 @@
 import {FileManager, FileWidget} from "filemanager.slint";
-import { ScrollView , LineEdit} from "std-widgets.slint";
+import { ScrollView , LineEdit, ListView} from "std-widgets.slint";
 import { Theme } from "theme.slint";
 import { Icons } from "icons.slint";
 import { VSeparator, MainAdapter } from "utils.slint";
@@ -131,18 +131,11 @@ export component TabWidgetBody inherits Rectangle {
             max-width: Theme.width;
         }
         ColumnHeaders {}
-        scrollview := ScrollView {
-            VerticalLayout {
-                alignment: start;
-                spacing: 2px;
-                for item[i] in FileManager.files : FileWidget {
-                    clicked => {
-                        FileManager.fileitem-clicked(item);
-                    }
-                    file: item;
-                }
+        ListView {
+            for item[i] in FileManager.files : FileWidget {
+                file: item;
             }
-        }
+        }        
     }
 }
 

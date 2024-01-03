@@ -1,4 +1,4 @@
-use chrono::{DateTime, Utc};
+use chrono::{Local, LocalResult, TimeZone};
 use slint::SharedString;
 
 pub fn i32_to_i64((a, b): (i32, i32)) -> i64 {
@@ -43,8 +43,9 @@ pub fn format_size(i: i64) -> SharedString {
 //TODO: Possibly support more formats (for now, ISO 8601 is fine)
 //Where i = number of seconds since UNIX_EPOCH
 pub fn format_date(i: i64) -> SharedString {
-    if let Some(datetime) = DateTime::<Utc>::from_timestamp(i, 0) {
-        format!("{}", datetime.format("%F %I:%M %p")).into()
+    let time = Local.timestamp_opt(i, 0);
+    if time != LocalResult::None {
+        format!("{}", time.unwrap().format("%F %I:%M %p")).into()
     } else {
         "ERR".into()
     }

@@ -14,7 +14,11 @@ pub fn generate_files_for_path(path: &str) -> Vec<FileItem> {
         .map(|file| {
             if let Ok(f) = file {
                 if let Ok(meta) = std::fs::metadata(f.path()) {
-                    let (size_a, size_b) = i64_to_i32(meta.len() as i64);
+                    let (size_a, size_b) = if meta.is_dir() {
+                        (0, 0) //So that directories don't get sorted by size
+                    } else {
+                        i64_to_i32(meta.len() as i64)
+                    };
                     let (date_a, date_b);
                     if let Ok(modified) = meta.modified() {
                         if let Ok(modified_dr) = modified.duration_since(SystemTime::UNIX_EPOCH) {
@@ -54,6 +58,6 @@ pub fn bad_file() -> FileItem {
         file_name: "?".into(),
         is_dir: false,
         size: _i64 { a: 0, b: 0 },
-        date: _i64 { a: 0, b: 0 },
+        date: _i64 { a: 0, b: -1 }, //-1 Used as error condition, faster than comparing strings
     }
 }
