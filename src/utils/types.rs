@@ -1,3 +1,4 @@
+use chrono::{DateTime, Utc};
 use slint::SharedString;
 
 pub fn i32_to_i64((a, b): (i32, i32)) -> i64 {
@@ -35,4 +36,16 @@ pub fn format_size(i: i64) -> SharedString {
         }
     ) + suffix)
         .into()
+}
+
+//Utility to convert seconds to a human readable format
+//TODO: If this is the only place where we use chrono, possibly write it manually
+//TODO: Possibly support more formats (for now, ISO 8601 is fine)
+//Where i = number of seconds since UNIX_EPOCH
+pub fn format_date(i: i64) -> SharedString {
+    if let Some(datetime) = DateTime::<Utc>::from_timestamp(i, 0) {
+        format!("{}", datetime.format("%F %I:%M %p")).into()
+    } else {
+        "ERR".into()
+    }
 }

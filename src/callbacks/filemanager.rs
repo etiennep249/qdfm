@@ -1,5 +1,6 @@
 use crate::core;
 use crate::globals::config_lock;
+use crate::sort::call_current_sort;
 use crate::ui::*;
 use crate::utils::doubleclicks::check_for_dclick;
 use crate::utils::types;
@@ -51,10 +52,14 @@ pub fn set_current_tab_file(mut item: TabItem, mw: Rc<Weak<MainWindow>>, remembe
     tabs.invoke_set_current_tab(item);
     w.global::<FileManager>()
         .set_files(Rc::new(VecModel::from(files)).into());
+    call_current_sort(mw);
 }
 
 pub fn format_size(i: _i64) -> SharedString {
     types::format_size(i32_to_i64((i.a, i.b)))
+}
+pub fn format_date(i: _i64) -> SharedString {
+    types::format_date(i32_to_i64((i.a, i.b)))
 }
 
 /*

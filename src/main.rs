@@ -32,8 +32,6 @@ fn main() {
             )))
             .into(),
         );
-        w.global::<FileManager>()
-            .on_format_size(move |i| filemanager::format_size(i));
         w.global::<Theme>()
             .invoke_setup(conf.get::<String>("theme").unwrap().into(), 3840, 2160); //Change these
         w.global::<ColumnHeadersAdapter>()
@@ -49,6 +47,10 @@ fn main() {
             }]
             .into(),
         );
+
+        //Default sort
+        //TODO use config
+        qdfm::sort::sort_by_name(weak.clone(), true, true);
     }
     //Callbacks
     {
@@ -78,6 +80,12 @@ fn main() {
         w.global::<ColumnHeadersAdapter>().on_adjust_size(
             enclose! { (weak) move |header, offset, original| headers::on_header_resize(header, offset, original, weak.clone())},
         );
+        w.global::<FileManager>()
+            .on_format_size(move |i| filemanager::format_size(i));
+        w.global::<FileManager>()
+            .on_format_date(move |i| filemanager::format_date(i));
+
+
     }
     w.run().unwrap();
 }

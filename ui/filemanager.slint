@@ -7,6 +7,7 @@ export struct FileItem {
     file_name: string,
     is_dir: bool,
     size: _i64,
+    date: _i64,
 }
 //For current tab only
 export global FileManager {
@@ -14,34 +15,38 @@ export global FileManager {
     in-out property <[FileItem]> files; /*The actual files listed*/
     callback fileitem_clicked(FileItem);
     pure callback format_size(_i64) -> string;
+    pure callback format_date(_i64) -> string;
 }
 
 export component FileItemConditional inherits Rectangle {
     in property <Header> header;
     in property <FileItem> file;
-    background: red;
-    if header.inner-value == 0 : Text {
+    if header.inner-value == 0 : Text { /*Name*/
+        width: parent.width;
         text: file.file-name;
         font-size: Theme.current.font-size-main;
         color: Theme.current.text-color-main;
         vertical-alignment: center;
         horizontal-alignment: header.alignment == 0 ? left : header.alignment == 1 ? center : right;
     }
-    if header.inner-value == 1 : Text {
+    if header.inner-value == 1 : Text { /*Size*/
+        width: parent.width;
         visible: !file.is-dir;
         text: FileManager.format_size(file.size);
         horizontal-alignment: header.alignment == 0 ? left : header.alignment == 1 ? center : right;
     }
+    if header.inner-value == 2 : Text { /*Date*/
+        width: parent.width;
+        text: FileManager.format_date(file.date);
+        horizontal-alignment: header.alignment == 0 ? left : header.alignment == 1 ? center : right;
+    }
 }
 
-export component FileWidget inherits Rectangle {
+export component FileWidget {
     in property <FileItem> file;
     height: 30px;
     callback clicked <=> touch.clicked;
-
-    rect := Rectangle {
-        /*border-width: 1px;
-        border-color: black;*/
+    touch := TouchArea {
         HorizontalLayout {
             padding-left: 2px;
             padding-top: 2px;
@@ -49,20 +54,11 @@ export component FileWidget inherits Rectangle {
             padding-right: 2px;
             spacing: 5px;
             alignment: stretch;
-
             for header[i] in ColumnHeadersAdapter.headers : FileItemConditional {
                 header: header;
                 file: file;
                 horizontal-stretch: header.width-pct/1px;
             }
-            /*Image {
-                horizontal-stretch: 0;
-                visible: false;
-                source: Images.check;
-                colorize: Theme.palette.lemon-green;
-            }*/
-            
         }
-        touch := TouchArea {}
     }
 }

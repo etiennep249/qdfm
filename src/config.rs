@@ -23,8 +23,9 @@ impl Config {
             (
                 //<name>:<width_percent>:<0/1/2 not_selected/ascending/descending>
                 String::from("headers"),
-                String::from("name:70:1,size:15:0,date:15:0"),
+                String::from("name:70:1,size:15:0,date:20:0"),
             ),
+            (String::from("default_sort"), String::from("name")),
         ])
     }
     //"Safe" to unwrap

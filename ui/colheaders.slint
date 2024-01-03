@@ -19,8 +19,7 @@ export global ColumnHeadersAdapter {
 export component HeaderSeparator inherits Rectangle {
     in property <Header> header;
     width: 1px;
-    animate background {duration: 150ms;}
-
+    
     touch := TouchArea {
         width: 10px;
         mouse-cursor: ew-resize;
@@ -35,46 +34,51 @@ export component HeaderSeparator inherits Rectangle {
             background: Theme.current.separator-color;
         }
     ]
+    animate background {duration: 150ms;}
+    //background: Theme.current.separator-color;
+
 }
 
-export component ColumnItem {
+export component ColumnItem inherits Rectangle{
     in property <Header> header;
     in property <int> index;
     touch := TouchArea {
-        HorizontalLayout {
-            Rectangle {
-                text := Text {
-                    vertical-alignment: center;
-                    horizontal-alignment: header.alignment == 0 ? left : header.alignment == 1 ? center : right;
-                    width: 100%;
-                    text: header.display;
-                    font-size: Theme.current.font-size-header;
-                }
-            }
-            img := Image {
-                source: header.sort == 1 ? Icons.up-arrow : Icons.down-arrow;
-                colorize: Theme.current.header-arrows-color;
-                height: 20px;
-                width: 20px;
-                visible: header.sort == 0 ? false : true;
-            } 
+        text := Text {
+            x: parent.x;
+            vertical-alignment: center;
+            horizontal-alignment: header.alignment == 0 ? left : header.alignment == 1 ? center : right;
+            width: touch.width;
+            text: header.display;
+            font-size: Theme.current.font-size-header;
         }
+        img := Image {
+            x: header.alignment == 2 ? touch.x + 2px : touch.width - self.width - 2px;
+            source: header.sort == 1 ? Icons.up-arrow : Icons.down-arrow;
+            colorize: Theme.current.header-arrows-color;
+            height: 20px;
+            width: 20px;
+            visible: header.sort == 0 ? false : true;
+        }  
         clicked => {
             ColumnHeadersAdapter.header_clicked(header);
         }
     }
     HeaderSeparator {
         visible: index != ColumnHeadersAdapter.headers.length - 1;
-        x: touch.width - 1px;
+        x: touch.width + 4px;
         header: header;
     }
 }
 
 
 export component ColumnHeaders inherits Rectangle {
-    height: 22px;
+    height: 24px;
     HorizontalLayout {
+        padding-left: 2px;
         padding-top: 2px;
+        padding-bottom: 2px;
+        padding-right: 2px;
+        spacing: 8px;
         alignment: stretch;
         for header[i] in ColumnHeadersAdapter.headers : ColumnItem {
             header: header;
