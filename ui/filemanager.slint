@@ -22,6 +22,7 @@ export component FileItemConditional inherits Rectangle {
     in property <Header> header;
     in property <FileItem> file;
     if header.inner-value == 0 : Text { /*Name*/
+        overflow: elide;
         width: parent.width;
         text: file.file-name;
         font-size: Theme.current.font-size-main;
@@ -30,12 +31,14 @@ export component FileItemConditional inherits Rectangle {
         horizontal-alignment: header.alignment == 0 ? left : header.alignment == 1 ? center : right;
     }
     if header.inner-value == 1 : Text { /*Size*/
+        overflow: elide;
         width: parent.width;
         visible: !file.is-dir;
         text: FileManager.format_size(file.size);
         horizontal-alignment: header.alignment == 0 ? left : header.alignment == 1 ? center : right;
     }
     if header.inner-value == 2 : Text { /*Date*/
+        overflow: elide;
         width: parent.width;
         text: FileManager.format_date(file.date);
         horizontal-alignment: header.alignment == 0 ? left : header.alignment == 1 ? center : right;
@@ -51,7 +54,7 @@ export component FileWidget {
             padding-top: 2px;
             padding-bottom: 2px;
             padding-right: 2px;
-            spacing: 5px;
+            spacing: 12px;
             alignment: stretch;
             for header[i] in ColumnHeadersAdapter.headers : FileItemConditional {
                 header: header;

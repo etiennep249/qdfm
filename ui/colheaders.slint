@@ -44,6 +44,7 @@ export component ColumnItem inherits Rectangle{
     in property <int> index;
     touch := TouchArea {
         text := Text {
+            overflow: elide;
             x: parent.x;
             vertical-alignment: center;
             horizontal-alignment: header.alignment == 0 ? left : header.alignment == 1 ? center : right;
@@ -65,7 +66,7 @@ export component ColumnItem inherits Rectangle{
     }
     HeaderSeparator {
         visible: index != ColumnHeadersAdapter.headers.length - 1;
-        x: touch.width + 4px;
+        x: touch.width + 6px;
         header: header;
     }
 }
@@ -78,7 +79,7 @@ export component ColumnHeaders inherits Rectangle {
         padding-top: 2px;
         padding-bottom: 2px;
         padding-right: 2px;
-        spacing: 8px;
+        spacing: 15px;
         alignment: stretch;
         for header[i] in ColumnHeadersAdapter.headers : ColumnItem {
             header: header;
