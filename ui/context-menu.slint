@@ -1,0 +1,76 @@
+import {FileItem} from "filemanager.slint";
+import {Theme} from "theme.slint";
+
+export global ContextAdapter {
+    in-out property <length> x-pos;
+    in-out property <length> y-pos;
+    callback show_context_menu(length, length, FileItem);
+}
+
+
+export component ContextMenuItem inherits Rectangle {
+    in property <string> display;
+    in property <image> icon;
+    in property <string> shortcut;
+    height: Theme.current.context-menu-entry-height;
+
+    touch := TouchArea {
+        text := Text {
+            overflow: elide;
+            x: parent.x + 1px + Theme.current.context-menu-left-padding;
+            width: parent.width - 2px - Theme.current.context-menu-left-padding;
+            height: Theme.current.context-menu-entry-height;
+            text: display;
+            font-size: Theme.current.context-menu-font-size;
+            color: Theme.current.context-menu-font-color;
+            vertical-alignment: center;
+            horizontal-alignment: left;
+        }
+        clicked => {
+            text.text = "test";
+        }
+    }
+
+    //Does not work currently : https://github.com/slint-ui/slint/issues/2911
+    //Since TouchArea cannot get focus
+    /*states [
+        hover when touch.has-hover: {
+            background: Theme.current.context-menu-hover-color;
+        }
+    ]*/
+}
+
+export component ContextMenuSeparator inherits Rectangle {
+    height: 1px;
+    background: Theme.current.context-menu-separator-color;
+}
+
+
+export component ContextMenu inherits Rectangle {
+    private property <int> entry_count: 2; // TODO: Make this dynamic
+    background: Theme.current.context-menu-background-color;
+    border-color: Theme.current.context-menu-border-color;
+    border-width: 1px;
+    border-radius: 2px;
+    width: 200px;
+    height: Theme.current.context-menu-entry-height * entry-count; //TODO: Make this dynamic (not setting height is buggy)
+    x: ContextAdapter.x-pos;
+    y: ContextAdapter.y-pos;
+
+    VerticalLayout {
+        ContextMenuItem {
+            display: "Open with <default TODO>";
+        }
+        /*ContextMenuItemWithChildren { //Use ContextMenuItem instead with some children parameter
+            display: "Open with:";
+        }*/
+        ContextMenuSeparator {
+            x: parent.x + 5px;
+            //width: 30px; //Use this when https://github.com/slint-ui/slint/pull/4275 is merged
+            vertical-stretch: 0;
+        }
+        ContextMenuItem {
+            display: "Properties";
+        }
+    }
+}

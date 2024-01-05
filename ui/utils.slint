@@ -1,43 +1,16 @@
 /*
-    Parameters: x, y, height, color
+    Parameters: x, y, height, background
     Drawn from (x,y) down to (x, y+height)
 */
-
-export global MainAdapter {}
-
-export component HSeparator inherits Path {
-    in property <brush> color;
+export component HSeparator inherits Rectangle {
     width: 1px;
-    stroke-width: 1px;
-    stroke: color;
-    MoveTo {
-        x: 0;
-        y: 0;
-    }
-    LineTo {
-        x: 0;
-        y: parent.height/1px;
-    }
-    Close{}
 }
 /*
-    Parameters: x, y, width, color
+    Parameters: x, y, width, background
     Drawn form (x,y) to (x+width, y)
 */
-export component VSeparator inherits Path {
-    in property <brush> color;
+export component VSeparator inherits Rectangle {
     height: 1px;
-    stroke-width: 1px;
-    stroke: color;
-    MoveTo {
-        x: 0;
-        y: 0;
-    }
-    LineTo {
-        x: parent.width/1px;
-        y: 0;
-    }
-    Close{}
 }
 
 //An i64 split into two i32. Needed to store things like sizes

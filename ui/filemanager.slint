@@ -71,10 +71,11 @@ export component FileItemConditional inherits Rectangle {
 export component FileWidget inherits Rectangle {
     in property <FileItem> file;
     in property <int> self_index;
+    callback context-menu(length, length, FileItem);
     background: self-index == FileManager.selected-index ? Theme.current.selected-file-color : transparent;
     border-radius: 2px;
     height: file.date.b == -1 ? 0 : 30px;
-    private property <length> _height: self.height;
+    private property <length> rowh: self.height;
     if file.date.b != -1 : touch := TouchArea {
         HorizontalLayout {
             padding-left: 2px;
@@ -84,7 +85,7 @@ export component FileWidget inherits Rectangle {
             spacing: 12px;
             alignment: stretch;
             for header[i] in ColumnHeadersAdapter.headers : FileItemConditional {
-                rowh: _height;
+                rowh: rowh;
                 header: header;
                 file: file;
                 horizontal-stretch: header.width-pct/1px;
@@ -98,6 +99,12 @@ export component FileWidget inherits Rectangle {
             else {
                 //Path changed, reset 
                 FileManager.selected-index = -1;
+            }
+        }
+        pointer-event(e) => {
+            if (e.button == PointerEventButton.right && e.kind == PointerEventKind.down) { //Right click
+                //Pass absolute x and y for the context menu
+                root.context-menu(self.absolute-position.x + self.mouse-x, self.absolute-position.y + self.mouse-y, file);
             }
         }
     }

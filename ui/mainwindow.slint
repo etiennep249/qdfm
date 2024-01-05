@@ -1,16 +1,26 @@
 import { StandardListView, ProgressIndicator, ScrollView} from "std-widgets.slint";
 import { DriveList, SidebarItems , NavArrows} from "sidebar.slint";
 import { TabWidget_, TabsAdapter } from "tabs.slint";
-import { FileManager } from "filemanager.slint";
+import { FileManager, FileItem } from "filemanager.slint";
 import { Theme } from "theme.slint";
-import { HSeparator, MainAdapter } from "utils.slint";
+import { HSeparator } from "utils.slint";
 import { ColumnHeadersAdapter } from "colheaders.slint";
+import { ContextMenu, ContextAdapter } from "context-menu.slint";
 
-export { FileManager, SidebarItems, TabsAdapter, Theme, MainAdapter, ColumnHeadersAdapter }
+export { FileManager, SidebarItems, TabsAdapter, Theme, ColumnHeadersAdapter, ContextAdapter }
 
 export component MainWindow inherits Rectangle {
     private property <length> nav_arrows_height: 30px;
     background: Theme.current.background-color-main;
+    ctx_popup := PopupWindow {
+        //close-on-click: false;
+        ContextMenu {}
+    }
+    callback context_menu(length, length, FileItem);
+    context-menu(x,y,file) => {
+        ContextAdapter.show_context_menu(x,y,file);
+        ctx_popup.show();
+    }
     HorizontalLayout {
         padding-left: Theme.current.main-padding-left;
         padding-top: Theme.current.main-padding-top;
@@ -35,11 +45,14 @@ export component MainWindow inherits Rectangle {
         TabWidget_ {
             tabs: TabsAdapter.tabs;
             current-tab: TabsAdapter.current-tab;
+            context-menu(x,y,file) => {
+                root.context-menu(x,y,file);
+            }
         }
     }
     //Sidebar separator
     HSeparator {
-        color: Theme.current.separator-color;
+        background: Theme.current.separator-color;
         x: Theme.current.sidebar-width;
         y: 0;
         height: parent.height - Theme.current.main-padding-bot;

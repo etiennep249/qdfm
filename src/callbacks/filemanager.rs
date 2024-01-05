@@ -21,8 +21,7 @@ pub fn fileitem_clicked(item: FileItem, index: i32, mw: Rc<Weak<MainWindow>>) ->
     if check_for_dclick(index) {
         fileitem_doubleclicked(item, mw);
         return true;
-    }
-    else {
+    } else {
         return false;
     }
 }
@@ -64,6 +63,12 @@ pub fn format_size(i: _i64) -> SharedString {
 }
 pub fn format_date(i: _i64) -> SharedString {
     types::format_date(i32_to_i64((i.a, i.b)))
+}
+pub fn show_context_menu(x: f32, y: f32, file: FileItem, mw: Rc<Weak<MainWindow>>) {
+    let w = mw.unwrap();
+    let ctx_adapter = w.global::<ContextAdapter>();
+    ctx_adapter.set_x_pos(x);
+    ctx_adapter.set_y_pos(y);
 }
 
 /*

@@ -32,7 +32,7 @@ export struct ThemeImpl {
     file_icon_color: brush,
     folder_icon_color: brush,
     selected_file_color: brush,
-
+    
     //Padding
     main_padding_left: length,
     main_padding_top: length,
@@ -43,8 +43,16 @@ export struct ThemeImpl {
     sidebar_width: length,
     tab_height: length,
     breadcrumbs_height: length,
-    
 
+    //Context menu
+    context_menu_border_color: brush,
+    context_menu_separator_color: brush,
+    context_menu_background_color: brush,
+    context_menu_hover_color: brush,
+    context_menu_font_size: length,
+    context_menu_font_color: brush,
+    context_menu_entry_height: length,
+    context_menu_left_padding: length, //Bug workaround: Actual padding will always be 1px more
 }
 
 export global Theme {
@@ -85,6 +93,15 @@ export global Theme {
         sidebar_width: 200px,
         tab_height: 30px,
         breadcrumbs_height: 30px,
+
+        context_menu_border_color: #d0d0d0,
+        context_menu_separator_color: #4e5155,
+        context_menu_background_color: #000000,
+        context_menu_hover_color: #4e5155,
+        context_menu_font_size: 12px,
+        context_menu_font_color: #FFFFFF,
+        context_menu_entry_height: 30px,
+        context_menu_left_padding: 8px,
     };
     in property <ThemeImpl> light: {
         background_color_main: #FFFFFF,

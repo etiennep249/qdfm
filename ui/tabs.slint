@@ -1,8 +1,8 @@
-import {FileManager, FileWidget} from "filemanager.slint";
+import {FileManager, FileWidget, FileItem} from "filemanager.slint";
 import { ScrollView , LineEdit, ListView} from "std-widgets.slint";
 import { Theme } from "theme.slint";
 import { Icons } from "icons.slint";
-import { VSeparator, MainAdapter } from "utils.slint";
+import { VSeparator } from "utils.slint";
 import { ColumnHeaders } from "colheaders.slint";
 
 export struct TabItem {
@@ -119,13 +119,14 @@ export component PathAndCrumbs inherits Rectangle {
         x: 0;
         y: parent.height;
         width: parent.width;
-        color: Theme.current.separator-color;
+        background: Theme.current.separator-color;
     }
 }
 
 
 export component TabWidgetBody inherits Rectangle {
     background: Theme.current.background-color-main;
+    callback context-menu(length, length, FileItem);
     VerticalLayout {
         crumbs := PathAndCrumbs{
             max-width: Theme.width;
@@ -133,6 +134,9 @@ export component TabWidgetBody inherits Rectangle {
         ColumnHeaders {}
         ListView {
             for item[i] in FileManager.files : FileWidget {
+                context-menu(x,y,file) => {
+                    root.context-menu(x,y,file);
+                }
                 file: item;
                 self-index: i;
             }
@@ -143,6 +147,7 @@ export component TabWidgetBody inherits Rectangle {
 export component TabWidget_ {
     in property <[TabItem]> tabs;
     in-out property <int> current_tab;    
+    callback context-menu(length, length, FileItem);
     VerticalLayout {
         HorizontalLayout {
             height: Theme.current.tab-height;
@@ -153,7 +158,10 @@ export component TabWidget_ {
                 background: Theme.current.background-color-tabs;
             }
         }
-        TabWidgetBody {}
+        TabWidgetBody {
+            context-menu(x,y,file) => {
+                root.context-menu(x,y,file);
+            }
+        }
     }
-        
 }
