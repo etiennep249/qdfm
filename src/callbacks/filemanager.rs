@@ -17,9 +17,13 @@ use std::sync::MutexGuard;
 use super::tabs::get_breadcrumbs_for;
 
 //For now, there is no double click handler, CHANGE TO DOUBLE CLICK WHEN/IF IT'S IMPLEMENTED
-pub fn fileitem_clicked(item: FileItem, mw: Rc<Weak<MainWindow>>) {
-    if check_for_dclick() {
+pub fn fileitem_clicked(item: FileItem, index: i32, mw: Rc<Weak<MainWindow>>) -> bool {
+    if check_for_dclick(index) {
         fileitem_doubleclicked(item, mw);
+        return true;
+    }
+    else {
+        return false;
     }
 }
 

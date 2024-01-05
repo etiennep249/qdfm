@@ -65,7 +65,7 @@ fn main() {
             enclose! { (weak) move || sidebar::right_arrow_clicked(weak.clone())},
         );
         w.global::<FileManager>().on_fileitem_clicked(
-            enclose! { (weak) move |i| filemanager::fileitem_clicked(i, weak.clone())},
+            enclose! { (weak) move |file, i| filemanager::fileitem_clicked(file, i, weak.clone())},
         );
         let tabs_adapter = w.global::<TabsAdapter>();
         tabs_adapter.on_breadcrumb_clicked(
@@ -84,8 +84,6 @@ fn main() {
             .on_format_size(move |i| filemanager::format_size(i));
         w.global::<FileManager>()
             .on_format_date(move |i| filemanager::format_date(i));
-
-
     }
     w.run().unwrap();
 }

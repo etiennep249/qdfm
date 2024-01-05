@@ -134,6 +134,7 @@ export component TabWidgetBody inherits Rectangle {
         ListView {
             for item[i] in FileManager.files : FileWidget {
                 file: item;
+                self-index: i;
             }
         }        
     }

@@ -1,5 +1,6 @@
 import { Theme } from "theme.slint";
 import { _i64 } from "utils.slint";
+import {Icons} from "icons.slint";
 import {Header, ColumnHeadersAdapter} from "colheaders.slint";
 
 export struct FileItem {
@@ -13,22 +14,44 @@ export struct FileItem {
 export global FileManager {
     in-out property <string> path;
     in-out property <[FileItem]> files; /*The actual files listed*/
-    callback fileitem_clicked(FileItem);
+    in-out property <int> selected_index: -1;
+    callback fileitem_clicked(FileItem, int) -> bool;
     pure callback format_size(_i64) -> string;
     pure callback format_date(_i64) -> string;
 }
 
-export component FileItemConditional inherits Rectangle {
+export component NameWithIcon inherits Rectangle {
     in property <Header> header;
     in property <FileItem> file;
-    if header.inner-value == 0 : Text { /*Name*/
+    in property <length> rowh;
+    private property <length> spacing: 2px;
+    icon := Image {
+        x: parent.x;
+        source: file.is-dir ? Icons.folder : Icons.file;
+        colorize: file.is-dir ? Theme.current.folder-icon-color : Theme.current.file-icon-color;
+        height: rowh;
+        width: rowh;
+    }
+    Text {
+        x: icon.width + spacing;
         overflow: elide;
-        width: parent.width;
+        width: parent.width - icon.width - spacing;
         text: file.file-name;
         font-size: Theme.current.font-size-main;
         color: Theme.current.text-color-main;
         vertical-alignment: center;
         horizontal-alignment: header.alignment == 0 ? left : header.alignment == 1 ? center : right;
+    }
+}
+
+export component FileItemConditional inherits Rectangle {
+    in property <Header> header;
+    in property <FileItem> file;
+    in property <length> rowh;
+    if header.inner-value == 0 : NameWithIcon { /*Name*/
+        rowh: rowh;
+        file: file;
+        header: header;
     }
     if header.inner-value == 1 : Text { /*Size*/
         overflow: elide;
@@ -45,9 +68,13 @@ export component FileItemConditional inherits Rectangle {
     }
 }
 
-export component FileWidget {
+export component FileWidget inherits Rectangle {
     in property <FileItem> file;
+    in property <int> self_index;
+    background: self-index == FileManager.selected-index ? Theme.current.selected-file-color : transparent;
+    border-radius: 2px;
     height: file.date.b == -1 ? 0 : 30px;
+    private property <length> _height: self.height;
     if file.date.b != -1 : touch := TouchArea {
         HorizontalLayout {
             padding-left: 2px;
@@ -57,13 +84,21 @@ export component FileWidget {
             spacing: 12px;
             alignment: stretch;
             for header[i] in ColumnHeadersAdapter.headers : FileItemConditional {
+                rowh: _height;
                 header: header;
                 file: file;
                 horizontal-stretch: header.width-pct/1px;
             }
         }
         clicked => {
-            FileManager.fileitem-clicked(file);
+            if (!FileManager.fileitem-clicked(file, self-index)) { 
+                //If this wasn't a double click (aka if we don't change the path)
+                FileManager.selected-index = self-index;
+            }
+            else {
+                //Path changed, reset 
+                FileManager.selected-index = -1;
+            }
         }
     }
 }
