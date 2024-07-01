@@ -4,18 +4,21 @@ build = "build.rs"
 version = "0.1.0"
 edition = "2021"
 license = "GPLv3"
-
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 once_cell = "1.18.0"
 sysinfo = "0.29.10"
 #Do we need std in slint?
-slint = {version = "1.3.2", default-features=false, features=["std", "backend-winit", "renderer-skia-opengl", "compat-1-2"]} #Use vulkan when fixed
+#Using git for latest features, may want to change it to crates.io later
+slint = { version = "*", default-features=false, features=["std", "backend-winit", "renderer-skia-opengl", "compat-1-2"], git = "https://github.com/slint-ui/slint" } #Use vulkan when fixed
+winit = "*"
+i-slint-core = { version="*", git = "https://github.com/slint-ui/slint" }
+i-slint-backend-winit = { version="*", git = "https://github.com/slint-ui/slint" }
 chrono = {version = "*", default-features=false, features=["alloc", "clock"]}
 
 [build-dependencies]
-slint-build = "1.3.2"
+slint-build = { version = "1.3.2", git = "https://github.com/slint-ui/slint"}
 
 [profile.release]
 opt-level = 'z'
@@ -25,3 +28,5 @@ panic = 'abort'
 strip = true #ADD this
 #debug = true #AND REMOVE THIS for profiling
 
+[build]
+target="x86_64-unknown-linux-gnu"

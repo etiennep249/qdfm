@@ -18,6 +18,10 @@ macro_rules! enclose {
 }
 
 fn main() {
+    //Use winit
+    let backend = i_slint_backend_winit::Backend::new().unwrap();
+    slint::platform::set_platform(Box::new(backend)).unwrap();
+
     let w: MainWindow = MainWindow::new().unwrap();
     let weak = Rc::new(w.as_weak());
     //Initialization sequence
@@ -87,7 +91,6 @@ fn main() {
         w.global::<ContextAdapter>()
             .on_show_context_menu(
                  enclose! { (weak) move |x,y,file| filemanager::show_context_menu(x,y,file,weak.clone())});
-        
     }
     w.run().unwrap();
 }

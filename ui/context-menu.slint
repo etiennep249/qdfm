@@ -33,11 +33,11 @@ export component ContextMenuItem inherits Rectangle {
 
     //Does not work currently : https://github.com/slint-ui/slint/issues/2911
     //Since TouchArea cannot get focus
-    /*states [
+    states [
         hover when touch.has-hover: {
             background: Theme.current.context-menu-hover-color;
         }
-    ]*/
+    ]
 }
 
 export component ContextMenuSeparator inherits Rectangle {
@@ -66,7 +66,7 @@ export component ContextMenu inherits Rectangle {
         }*/
         ContextMenuSeparator {
             x: parent.x + 5px;
-            //width: 30px; //Use this when https://github.com/slint-ui/slint/pull/4275 is merged
+            width: parent.width - 10px; 
             vertical-stretch: 0;
         }
         ContextMenuItem {
