@@ -52,7 +52,8 @@ export struct ThemeImpl {
     context_menu_font_size: length,
     context_menu_font_color: brush,
     context_menu_entry_height: length,
-    context_menu_left_padding: length, //Bug workaround: Actual padding will always be 1px more
+    context_menu_left_padding: length,
+    context_menu_top_padding: length, //Bug workaround: Actual padding will always be 1px more
 }
 
 export global Theme {
@@ -60,23 +61,18 @@ export global Theme {
         background_color_main: #131416,
         background_color_sidebar: #131416,
         background_color_tabs: #262626,
-
         selected_tab_color: #131416,
         unselected_tab_color: #262626,
-
         hover_color_main: #292929,
         hover_color_sidebar: #292929,
-
         text_color_main: #d0d0d0,
         text_color_sidebar_header: #d0d0d0,
         text_color_tabs: #d0d0d0,
-
         font_size_sidebar_item: 14px,
         font_size_sidebar_header: 16px,
         font_size_tabs: 14px,
         font_size_crumbs: 18px,
         font_size_header: 14px,
-
         arrow_color: #d0d0d0,
         separator_color: #303335,
         red_color: #ee5396,
@@ -84,16 +80,13 @@ export global Theme {
         file_icon_color: #d0d0d0,
         folder_icon_color: #d0d0d0,
         selected_file_color: #4e5155,
-
         main_padding_left: 10px,
         main_padding_top: 5px,
         main_padding_bot: 5px,
         main_padding_right: 5px,
-
         sidebar_width: 200px,
         tab_height: 30px,
         breadcrumbs_height: 30px,
-
         context_menu_border_color: #d0d0d0,
         context_menu_separator_color: #4e5155,
         context_menu_background_color: #000000,
@@ -101,7 +94,8 @@ export global Theme {
         context_menu_font_size: 12px,
         context_menu_font_color: #FFFFFF,
         context_menu_entry_height: 30px,
-        context_menu_left_padding: 8px,
+        context_menu_left_padding: 4px,
+        context_menu_top_padding: 4px,
     };
     in property <ThemeImpl> light: {
         background_color_main: #FFFFFF,
@@ -110,18 +104,15 @@ export global Theme {
         background_color_main: #000000,
     };
     in-out property <ThemeImpl> current: dark;
-    in-out property <length> width; 
-    in-out property <length> height; 
-    public function setup(current_theme_str: string, _w: int, _h: int)  {
+    in-out property <length> width;
+    in-out property <length> height;
+    public function setup(current_theme_str: string, _w: int, _h: int) {
         if (current-theme_str == "dark") {
             current = dark;
-        }
-        else if (current-theme_str == "light") {
+        } else if (current-theme_str == "light") {
             current = light;
         }
-        width = _w*1px;
-        height = _h*1px;
+        width = _w * 1px;
+        height = _h * 1px;
     }
 }
-
-

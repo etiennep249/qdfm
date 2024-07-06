@@ -5,56 +5,79 @@ import { FileManager, FileItem } from "filemanager.slint";
 import { Theme } from "theme.slint";
 import { HSeparator } from "utils.slint";
 import { ColumnHeadersAdapter } from "colheaders.slint";
-import { ContextMenu, ContextAdapter } from "context-menu.slint";
+import { ContextMenu, ContextAdapter, ContextItem } from "context-menu.slint";
 
-export { FileManager, SidebarItems, TabsAdapter, Theme, ColumnHeadersAdapter, ContextAdapter }
+export { FileManager, SidebarItems, TabsAdapter, Theme, ColumnHeadersAdapter, ContextAdapter, ContextItem }
 
 export component MainWindow inherits Rectangle {
     private property <length> nav_arrows_height: 30px;
     background: Theme.current.background-color-main;
-    ctx_popup := PopupWindow {
+    ctx_popup := Rectangle {
         //close-on-click: false;
-        ContextMenu {}
+        visible: false;
+        z: 15;
+        ContextMenu { }
     }
+
+    fullscreen_area := TouchArea {
+        x: 0;
+        y: 0;
+        z: 14;
+        width: parent.width;
+        height: parent.height;
+        visible: false;
+        pointer-event(e) => {
+            if (e.kind == PointerEventKind.down) {
+                ctx_popup.visible = false;
+                fullscreen-area.visible = false;
+            }
+        }
+    }
+
     callback context_menu(length, length, FileItem);
-    context-menu(x,y,file) => {
+    context-menu(x, y, file) => {
         ContextAdapter.show_context_menu(x,y,file);
-        ctx_popup.show();
+        ctx_popup.visible = true;
+        fullscreen-area.visible = true;
     }
     HorizontalLayout {
         padding-left: Theme.current.main-padding-left;
         padding-top: Theme.current.main-padding-top;
         padding-right: Theme.current.main-padding-right;
         padding-bottom: Theme.current.main-padding-bot;
-        l := VerticalLayout{
+        l := VerticalLayout {
             width: Theme.current.sidebar-width;
             spacing: 5px;
             NavArrows {
                 _height: nav_arrows_height;
             }
+
             Text {
                 text: "Drives";
                 font-size: Theme.current.font-size-sidebar-header;
                 color: Theme.current.text-color-sidebar-header;
             }
+
             DriveList {
                 _width: Theme.current.sidebar-width;
                 model: SidebarItems.drive-list;
             }
         }
+
         TabWidget_ {
             tabs: TabsAdapter.tabs;
             current-tab: TabsAdapter.current-tab;
-            context-menu(x,y,file) => {
+            context-menu(x, y, file) => {
                 root.context-menu(x,y,file);
             }
         }
     }
+
     //Sidebar separator
     HSeparator {
         background: Theme.current.separator-color;
         x: Theme.current.sidebar-width;
         y: 0;
         height: parent.height - Theme.current.main-padding-bot;
-    } 
+    }
 }

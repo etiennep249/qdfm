@@ -1,18 +1,32 @@
-import {FileItem} from "filemanager.slint";
+import {FileItem, FileManager} from "filemanager.slint";
 import {Theme} from "theme.slint";
 
+
+export struct ContextItem {
+    display: string,
+    icon: image,
+    shortcut: string,
+    callback_id: int,
+    has_separator: bool,
+}
 export global ContextAdapter {
     in-out property <length> x-pos;
     in-out property <length> y-pos;
+    in-out property <[ContextItem]> items;
     callback show_context_menu(length, length, FileItem);
+    callback menuitem_click(FileItem, ContextItem);
 }
 
-
 export component ContextMenuItem inherits Rectangle {
+    in property <length> menu_width;
+    in property <bool> has_separator;
     in property <string> display;
     in property <image> icon;
     in property <string> shortcut;
+    in property <ContextItem> context_item;
     height: Theme.current.context-menu-entry-height;
+    width: menu_width - 2px - (Theme.current.context-menu-left-padding * 2);
+    background: Theme.current.context-menu-background-color;
 
     touch := TouchArea {
         text := Text {
@@ -26,13 +40,18 @@ export component ContextMenuItem inherits Rectangle {
             vertical-alignment: center;
             horizontal-alignment: left;
         }
+
         clicked => {
-            text.text = "test";
+            ContextAdapter.menuitem_click(FileManager.files[FileManager.selected_index], context_item);
         }
     }
 
-    //Does not work currently : https://github.com/slint-ui/slint/issues/2911
-    //Since TouchArea cannot get focus
+    separator := Rectangle {
+        y: parent.height - 1px;
+        height: 1px;
+        background: has_separator ? Theme.current.context-menu-separator-color : Theme.current.context-menu-background-color;
+    }
+
     states [
         hover when touch.has-hover: {
             background: Theme.current.context-menu-hover-color;
@@ -40,37 +59,23 @@ export component ContextMenuItem inherits Rectangle {
     ]
 }
 
-export component ContextMenuSeparator inherits Rectangle {
-    height: 1px;
-    background: Theme.current.context-menu-separator-color;
-}
-
-
 export component ContextMenu inherits Rectangle {
-    private property <int> entry_count: 2; // TODO: Make this dynamic
+    private property <length> menu_width: 200px;
     background: Theme.current.context-menu-background-color;
     border-color: Theme.current.context-menu-border-color;
     border-width: 1px;
     border-radius: 2px;
-    width: 200px;
-    height: Theme.current.context-menu-entry-height * entry-count; //TODO: Make this dynamic (not setting height is buggy)
+    width: menu_width;
+    height: (Theme.current.context-menu-entry-height * ContextAdapter.items.length) + (Theme.current.context-menu-top-padding * 2);
     x: ContextAdapter.x-pos;
     y: ContextAdapter.y-pos;
 
-    VerticalLayout {
-        ContextMenuItem {
-            display: "Open with <default TODO>";
-        }
-        /*ContextMenuItemWithChildren { //Use ContextMenuItem instead with some children parameter
-            display: "Open with:";
-        }*/
-        ContextMenuSeparator {
-            x: parent.x + 5px;
-            width: parent.width - 10px; 
-            vertical-stretch: 0;
-        }
-        ContextMenuItem {
-            display: "Properties";
-        }
+    for item[i] in ContextAdapter.items: ContextMenuItem {
+        context_item: item;
+        display: item.display;
+        icon: item.icon;
+        has_separator: item.has_separator;
+        menu_width: menu_width;
+        y: (i * Theme.current.context-menu-entry-height) + parent.border-width + Theme.current.context-menu-top-padding;
     }
 }

@@ -3,6 +3,7 @@ pub mod ui {
 }
 pub mod callbacks;
 pub mod config;
+pub mod context_menus;
 pub mod core;
 pub mod drives;
 pub mod globals;

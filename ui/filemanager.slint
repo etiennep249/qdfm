@@ -13,7 +13,8 @@ export struct FileItem {
 //For current tab only
 export global FileManager {
     in-out property <string> path;
-    in-out property <[FileItem]> files; /*The actual files listed*/
+    in-out property <[FileItem]> files;
+    /*The actual files listed*/
     in-out property <int> selected_index: -1;
     callback fileitem_clicked(FileItem, int) -> bool;
     pure callback format_size(_i64) -> string;
@@ -32,6 +33,7 @@ export component NameWithIcon inherits Rectangle {
         height: rowh;
         width: rowh;
     }
+
     Text {
         x: icon.width + spacing;
         overflow: elide;
@@ -48,19 +50,22 @@ export component FileItemConditional inherits Rectangle {
     in property <Header> header;
     in property <FileItem> file;
     in property <length> rowh;
-    if header.inner-value == 0 : NameWithIcon { /*Name*/
+    if header.inner-value == 0: NameWithIcon {
+        /*Name*/
         rowh: rowh;
         file: file;
         header: header;
     }
-    if header.inner-value == 1 : Text { /*Size*/
+    if header.inner-value == 1: Text {
+        /*Size*/
         overflow: elide;
         width: parent.width;
         visible: !file.is-dir;
         text: FileManager.format_size(file.size);
         horizontal-alignment: header.alignment == 0 ? left : header.alignment == 1 ? center : right;
     }
-    if header.inner-value == 2 : Text { /*Date*/
+    if header.inner-value == 2: Text {
+        /*Date*/
         overflow: elide;
         width: parent.width;
         text: FileManager.format_date(file.date);
@@ -76,7 +81,7 @@ export component FileWidget inherits Rectangle {
     border-radius: 2px;
     height: file.date.b == -1 ? 0 : 30px;
     private property <length> rowh: self.height;
-    if file.date.b != -1 : touch := TouchArea {
+    if file.date.b != -1: touch := TouchArea {
         HorizontalLayout {
             padding-left: 2px;
             padding-top: 2px;
@@ -84,27 +89,28 @@ export component FileWidget inherits Rectangle {
             padding-right: 2px;
             spacing: 12px;
             alignment: stretch;
-            for header[i] in ColumnHeadersAdapter.headers : FileItemConditional {
+            for header[i] in ColumnHeadersAdapter.headers: FileItemConditional {
                 rowh: rowh;
                 header: header;
                 file: file;
-                horizontal-stretch: header.width-pct/1px;
+                horizontal-stretch: header.width-pct / 1px;
             }
         }
-        clicked => {
-            if (!FileManager.fileitem-clicked(file, self-index)) { 
-                //If this wasn't a double click (aka if we don't change the path)
-                FileManager.selected-index = self-index;
-            }
-            else {
-                //Path changed, reset 
-                FileManager.selected-index = -1;
-            }
-        }
+
         pointer-event(e) => {
-            if (e.button == PointerEventButton.right && e.kind == PointerEventKind.down) { //Right click
+            if (e.button == PointerEventButton.right && e.kind == PointerEventKind.down) {
+                //Right click
                 //Pass absolute x and y for the context menu
                 root.context-menu(self.absolute-position.x + self.mouse-x, self.absolute-position.y + self.mouse-y, file);
+                FileManager.selected-index = self-index;
+            } else if (e.button == PointerEventButton.left && e.kind == PointerEventKind.down) {
+                if (!FileManager.fileitem-clicked(file, self-index)) {
+                    //If this wasn't a double click (aka if we don't change the path)
+                    FileManager.selected-index = self-index;
+                } else {
+                    //Path changed, reset 
+                    FileManager.selected-index = -1;
+                }
             }
         }
     }

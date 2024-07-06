@@ -88,6 +88,9 @@ fn main() {
             .on_format_size(move |i| filemanager::format_size(i));
         w.global::<FileManager>()
             .on_format_date(move |i| filemanager::format_date(i));
+        w.global::<ContextAdapter>().on_menuitem_click(
+            enclose! { (weak) move |f, callback_item| context_menu::menuitem_click(f,callback_item, weak.clone())},
+        );
         w.global::<ContextAdapter>()
             .on_show_context_menu(
                  enclose! { (weak) move |x,y,file| filemanager::show_context_menu(x,y,file,weak.clone())});

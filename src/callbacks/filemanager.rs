@@ -6,6 +6,8 @@ use crate::utils::doubleclicks::check_for_dclick;
 use crate::utils::types;
 use crate::utils::types::i32_to_i64;
 use once_cell::sync::OnceCell;
+use slint::Image;
+use slint::SharedPixelBuffer;
 use slint::SharedString;
 use slint::VecModel;
 use slint::Weak;
@@ -67,8 +69,29 @@ pub fn format_date(i: _i64) -> SharedString {
 pub fn show_context_menu(x: f32, y: f32, file: FileItem, mw: Rc<Weak<MainWindow>>) {
     let w = mw.unwrap();
     let ctx_adapter = w.global::<ContextAdapter>();
-    ctx_adapter.set_x_pos(x);
-    ctx_adapter.set_y_pos(y);
+
+    let menu = [
+        ContextItem {
+            display: "Open With <default>".into(),
+            callback_id: 0,
+            shortcut: "".into(),
+            icon: Image::from_rgb8(SharedPixelBuffer::new(0, 0)),
+            has_separator: true,
+        },
+        ContextItem {
+            display: "Properties".into(),
+            callback_id: 1,
+            shortcut: "".into(),
+            icon: Image::from_rgb8(SharedPixelBuffer::new(0, 0)),
+            has_separator: false,
+        },
+    ];
+
+    //TODO: Have these somewhere so we don't have to generate it everytime
+    ctx_adapter.set_items(menu.into());
+
+    ctx_adapter.set_x_pos(x + 1f32);
+    ctx_adapter.set_y_pos(y + 1f32);
 }
 
 /*
