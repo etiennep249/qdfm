@@ -2,7 +2,6 @@ use once_cell::sync::Lazy;
 use std::sync::{Mutex, MutexGuard};
 
 use crate::config::Config;
-use crate::ui::*;
 use sysinfo::{System, SystemExt};
 
 static SYSINFO: Lazy<Mutex<System>> = Lazy::new(|| Mutex::new(System::new()));

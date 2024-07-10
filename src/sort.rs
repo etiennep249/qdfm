@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::{cmp::Ordering, rc::Rc};
 
 use crate::{ui::*, utils::types::i32_to_i64};
 use slint::{SortModel, Weak};
@@ -40,18 +40,30 @@ pub fn sort_by_name(mw: Rc<Weak<MainWindow>>, ascending: bool, save: bool) {
     if ascending {
         fm.set_files(
             Rc::new(SortModel::new(fm.get_files(), |lhs, rhs| {
-                lhs.file_name
-                    .to_lowercase()
-                    .cmp(&rhs.file_name.to_lowercase())
+                if lhs.is_dir && !rhs.is_dir {
+                    Ordering::Less
+                } else if rhs.is_dir && !lhs.is_dir {
+                    Ordering::Greater
+                } else {
+                    lhs.file_name
+                        .to_lowercase()
+                        .cmp(&rhs.file_name.to_lowercase())
+                }
             }))
             .into(),
         );
     } else {
         fm.set_files(
             Rc::new(SortModel::new(fm.get_files(), |lhs, rhs| {
-                rhs.file_name
-                    .to_lowercase()
-                    .cmp(&lhs.file_name.to_lowercase())
+                if lhs.is_dir && !rhs.is_dir {
+                    Ordering::Less
+                } else if rhs.is_dir && !lhs.is_dir {
+                    Ordering::Greater
+                } else {
+                    rhs.file_name
+                        .to_lowercase()
+                        .cmp(&lhs.file_name.to_lowercase())
+                }
             }))
             .into(),
         );
@@ -66,12 +78,19 @@ pub fn sort_by_date(mw: Rc<Weak<MainWindow>>, ascending: bool, save: bool) {
     if ascending {
         fm.set_files(
             Rc::new(SortModel::new(fm.get_files(), |lhs, rhs| {
-                if lhs.date.a == 0 && rhs.date.a == 0 {
-                    // No need to convert to 64 bits if date is stored entirely in 32 bits.
-                    // This should always be true until 2038
-                    lhs.date.b.cmp(&rhs.date.b)
+                if lhs.is_dir && !rhs.is_dir {
+                    Ordering::Less
+                } else if rhs.is_dir && !lhs.is_dir {
+                    Ordering::Greater
                 } else {
-                    i32_to_i64((lhs.date.a, lhs.date.b)).cmp(&i32_to_i64((rhs.date.a, rhs.date.b)))
+                    if lhs.date.a == 0 && rhs.date.a == 0 {
+                        // No need to convert to 64 bits if date is stored entirely in 32 bits.
+                        // This should always be true until 2038
+                        lhs.date.b.cmp(&rhs.date.b)
+                    } else {
+                        i32_to_i64((lhs.date.a, lhs.date.b))
+                            .cmp(&i32_to_i64((rhs.date.a, rhs.date.b)))
+                    }
                 }
             }))
             .into(),
@@ -79,10 +98,17 @@ pub fn sort_by_date(mw: Rc<Weak<MainWindow>>, ascending: bool, save: bool) {
     } else {
         fm.set_files(
             Rc::new(SortModel::new(fm.get_files(), |lhs, rhs| {
-                if lhs.date.a == 0 && rhs.date.a == 0 {
-                    rhs.date.b.cmp(&lhs.date.b)
+                if lhs.is_dir && !rhs.is_dir {
+                    Ordering::Less
+                } else if rhs.is_dir && !lhs.is_dir {
+                    Ordering::Greater
                 } else {
-                    i32_to_i64((rhs.date.a, rhs.date.b)).cmp(&i32_to_i64((lhs.date.a, lhs.date.b)))
+                    if lhs.date.a == 0 && rhs.date.a == 0 {
+                        rhs.date.b.cmp(&lhs.date.b)
+                    } else {
+                        i32_to_i64((rhs.date.a, rhs.date.b))
+                            .cmp(&i32_to_i64((lhs.date.a, lhs.date.b)))
+                    }
                 }
             }))
             .into(),
@@ -98,10 +124,17 @@ pub fn sort_by_size(mw: Rc<Weak<MainWindow>>, ascending: bool, save: bool) {
     if ascending {
         fm.set_files(
             Rc::new(SortModel::new(fm.get_files(), |lhs, rhs| {
-                if lhs.size.a == 0 && rhs.size.a == 0 {
-                    lhs.size.b.cmp(&rhs.size.b)
+                if lhs.is_dir && !rhs.is_dir {
+                    Ordering::Less
+                } else if rhs.is_dir && !lhs.is_dir {
+                    Ordering::Greater
                 } else {
-                    i32_to_i64((lhs.size.a, lhs.size.b)).cmp(&i32_to_i64((rhs.size.a, rhs.size.b)))
+                    if lhs.size.a == 0 && rhs.size.a == 0 {
+                        lhs.size.b.cmp(&rhs.size.b)
+                    } else {
+                        i32_to_i64((lhs.size.a, lhs.size.b))
+                            .cmp(&i32_to_i64((rhs.size.a, rhs.size.b)))
+                    }
                 }
             }))
             .into(),
@@ -109,10 +142,17 @@ pub fn sort_by_size(mw: Rc<Weak<MainWindow>>, ascending: bool, save: bool) {
     } else {
         fm.set_files(
             Rc::new(SortModel::new(fm.get_files(), |lhs, rhs| {
-                if lhs.size.a == 0 && rhs.size.a == 0 {
-                    rhs.size.b.cmp(&lhs.size.b)
+                if lhs.is_dir && !rhs.is_dir {
+                    Ordering::Less
+                } else if rhs.is_dir && !lhs.is_dir {
+                    Ordering::Greater
                 } else {
-                    i32_to_i64((rhs.size.a, rhs.size.b)).cmp(&i32_to_i64((lhs.size.a, lhs.size.b)))
+                    if lhs.size.a == 0 && rhs.size.a == 0 {
+                        rhs.size.b.cmp(&lhs.size.b)
+                    } else {
+                        i32_to_i64((rhs.size.a, rhs.size.b))
+                            .cmp(&i32_to_i64((lhs.size.a, lhs.size.b)))
+                    }
                 }
             }))
             .into(),

@@ -6,10 +6,13 @@ import { Theme } from "theme.slint";
 import { HSeparator } from "utils.slint";
 import { ColumnHeadersAdapter } from "colheaders.slint";
 import { ContextMenu, ContextAdapter, ContextItem } from "context-menu.slint";
+import { PropertiesWindow, PropertiesAdapter } from "properties.slint";
 
-export { FileManager, SidebarItems, TabsAdapter, Theme, ColumnHeadersAdapter, ContextAdapter, ContextItem }
+export { FileManager, SidebarItems, TabsAdapter, Theme, ColumnHeadersAdapter, ContextAdapter, ContextItem, PropertiesWindow, PropertiesAdapter }
 
-export component MainWindow inherits Rectangle {
+export component MainWindow inherits Window {
+    in-out property <length> win_height <=> self.height;
+    in-out property <length> win_width <=> self.width;
     private property <length> nav_arrows_height: 30px;
     background: Theme.current.background-color-main;
     ctx_popup := Rectangle {
@@ -18,6 +21,8 @@ export component MainWindow inherits Rectangle {
         z: 15;
         ContextMenu { }
     }
+
+    title: "QDFM";
 
     fullscreen_area := TouchArea {
         x: 0;
@@ -28,10 +33,14 @@ export component MainWindow inherits Rectangle {
         visible: false;
         pointer-event(e) => {
             if (e.kind == PointerEventKind.down) {
-                ctx_popup.visible = false;
-                fullscreen-area.visible = false;
+                hide_context_menu();
             }
         }
+    }
+
+    public function hide_context_menu() {
+        ctx_popup.visible = false;
+        fullscreen-area.visible = false;
     }
 
     callback context_menu(length, length, FileItem);
@@ -66,7 +75,7 @@ export component MainWindow inherits Rectangle {
 
         TabWidget_ {
             tabs: TabsAdapter.tabs;
-            current-tab: TabsAdapter.current-tab;
+            current-tab: TabsAdapter.current-tab-idx;
             context-menu(x, y, file) => {
                 root.context-menu(x,y,file);
             }

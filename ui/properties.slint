@@ -1,0 +1,461 @@
+import { FileItem, FileManager} from "filemanager.slint";
+import {_i64} from "utils.slint";
+import { LineEdit, Button, StandardButton, TabWidget, CheckBox, ComboBox } from "std-widgets.slint";
+
+export global PropertiesAdapter {
+    in property <FileItem> file;
+
+    //I do not use the type from file as it may not be accurate. (extension based)
+    //This type is longer to compute but more accurate.
+    in property <string> type;
+    in property <string> encoding;
+
+    /*Times - Modified time is file.date*/
+    in property <string> atime;
+    in property <string> ctime;
+
+    in-out property <string> filename;
+
+    /*Permissions*/
+    in property <[string]> owners;
+    in property <[string]> groups;
+    in-out property <string> owner_value;
+    in-out property <string> group_value;
+    in property <bool> is_root;
+    in property <int> perm_bits;
+    in property <string> perm_bits_str;
+
+    in property <_i64> directory_size;
+    in property <bool> is_directory_calculated: false;
+
+    in property <bool> gid_dirty: false;
+    in property <bool> uid_dirty: false;
+    in property <bool> perm_bits_dirty: false;
+
+    /*Advanced*/
+    in property <string> inode;
+    in property <string> device;
+    in property <string> blocks;
+    in property <string> blksize;
+
+    /*To allow resetting the window*/
+    in-out property <int> selected_tab_idx: 0;
+    in-out property <bool> is_owner_focussed: false;
+
+    /*Callbacks*/
+    pure callback format_size_detailed(_i64) -> string;
+    callback cancel();
+    callback ok();
+    pure callback bitmask(int, int) -> bool;
+
+    callback recalculate_bitmask(int);
+    callback validate_perm_bits_str(string);
+}
+
+export component PropertiesItem inherits Rectangle {
+    in property <string> display_text;
+    in-out property <string> value;
+    in property <bool> readonly;
+    in property <bool> enabled: true;
+    private property <length> pad: 10px;
+    forward-focus: input;
+    label := Text {
+        x: 0;
+        text: display_text;
+        horizontal-alignment: right;
+        width: parent.width * 0.15;
+    }
+
+    input := LineEdit {
+        x: label.width + pad;
+        width: (parent.width * 0.85) - pad;
+        text <=> value;
+        read-only: readonly;
+        enabled: parent.enabled;
+    }
+}
+
+export component PropertiesWindow inherits Window {
+    height: 500px;
+    width: 480px;
+    in-out property <length> win_height <=> self.height;
+    in-out property <length> win_width <=> self.width;
+
+    title: "Properties";
+
+    TabWidget {
+        width: root.width;
+        padding: 2px;
+        current-index <=> PropertiesAdapter.selected_tab_idx;
+        Tab {
+            title: "Information";
+            VerticalLayout {
+                x: root.width * 0.05;
+                y: 50px;
+                width: root.width * 0.9;
+                max-height: root.height * 0.7;
+                alignment: LayoutAlignment.start;
+                spacing: 45px;
+
+                filename_item := PropertiesItem {
+                    width: parent.width;
+                    display_text: "Name:";
+                    value <=> PropertiesAdapter.filename;
+                    readonly: false;
+                }
+
+                PropertiesItem {
+                    width: parent.width;
+                    display_text: "Path:";
+                    value: PropertiesAdapter.file.path;
+                    readonly: true;
+                }
+
+                PropertiesItem {
+                    width: parent.width;
+                    display_text: "Type:";
+                    value: PropertiesAdapter.type;
+                    readonly: true;
+                }
+
+                PropertiesItem {
+                    width: parent.width;
+                    display_text: "Encoding:";
+                    value: PropertiesAdapter.encoding;
+                    readonly: true;
+                }
+
+                PropertiesItem {
+                    width: parent.width;
+                    display_text: "Size:";
+                    value: PropertiesAdapter.file.is-dir ? PropertiesAdapter.format_size_detailed(PropertiesAdapter.directory_size) : PropertiesAdapter.format_size_detailed(PropertiesAdapter.file.size);
+                    readonly: true;
+                    enabled: !PropertiesAdapter.file.is-dir || (PropertiesAdapter.file.is-dir && PropertiesAdapter.is_directory_calculated);
+                }
+
+                PropertiesItem {
+                    width: parent.width;
+                    display_text: "Modified:";
+                    value: FileManager.format_date(PropertiesAdapter.file.date);
+                    readonly: true;
+                }
+
+                PropertiesItem {
+                    width: parent.width;
+                    display_text: "Created:";
+                    value: PropertiesAdapter.ctime;
+                    readonly: true;
+                }
+
+                PropertiesItem {
+                    width: parent.width;
+                    display_text: "Accessed:";
+                    value: PropertiesAdapter.atime;
+                    readonly: true;
+                }
+            }
+
+            globalarea := TouchArea {
+                z: -1;
+                pointer-event(e) => {
+                    if (e.kind == PointerEventKind.down) {
+                        filename-item.focus();
+                        filename-item.clear-focus();
+                    }
+                }
+            }
+        }
+
+        Tab {
+            title: "Permissions";
+            VerticalLayout {
+                y: 20px;
+                x: 20px;
+                width: parent.width - 40px;
+                height: parent.height;
+                HorizontalLayout {
+                    height: 40px;
+                    width: parent.width;
+                    Text {
+                        text: "";
+                        width: parent.width * 0.67;
+                    }
+
+                    Text {
+                        text: "R";
+                        horizontal-alignment: left;
+                        width: parent.width * 0.12;
+                    }
+
+                    Text {
+                        text: "W";
+                        horizontal-alignment: left;
+                        width: parent.width * 0.12;
+                    }
+
+                    Text {
+                        text: "X";
+                        horizontal-alignment: left;
+                        width: parent.width * 0.12;
+                    }
+                }
+
+                HorizontalLayout {
+                    Text {
+                        text: "Owner";
+                        width: parent.width * 0.64;
+                    }
+
+                    o_r := CheckBox {
+                        width: parent.width * 0.12;
+                        //100 000 000
+                        private property <int> mask: 256;
+                        checked: PropertiesAdapter.bitmask(mask, PropertiesAdapter.perm_bits);
+                        toggled => {
+                            PropertiesAdapter.recalculate_bitmask(mask);
+                            PropertiesAdapter.perm_bits_dirty = true;
+                        }
+                    }
+
+                    o_w := CheckBox {
+                        width: parent.width * 0.12;
+                        //010 000 000
+                        private property <int> mask: 128;
+                        checked: PropertiesAdapter.bitmask(mask, PropertiesAdapter.perm_bits);
+                        toggled => {
+                            PropertiesAdapter.recalculate_bitmask(mask);
+                            PropertiesAdapter.perm_bits_dirty = true;
+                        }
+                    }
+
+                    o_x := CheckBox {
+                        width: parent.width * 0.12;
+                        //001 000 000
+                        private property <int> mask: 64;
+                        checked: PropertiesAdapter.bitmask(mask, PropertiesAdapter.perm_bits);
+                        toggled => {
+                            PropertiesAdapter.recalculate_bitmask(mask);
+                            PropertiesAdapter.perm_bits_dirty = true;
+                        }
+                    }
+                }
+
+                HorizontalLayout {
+                    Text {
+                        text: "Group";
+                        width: parent.width * 0.64;
+                    }
+
+                    g_r := CheckBox {
+                        width: parent.width * 0.12;
+                        //000 100 000
+                        private property <int> mask: 32;
+                        checked: PropertiesAdapter.bitmask(mask, PropertiesAdapter.perm_bits);
+                        toggled => {
+                            PropertiesAdapter.recalculate_bitmask(mask);
+                            PropertiesAdapter.perm_bits_dirty = true;
+                        }
+                    }
+
+                    g_w := CheckBox {
+                        width: parent.width * 0.12;
+                        //000 010 000
+                        private property <int> mask: 16;
+                        checked: PropertiesAdapter.bitmask(mask, PropertiesAdapter.perm_bits);
+                        toggled => {
+                            PropertiesAdapter.recalculate_bitmask(mask);
+                            PropertiesAdapter.perm_bits_dirty = true;
+                        }
+                    }
+
+                    g_x := CheckBox {
+                        width: parent.width * 0.12;
+                        //000 001 000
+                        private property <int> mask: 8;
+                        checked: PropertiesAdapter.bitmask(mask, PropertiesAdapter.perm_bits);
+                        toggled => {
+                            PropertiesAdapter.recalculate_bitmask(mask);
+                            PropertiesAdapter.perm_bits_dirty = true;
+                        }
+                    }
+                }
+
+                HorizontalLayout {
+                    Text {
+                        text: "Others";
+                        width: parent.width * 0.64;
+                    }
+
+                    a_r := CheckBox {
+                        width: parent.width * 0.12;
+                        //000 000 100
+                        private property <int> mask: 4;
+                        checked: PropertiesAdapter.bitmask(mask, PropertiesAdapter.perm_bits);
+                        toggled => {
+                            PropertiesAdapter.recalculate_bitmask(mask);
+                            PropertiesAdapter.perm_bits_dirty = true;
+                        }
+                    }
+
+                    a_w := CheckBox {
+                        width: parent.width * 0.12;
+                        //000 000 010
+                        private property <int> mask: 2;
+                        checked: PropertiesAdapter.bitmask(mask, PropertiesAdapter.perm_bits);
+                        toggled => {
+                            PropertiesAdapter.recalculate_bitmask(mask);
+                            PropertiesAdapter.perm_bits_dirty = true;
+                        }
+                    }
+
+                    a_x := CheckBox {
+                        width: parent.width * 0.12;
+                        //000 000 001
+                        private property <int> mask: 1;
+                        checked: PropertiesAdapter.bitmask(mask, PropertiesAdapter.perm_bits);
+                        toggled => {
+                            PropertiesAdapter.recalculate_bitmask(mask);
+                            PropertiesAdapter.perm_bits_dirty = true;
+                        }
+                    }
+                }
+
+                HorizontalLayout {
+                    padding-top: 5px;
+                    height: 40px;
+
+                    Text {
+                        text: "";
+                        width: parent.width * 0.64;
+                    }
+
+                    perm_code := LineEdit {
+                        horizontal-alignment: center;
+                        width: parent.width * 0.32;
+                        text <=> PropertiesAdapter.perm_bits_str;
+                        input-type: InputType.number;
+                    }
+                }
+
+                HorizontalLayout {
+                    height: 50px;
+                    padding-top: 20px;
+                    spacing: 10px;
+                    Text {
+                        text: "Owner";
+                        vertical-alignment: center;
+                        horizontal-alignment: left;
+                        width: parent.width * 0.2;
+                    }
+
+                    owner_combo := ComboBox {
+                        enabled: PropertiesAdapter.is_root;
+                        model: PropertiesAdapter.owners;
+                        current-value <=> PropertiesAdapter.owner_value;
+                        selected => {
+                            PropertiesAdapter.uid_dirty = true;
+                        }
+                    }
+                }
+
+                HorizontalLayout {
+                    height: 50px;
+                    padding-top: 20px;
+                    spacing: 10px;
+                    Text {
+                        text: "Group";
+                        vertical-alignment: center;
+                        horizontal-alignment: left;
+                        width: parent.width * 0.2;
+                    }
+
+                    group_combo := ComboBox {
+                        model: PropertiesAdapter.groups;
+                        current-value <=> PropertiesAdapter.group_value;
+                        selected => {
+                            PropertiesAdapter.gid_dirty = true;
+                        }
+                    }
+                }
+            }
+
+            TouchArea {
+                z: -1;
+                pointer-event(e) => {
+                    if (e.kind == PointerEventKind.down) {
+                        perm-code.focus();
+                        perm_code.clear-focus();
+                    }
+                }
+            }
+        }
+
+        Tab {
+            title: "Advanced";
+            VerticalLayout {
+                x: root.width * 0.05;
+                y: 50px;
+                width: root.width * 0.9;
+                max-height: root.height * 0.4;
+                alignment: LayoutAlignment.start;
+                spacing: 45px;
+                dev_item := PropertiesItem {
+                    width: parent.width;
+                    display_text: "Device:";
+                    value: PropertiesAdapter.device;
+                    readonly: true;
+                }
+
+                PropertiesItem {
+                    width: parent.width;
+                    display_text: "Inode:";
+                    value: PropertiesAdapter.inode;
+                    readonly: true;
+                }
+
+                PropertiesItem {
+                    width: parent.width;
+                    display_text: "Blocks:";
+                    value: PropertiesAdapter.blocks;
+                    readonly: true;
+                }
+
+                PropertiesItem {
+                    width: parent.width;
+                    display_text: "Blk Size:";
+                    value: PropertiesAdapter.blksize;
+                    readonly: true;
+                }
+            }
+
+            TouchArea {
+                z: -1;
+                pointer-event(e) => {
+                    if (e.kind == PointerEventKind.down) {
+                        dev-item.focus();
+                        dev-item.clear-focus();
+                    }
+                }
+            }
+        }
+    }
+
+    cancel_btn := StandardButton {
+        kind: cancel;
+        x: parent.width - self.width - 10px;
+        y: parent.height - 45px;
+
+        clicked => {
+            PropertiesAdapter.cancel();
+        }
+    }
+
+    ok_btn := StandardButton {
+        kind: StandardButtonKind.apply;
+        x: parent.width - cancel-btn.width - self.width - 20px;
+        y: parent.height - 45px;
+        clicked => {
+            PropertiesAdapter.ok();
+        }
+    }
+}

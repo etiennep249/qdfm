@@ -16,6 +16,7 @@ use std::rc::Rc;
 use std::sync::Mutex;
 use std::sync::MutexGuard;
 
+use super::context_menu::ContextCallback;
 use super::tabs::get_breadcrumbs_for;
 
 //For now, there is no double click handler, CHANGE TO DOUBLE CLICK WHEN/IF IT'S IMPLEMENTED
@@ -61,7 +62,7 @@ pub fn set_current_tab_file(mut item: TabItem, mw: Rc<Weak<MainWindow>>, remembe
 }
 
 pub fn format_size(i: _i64) -> SharedString {
-    types::format_size(i32_to_i64((i.a, i.b)))
+    types::format_size(i32_to_i64((i.a, i.b)), false)
 }
 pub fn format_date(i: _i64) -> SharedString {
     types::format_date(i32_to_i64((i.a, i.b)))
@@ -73,14 +74,14 @@ pub fn show_context_menu(x: f32, y: f32, file: FileItem, mw: Rc<Weak<MainWindow>
     let menu = [
         ContextItem {
             display: "Open With <default>".into(),
-            callback_id: 0,
+            callback_id: ContextCallback::OpenWithDefault as i32,
             shortcut: "".into(),
             icon: Image::from_rgb8(SharedPixelBuffer::new(0, 0)),
             has_separator: true,
         },
         ContextItem {
             display: "Properties".into(),
-            callback_id: 1,
+            callback_id: ContextCallback::ShowProperties as i32,
             shortcut: "".into(),
             icon: Image::from_rgb8(SharedPixelBuffer::new(0, 0)),
             has_separator: false,

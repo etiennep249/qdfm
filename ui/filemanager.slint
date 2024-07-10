@@ -9,6 +9,7 @@ export struct FileItem {
     is_dir: bool,
     size: _i64,
     date: _i64,
+    file_type: string, 
 }
 //For current tab only
 export global FileManager {
@@ -61,7 +62,7 @@ export component FileItemConditional inherits Rectangle {
         overflow: elide;
         width: parent.width;
         visible: !file.is-dir;
-        text: FileManager.format_size(file.size);
+        text: file.is-dir ? "" : FileManager.format_size(file.size);
         horizontal-alignment: header.alignment == 0 ? left : header.alignment == 1 ? center : right;
     }
     if header.inner-value == 2: Text {

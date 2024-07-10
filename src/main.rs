@@ -1,3 +1,4 @@
+use qdfm::callbacks::utils::format_size_detailed;
 use qdfm::callbacks::*;
 use qdfm::core::generate_files_for_path;
 use qdfm::drives;
@@ -5,6 +6,7 @@ use qdfm::globals::config_lock;
 use qdfm::ui::*;
 use slint::VecModel;
 use std::rc::Rc;
+
 //https://github.com/rust-lang/rfcs/issues/2407#issuecomment-385291238
 //Replace with https://github.com/rust-lang/rfcs/pull/3512
 //When/if it gets merged
@@ -23,6 +25,9 @@ fn main() {
     slint::platform::set_platform(Box::new(backend)).unwrap();
 
     let w: MainWindow = MainWindow::new().unwrap();
+    let prop_win = PropertiesWindow::new().unwrap();
+    let prop_weak = Rc::new(prop_win.as_weak());
+
     let weak = Rc::new(w.as_weak());
     //Initialization sequence
     //TODO: Optimize this
@@ -88,12 +93,33 @@ fn main() {
             .on_format_size(move |i| filemanager::format_size(i));
         w.global::<FileManager>()
             .on_format_date(move |i| filemanager::format_date(i));
-        w.global::<ContextAdapter>().on_menuitem_click(
-            enclose! { (weak) move |f, callback_item| context_menu::menuitem_click(f,callback_item, weak.clone())},
-        );
         w.global::<ContextAdapter>()
             .on_show_context_menu(
                  enclose! { (weak) move |x,y,file| filemanager::show_context_menu(x,y,file,weak.clone())});
+        prop_win
+            .global::<PropertiesAdapter>()
+            .on_format_size_detailed(move |i| format_size_detailed(i));
+        prop_win
+            .global::<FileManager>()
+            .on_format_date(move |i| filemanager::format_date(i));
+        prop_win.global::<PropertiesAdapter>().on_ok(
+            enclose! { (weak, prop_weak) move || properties::ok(prop_weak.clone(), weak.clone())},
+        );
+        prop_win
+            .global::<PropertiesAdapter>()
+            .on_cancel(enclose! { (prop_weak) move || properties::cancel(prop_weak.clone())});
+        prop_win
+            .global::<PropertiesAdapter>()
+            .on_bitmask(move |a, b| properties::bitmask(a, b));
+        prop_win
+            .global::<PropertiesAdapter>()
+            .on_recalculate_bitmask(
+                enclose! { (prop_weak) move |m| properties::recalculate_bitmask(m, prop_weak.clone())},
+            );
+
+        w.global::<ContextAdapter>().on_menuitem_click(
+            enclose! { (weak) move |f, callback_item| context_menu::menuitem_click(f,callback_item, weak.clone(), prop_win.as_weak())},
+        );
     }
     w.run().unwrap();
 }

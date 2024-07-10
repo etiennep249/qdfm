@@ -1,1 +1,1 @@
-mod cm_file;
+pub mod cm_file;

@@ -13,10 +13,10 @@ const KIB: f64 = 1024.0;
 const MIB: f64 = 1024.0 * KIB;
 const GIB: f64 = 1024.0 * MIB;
 const TIB: f64 = 1024.0 * GIB;
-pub fn format_size(i: i64) -> SharedString {
+pub fn format_size(i: i64, detailed: bool) -> SharedString {
     let f = i as f64;
     let suffix;
-    (format!(
+    let mut formatted = (format!(
         "{:.2}", //0.00
         if f < KIB {
             suffix = " B";
@@ -34,8 +34,21 @@ pub fn format_size(i: i64) -> SharedString {
             suffix = " TiB";
             f / TIB
         }
-    ) + suffix)
-        .into()
+    ) + suffix);
+
+    if detailed {
+        formatted += &(" - ".to_owned()
+            + &i.to_string()
+                .as_bytes()
+                .rchunks(3)
+                .rev()
+                .map(std::str::from_utf8)
+                .collect::<Result<Vec<&str>, _>>()
+                .unwrap()
+                .join(",")
+            + " Bytes");
+    }
+    formatted.into()
 }
 
 //Utility to convert seconds to a human readable format

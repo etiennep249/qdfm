@@ -1,8 +1,16 @@
+use magic::cookie::{DatabasePaths, Flags};
+use syscalls::syscall0;
+
 use crate::{
     ui::*,
     utils::{error_handling::log_error, types::i64_to_i32},
 };
-use std::{fs, time::SystemTime};
+use std::{
+    collections::HashMap,
+    ffi::OsStr,
+    fs::{self, Metadata},
+    time::SystemTime,
+};
 
 pub fn generate_files_for_path(path: &str) -> Vec<FileItem> {
     let dir = fs::read_dir(path);
@@ -41,6 +49,12 @@ pub fn generate_files_for_path(path: &str) -> Vec<FileItem> {
                             a: date_a,
                             b: date_b,
                         },
+                        file_type: f
+                            .path()
+                            .extension()
+                            .and_then(OsStr::to_str)
+                            .unwrap_or_else(|| "N/A")
+                            .into(),
                     }
                 } else {
                     bad_file()
@@ -52,6 +66,104 @@ pub fn generate_files_for_path(path: &str) -> Vec<FileItem> {
         .collect::<Vec<FileItem>>()
 }
 
+/*
+ *      Generates a map of <uid, name> from /etc/passwd
+ * */
+pub fn get_all_users() -> Result<HashMap<u32, String>, std::io::Error> {
+    let mut map: HashMap<u32, String> = HashMap::new();
+    std::fs::read_to_string("/etc/passwd")?
+        .split("\n")
+        .for_each(|line| {
+            if !line.starts_with("#") && !line.trim().is_empty() {
+                let tokens = line.split(":").collect::<Vec<&str>>();
+                if let Ok(uid) = tokens[2].parse::<u32>() {
+                    map.insert(uid, tokens[0].trim().into());
+                }
+            }
+        });
+    Ok(map)
+}
+
+/*
+ *  Generates a map of <gid, Group> from /etc/group
+ * */
+
+pub struct Group {
+    pub gid: u32,
+    pub name: String,
+    pub members: Vec<String>,
+}
+pub fn get_all_groups() -> Result<HashMap<u32, Group>, std::io::Error> {
+    let mut map: HashMap<u32, Group> = HashMap::new();
+    std::fs::read_to_string("/etc/group")?
+        .split("\n")
+        .for_each(|line| {
+            if !line.starts_with("#") && !line.trim().is_empty() {
+                let tokens = line.split(":").collect::<Vec<&str>>();
+                if let Ok(gid) = tokens[2].parse::<u32>() {
+                    map.insert(
+                        gid,
+                        Group {
+                            name: String::from(tokens[0]),
+                            gid,
+                            members: tokens[3].split(",").map(|s| s.trim().to_string()).collect(),
+                        },
+                    );
+                }
+            }
+        });
+    Ok(map)
+}
+
+//Returns the effective user id via syscall
+//"These functions are always successful and never modify errno."
+pub fn get_uid() -> u32 {
+    unsafe { syscall0(syscalls::Sysno::geteuid).unwrap() as u32 }
+}
+
+//Returns the effective group id via syscall
+//"These functions are always successful and never modify errno."
+pub fn get_gid() -> u32 {
+    unsafe { syscall0(syscalls::Sysno::getegid).unwrap() as u32 }
+}
+
+pub fn get_file_magic_type(path: &str) -> String {
+    let cookie =
+        magic::Cookie::open(Flags::ERROR | Flags::NO_CHECK_ENCODING | Flags::PRESERVE_ATIME);
+    if cookie.is_err() {
+        return "Unknown / Magic Open Error".into();
+    }
+    let cookie = cookie.unwrap().load(&DatabasePaths::default());
+    if cookie.is_err() {
+        return "Unknown / Magic Database Error".into();
+    }
+    let result = cookie.unwrap().file(path);
+    if result.is_err() {
+        return "Unknown / Magic Analysis Error".into();
+    }
+    return result.unwrap();
+}
+
+pub fn get_file_encoding(path: &str) -> String {
+    let cookie = magic::Cookie::open(Flags::ERROR | Flags::MIME_ENCODING | Flags::PRESERVE_ATIME);
+    if cookie.is_err() {
+        return "Unknown / Magic Open Error".into();
+    }
+    let cookie = cookie.unwrap().load(&DatabasePaths::default());
+    if cookie.is_err() {
+        return "Unknown / Magic Database Error".into();
+    }
+    let result = cookie.unwrap().file(path);
+    if result.is_err() {
+        return "Unknown / Magic Analysis Error".into();
+    }
+    return result.unwrap();
+}
+
+pub fn get_file_metadata(path: &str) -> Result<Metadata, std::io::Error> {
+    std::fs::metadata(path)
+}
+
 pub fn bad_file() -> FileItem {
     FileItem {
         path: "?".into(),
@@ -59,5 +171,6 @@ pub fn bad_file() -> FileItem {
         is_dir: false,
         size: _i64 { a: 0, b: 0 },
         date: _i64 { a: 0, b: -1 }, //-1 Used as error condition, faster than comparing strings
+        file_type: "Unknown / Bad file".into(),
     }
 }

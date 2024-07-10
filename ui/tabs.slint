@@ -13,18 +13,18 @@ export struct TabItem {
 }
 
 export global TabsAdapter {
-    in-out property <[TabItem]> tabs: [{text: "/", internal_path: "/", text_length: 1, selected: true}];
-    in-out property <int> current_tab: 0;
+    in-out property <[TabItem]> tabs: [{ text: "/", internal_path: "/", text_length: 1, selected: true }];
+    in-out property <int> current_tab_idx: 0;
     in-out property <[TabItem]> breadcrumbs;
     in-out property <bool> path_shown: false;
     callback breadcrumb_clicked(TabItem);
     callback breadcrumb_accepted(string);
     public function set_current_tab(item: TabItem) {
-        tabs[current-tab] = item;
+        tabs[current-tab-idx] = item;
         FileManager.path = item.internal-path;
     }
-    public function get_current_tab() -> TabItem {
-        return tabs[current_tab];
+    public pure function get_current_tab() -> TabItem {
+        return tabs[current_tab_idx];
     }
 }
 
@@ -36,6 +36,7 @@ export component TabWidgetItem {
     Rectangle {
         background: tab.selected ? Theme.current.selected-tab-color : Theme.current.unselected-tab-color;
     }
+
     HorizontalLayout {
         padding-right: 3px;
         spacing: 8px;
@@ -45,14 +46,16 @@ export component TabWidgetItem {
             font-size: Theme.current.font-size-tabs;
             color: Theme.current.text-color-tabs;
         }
+
         Image {
             source: Icons.cross;
             colorize: Theme.current.red-color;
-            height: h*0.7;
-            width: h*0.7;
+            height: h * 0.7;
+            width: h * 0.7;
             y: Theme.current.main-padding-top + 1px;
         }
     }
+
     TouchArea {
         /*clicked => { }*/
     }
@@ -70,6 +73,7 @@ export component BreadcrumbItem {
             horizontal-alignment: center;
             color: Theme.current.text-color-tabs;
         }
+
         rect := Rectangle {
             item := Text {
                 text: tabItem.text;
@@ -77,22 +81,21 @@ export component BreadcrumbItem {
                 vertical-alignment: center;
                 color: Theme.current.text-color-tabs;
             }
+
             width: item.width;
-            touch := TouchArea {}
+            touch := TouchArea { }
         }
     }
-
-    
 }
 
 export component PathAndCrumbs inherits Rectangle {
     height: Theme.current.breadcrumbs-height;
     bcrumbs_layout := HorizontalLayout {
-        for item[i] in TabsAdapter.breadcrumbs : BreadcrumbItem {
+        for item[i] in TabsAdapter.breadcrumbs: BreadcrumbItem {
             clicked => {
                 TabsAdapter.breadcrumb-clicked(item);
             }
-            tabItem: item; 
+            tabItem: item;
         }
         crumbsArea := TouchArea {
             enabled: !TabsAdapter.path-shown;
@@ -100,19 +103,20 @@ export component PathAndCrumbs inherits Rectangle {
                 TabsAdapter.path-shown = true;
             }
         }
+
         visible: !TabsAdapter.path_shown;
     }
+
     ledit := LineEdit {
         font-size: 14px;
         width: parent.width;
         height: parent.height;
-        text: TabsAdapter.tabs[TabsAdapter.current-tab].internal-path;
+        text: TabsAdapter.get_current_tab().internal-path;
         accepted(s) => {
             TabsAdapter.breadcrumb-accepted(s);
         }
         visible: TabsAdapter.path-shown;
     }
-    
 
     //Separator
     VSeparator {
@@ -123,43 +127,45 @@ export component PathAndCrumbs inherits Rectangle {
     }
 }
 
-
 export component TabWidgetBody inherits Rectangle {
     background: Theme.current.background-color-main;
     callback context-menu(length, length, FileItem);
     VerticalLayout {
-        crumbs := PathAndCrumbs{
+        crumbs := PathAndCrumbs {
             max-width: Theme.width;
         }
-        ColumnHeaders {}
+
+        ColumnHeaders { }
+
         ListView {
-            for item[i] in FileManager.files : FileWidget {
-                context-menu(x,y,file) => {
+            for item[i] in FileManager.files: FileWidget {
+                context-menu(x, y, file) => {
                     root.context-menu(x,y,file);
                 }
                 file: item;
                 self-index: i;
             }
-        }        
+        }
     }
 }
 
 export component TabWidget_ {
     in property <[TabItem]> tabs;
-    in-out property <int> current_tab;    
+    in-out property <int> current_tab;
     callback context-menu(length, length, FileItem);
     VerticalLayout {
         HorizontalLayout {
             height: Theme.current.tab-height;
-            for item[i] in tabs : TabWidgetItem {
+            for item[i] in tabs: TabWidgetItem {
                 tab: item;
             }
             tab_header_filler := Rectangle {
                 background: Theme.current.background-color-tabs;
             }
         }
+
         TabWidgetBody {
-            context-menu(x,y,file) => {
+            context-menu(x, y, file) => {
                 root.context-menu(x,y,file);
             }
         }
