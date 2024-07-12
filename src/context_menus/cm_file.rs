@@ -1,4 +1,7 @@
-use crate::{clipboard, file_properties::setup_properties, ui::*};
+use crate::{
+    callbacks::filemanager::set_current_tab_file, clipboard, file_properties::setup_properties,
+    ui::*, utils::error_handling::log_error_str,
+};
 use slint::{ComponentHandle, LogicalPosition, Weak};
 use std::{path::Path, rc::Rc};
 
@@ -14,6 +17,26 @@ pub fn cut(item: FileItem) {
 }
 pub fn paste(path: &Path, mw: Rc<Weak<MainWindow>>) {
     clipboard::paste_file(path, mw);
+}
+pub fn delete(file: FileItem, mw: Rc<Weak<MainWindow>>) {
+    let ret = if file.is_dir {
+        std::fs::remove_dir_all(Path::new(&file.path.to_string()))
+    } else {
+        std::fs::remove_file(Path::new(&file.path.to_string()))
+    };
+    if ret.is_err() {
+        log_error_str(&format!(
+            "Could not delete \"{}\". Error Text: {}",
+            file.path,
+            ret.err().unwrap().to_string()
+        ))
+    }
+    //Refresh UI
+    set_current_tab_file(
+        mw.unwrap().global::<TabsAdapter>().invoke_get_current_tab(),
+        mw,
+        false,
+    );
 }
 pub fn show_properties(
     item: FileItem,

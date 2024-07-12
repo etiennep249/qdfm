@@ -14,10 +14,10 @@ use walkdir::WalkDir;
 
 static CUT_BUFFER: OnceLock<Mutex<String>> = OnceLock::new();
 
-pub fn copy_file(item: FileItem) {
+pub fn copy_file(file: FileItem) {
     std::thread::spawn(move || {
         if let Ok(mut clip) = Clipboard::new() {
-            let ret = clip.set().wait().text(format!("file://{}", item.path));
+            let ret = clip.set().wait().text(format!("file://{}", file.path));
             if ret.is_err() {
                 log_error_str("Could not set the clipboard text");
             }
@@ -27,16 +27,17 @@ pub fn copy_file(item: FileItem) {
     });
 }
 
-pub fn cut_file(item: FileItem) {
+pub fn cut_file(file: FileItem) {
     let buf = CUT_BUFFER.get_or_init(|| Mutex::new(String::new())).lock();
 
     if let Ok(mut buf_lock) = buf {
-        *buf_lock = String::from(&item.path);
+        *buf_lock = String::from(&file.path);
         drop(buf_lock);
     }
 
-    copy_file(item);
+    copy_file(file);
 }
+
 //TODO: progress bar
 pub fn paste_file(path: &Path, mw: Rc<Weak<MainWindow>>) {
     let clipboard = Clipboard::new();

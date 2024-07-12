@@ -75,6 +75,8 @@ pub fn show_context_menu(x: f32, y: f32, file: FileItem, mw: Rc<Weak<MainWindow>
 
     let mut menu: Vec<ContextItem> = Vec::new();
 
+    //TODO: Get shortcuts from config file
+
     menu.push(ContextItem {
         display: "Open With <default>".into(),
         callback_id: ContextCallback::OpenWithDefault as i32,
@@ -113,6 +115,13 @@ pub fn show_context_menu(x: f32, y: f32, file: FileItem, mw: Rc<Weak<MainWindow>
             has_separator: true,
         });
     }
+    menu.push(ContextItem {
+        display: "Delete".into(),
+        callback_id: ContextCallback::Delete as i32,
+        shortcut: "".into(),
+        icon: Image::from_rgb8(SharedPixelBuffer::new(0, 0)),
+        has_separator: true,
+    });
     menu.push(ContextItem {
         display: "Properties".into(),
         callback_id: ContextCallback::ShowProperties as i32,

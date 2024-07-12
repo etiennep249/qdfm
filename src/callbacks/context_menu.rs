@@ -11,6 +11,7 @@ pub enum ContextCallback {
     Copy,
     PasteIntoSelected,
     PasteHere,
+    Delete,
 }
 
 pub fn menuitem_click(
@@ -33,6 +34,7 @@ pub fn menuitem_click(
         c if c == ContextCallback::PasteHere as i32 => {
             cm_file::paste(Path::new(&(item.path.to_string())).parent().unwrap(), mw)
         }
+        c if c == ContextCallback::Delete as i32 => cm_file::delete(item, mw),
         _ => (),
     }
     mw_clone_do_not_pass.unwrap().invoke_hide_context_menu();

@@ -7,7 +7,7 @@ use crate::{
 use slint::{ComponentHandle, Weak};
 use std::{
     fs::{set_permissions, Permissions},
-    os::unix::fs::{chown, lchown, PermissionsExt},
+    os::unix::fs::{lchown, PermissionsExt},
     path::Path,
     rc::Rc,
 };
