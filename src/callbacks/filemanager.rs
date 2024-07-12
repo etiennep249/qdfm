@@ -5,7 +5,6 @@ use crate::ui::*;
 use crate::utils::doubleclicks::check_for_dclick;
 use crate::utils::types;
 use crate::utils::types::i32_to_i64;
-use once_cell::sync::OnceCell;
 use slint::Image;
 use slint::SharedPixelBuffer;
 use slint::SharedString;
@@ -15,6 +14,7 @@ use std::collections::VecDeque;
 use std::rc::Rc;
 use std::sync::Mutex;
 use std::sync::MutexGuard;
+use std::sync::OnceLock;
 
 use super::context_menu::ContextCallback;
 use super::tabs::get_breadcrumbs_for;
@@ -71,26 +71,57 @@ pub fn show_context_menu(x: f32, y: f32, file: FileItem, mw: Rc<Weak<MainWindow>
     let w = mw.unwrap();
     let ctx_adapter = w.global::<ContextAdapter>();
 
-    let menu = [
-        ContextItem {
-            display: "Open With <default>".into(),
-            callback_id: ContextCallback::OpenWithDefault as i32,
+    //TODO: have all of these items stored somewhere so we dont genereate everytime
+
+    let mut menu: Vec<ContextItem> = Vec::new();
+
+    menu.push(ContextItem {
+        display: "Open With <default>".into(),
+        callback_id: ContextCallback::OpenWithDefault as i32,
+        shortcut: "".into(),
+        icon: Image::from_rgb8(SharedPixelBuffer::new(0, 0)),
+        has_separator: true,
+    });
+    menu.push(ContextItem {
+        display: "Cut".into(),
+        callback_id: ContextCallback::Cut as i32,
+        shortcut: "".into(),
+        icon: Image::from_rgb8(SharedPixelBuffer::new(0, 0)),
+        has_separator: false,
+    });
+    menu.push(ContextItem {
+        display: "Copy".into(),
+        callback_id: ContextCallback::Copy as i32,
+        shortcut: "".into(),
+        icon: Image::from_rgb8(SharedPixelBuffer::new(0, 0)),
+        has_separator: false,
+    });
+    if file.is_dir {
+        menu.push(ContextItem {
+            display: "Paste Into".into(),
+            callback_id: ContextCallback::PasteIntoSelected as i32,
             shortcut: "".into(),
             icon: Image::from_rgb8(SharedPixelBuffer::new(0, 0)),
             has_separator: true,
-        },
-        ContextItem {
-            display: "Properties".into(),
-            callback_id: ContextCallback::ShowProperties as i32,
+        });
+    } else {
+        menu.push(ContextItem {
+            display: "Paste Here".into(),
+            callback_id: ContextCallback::PasteHere as i32,
             shortcut: "".into(),
             icon: Image::from_rgb8(SharedPixelBuffer::new(0, 0)),
-            has_separator: false,
-        },
-    ];
+            has_separator: true,
+        });
+    }
+    menu.push(ContextItem {
+        display: "Properties".into(),
+        callback_id: ContextCallback::ShowProperties as i32,
+        shortcut: "".into(),
+        icon: Image::from_rgb8(SharedPixelBuffer::new(0, 0)),
+        has_separator: false,
+    });
 
-    //TODO: Have these somewhere so we don't have to generate it everytime
-    ctx_adapter.set_items(menu.into());
-
+    ctx_adapter.set_items(Rc::new(VecModel::from(menu)).into());
     ctx_adapter.set_x_pos(x + 1f32);
     ctx_adapter.set_y_pos(y + 1f32);
 }
@@ -112,7 +143,7 @@ pub fn show_context_menu(x: f32, y: f32, file: FileItem, mw: Rc<Weak<MainWindow>
 * */
 
 /*(LHistory, RHistory)*/
-static NAV_HISTORY: OnceCell<Mutex<(VecDeque<TabItem>, VecDeque<TabItem>)>> = OnceCell::new();
+static NAV_HISTORY: OnceLock<Mutex<(VecDeque<TabItem>, VecDeque<TabItem>)>> = OnceLock::new();
 
 pub fn get_history() -> MutexGuard<'static, (VecDeque<TabItem>, VecDeque<TabItem>)> {
     NAV_HISTORY

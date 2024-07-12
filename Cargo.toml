@@ -7,7 +7,6 @@ license = "GPLv3"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-once_cell = "1.18.0"
 sysinfo = "0.29.10"
 #Do we need std in slint?
 #Using git for latest features, may want to change it to crates.io later
@@ -19,6 +18,7 @@ chrono = {version = "*", default-features=false, features=["alloc", "clock"]}
 magic = "0.16.2"
 syscalls = { version="0.6.18", features=["x86", "x86_64", "aarch64", "arm"]}
 walkdir = "*"
+arboard = {version = "3.4.0", default-features=false, features=["wayland-data-control", "wl-clipboard-rs"]}
 
 [build-dependencies]
 slint-build = { version = "*", git = "https://github.com/slint-ui/slint"}

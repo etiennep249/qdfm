@@ -7,7 +7,7 @@ use crate::{
 use slint::{ComponentHandle, Weak};
 use std::{
     fs::{set_permissions, Permissions},
-    os::unix::fs::{chown, PermissionsExt},
+    os::unix::fs::{chown, lchown, PermissionsExt},
     path::Path,
     rc::Rc,
 };
@@ -50,7 +50,7 @@ pub fn ok(prop_win: Rc<Weak<PropertiesWindow>>, mw: Rc<Weak<MainWindow>>) {
         let owner_str = prop_adp.get_owner_value().to_string();
         if let Ok(users) = get_all_users() {
             if let Some((k, _)) = users.iter().find(|(_, v)| **v == owner_str) {
-                let ret = chown(path, Some(*k), None);
+                let ret = lchown(path, Some(*k), None);
                 if ret.is_err() {
                     log_error(ret.err().unwrap());
                 }
@@ -67,7 +67,7 @@ pub fn ok(prop_win: Rc<Weak<PropertiesWindow>>, mw: Rc<Weak<MainWindow>>) {
         let group_str = prop_adp.get_group_value().to_string();
         if let Ok(groups) = get_all_groups() {
             if let Some((k, _)) = groups.iter().find(|(_, v)| v.name == group_str) {
-                let ret = chown(path, None, Some(*k));
+                let ret = lchown(path, None, Some(*k));
                 if ret.is_err() {
                     log_error(ret.err().unwrap());
                 }

@@ -2,6 +2,7 @@ pub mod ui {
     slint::include_modules!();
 }
 pub mod callbacks;
+pub mod clipboard;
 pub mod config;
 pub mod context_menus;
 pub mod core;

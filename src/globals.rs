@@ -1,21 +1,20 @@
-use once_cell::sync::Lazy;
-use std::sync::{Mutex, MutexGuard};
+use std::sync::{Mutex, MutexGuard, OnceLock};
 
 use crate::config::Config;
 use sysinfo::{System, SystemExt};
 
-static SYSINFO: Lazy<Mutex<System>> = Lazy::new(|| Mutex::new(System::new()));
+static SYSINFO: OnceLock<Mutex<System>> = OnceLock::new();
 pub fn sysinfo_lock() -> MutexGuard<'static, System> {
-    match SYSINFO.lock() {
+    match SYSINFO.get_or_init(|| Mutex::new(System::new())).lock() {
         Ok(e) => e,
         Err(_) => {
             panic!("Could not get SYSINFO lock.");
         }
     }
 }
-static CONFIG: Lazy<Mutex<Config>> = Lazy::new(|| Mutex::new(Config::new()));
+static CONFIG: OnceLock<Mutex<Config>> = OnceLock::new();
 pub fn config_lock() -> MutexGuard<'static, Config> {
-    match CONFIG.lock() {
+    match CONFIG.get_or_init(|| Mutex::new(Config::new())).lock() {
         Ok(e) => e,
         Err(_) => {
             panic!("Could not get SYSINFO lock.");

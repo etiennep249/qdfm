@@ -55,6 +55,7 @@ pub fn generate_files_for_path(path: &str) -> Vec<FileItem> {
                             .and_then(OsStr::to_str)
                             .unwrap_or_else(|| "N/A")
                             .into(),
+                        is_link: f.file_type().unwrap().is_symlink(),
                     }
                 } else {
                     bad_file()
@@ -166,11 +167,12 @@ pub fn get_file_metadata(path: &str) -> Result<Metadata, std::io::Error> {
 
 pub fn bad_file() -> FileItem {
     FileItem {
-        path: "?".into(),
-        file_name: "?".into(),
+        path: "???".into(),
+        file_name: "???".into(),
         is_dir: false,
         size: _i64 { a: 0, b: 0 },
         date: _i64 { a: 0, b: -1 }, //-1 Used as error condition, faster than comparing strings
         file_type: "Unknown / Bad file".into(),
+        is_link: false,
     }
 }

@@ -10,6 +10,7 @@ export struct FileItem {
     size: _i64,
     date: _i64,
     file_type: string, 
+    is_link: bool,
 }
 //For current tab only
 export global FileManager {
@@ -26,6 +27,7 @@ export component NameWithIcon inherits Rectangle {
     in property <Header> header;
     in property <FileItem> file;
     in property <length> rowh;
+    in property <bool> is_link;
     private property <length> spacing: 2px;
     icon := Image {
         x: parent.x;
@@ -44,6 +46,7 @@ export component NameWithIcon inherits Rectangle {
         color: Theme.current.text-color-main;
         vertical-alignment: center;
         horizontal-alignment: header.alignment == 0 ? left : header.alignment == 1 ? center : right;
+        font-italic: is_link;
     }
 }
 
@@ -56,6 +59,7 @@ export component FileItemConditional inherits Rectangle {
         rowh: rowh;
         file: file;
         header: header;
+        is_link: file.is-link;
     }
     if header.inner-value == 1: Text {
         /*Size*/

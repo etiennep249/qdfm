@@ -1,2 +1,5 @@
 [env]
 SLINT_BACKEND = "winit-skia"
+
+[build]
+rustc-wrapper = "sccache"

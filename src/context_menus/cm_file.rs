@@ -1,11 +1,20 @@
-use crate::{file_properties::setup_properties, ui::*};
+use crate::{clipboard, file_properties::setup_properties, ui::*};
 use slint::{ComponentHandle, LogicalPosition, Weak};
-use std::rc::Rc;
+use std::{path::Path, rc::Rc};
 
 pub fn open_with_default(item: FileItem, mw: Rc<Weak<MainWindow>>) {
     println!("File clicked: {}", item.path);
 }
 
+pub fn copy(item: FileItem) {
+    clipboard::copy_file(item);
+}
+pub fn cut(item: FileItem) {
+    clipboard::cut_file(item);
+}
+pub fn paste(path: &Path, mw: Rc<Weak<MainWindow>>) {
+    clipboard::paste_file(path, mw);
+}
 pub fn show_properties(
     item: FileItem,
     mw: Rc<Weak<MainWindow>>,
