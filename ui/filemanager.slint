@@ -18,7 +18,7 @@ export global FileManager {
     in-out property <[FileItem]> files;
     /*The actual files listed*/
     in-out property <int> selected_index: -1;
-    callback fileitem_clicked(FileItem, int) -> bool;
+    callback fileitem_doubleclicked(FileItem, int);
     pure callback format_size(_i64) -> string;
     pure callback format_date(_i64) -> string;
 }
@@ -81,8 +81,9 @@ export component FileItemConditional inherits Rectangle {
 export component FileWidget inherits Rectangle {
     in property <FileItem> file;
     in property <int> self_index;
+    private property <bool> selected: self-index == FileManager.selected-index;
     callback context-menu(length, length, FileItem);
-    background: self-index == FileManager.selected-index ? Theme.current.selected-file-color : transparent;
+    background: selected ? Theme.current.selected-file-color : transparent;
     border-radius: 2px;
     height: file.date.b == -1 ? 0 : 30px;
     private property <length> rowh: self.height;
@@ -102,6 +103,10 @@ export component FileWidget inherits Rectangle {
             }
         }
 
+        double-clicked => {
+            FileManager.fileitem_doubleclicked(file, self_index);
+        }
+
         pointer-event(e) => {
             if (e.button == PointerEventButton.right && e.kind == PointerEventKind.down) {
                 //Right click
@@ -109,13 +114,7 @@ export component FileWidget inherits Rectangle {
                 root.context-menu(self.absolute-position.x + self.mouse-x, self.absolute-position.y + self.mouse-y, file);
                 FileManager.selected-index = self-index;
             } else if (e.button == PointerEventButton.left && e.kind == PointerEventKind.down) {
-                if (!FileManager.fileitem-clicked(file, self-index)) {
-                    //If this wasn't a double click (aka if we don't change the path)
-                    FileManager.selected-index = self-index;
-                } else {
-                    //Path changed, reset 
-                    FileManager.selected-index = -1;
-                }
+                FileManager.selected-index = self-index;
             }
         }
     }

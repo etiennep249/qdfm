@@ -73,8 +73,8 @@ fn main() {
         sidebaritems.on_right_arrow_clicked(
             enclose! { (weak) move || sidebar::right_arrow_clicked(weak.clone())},
         );
-        w.global::<FileManager>().on_fileitem_clicked(
-            enclose! { (weak) move |file, i| filemanager::fileitem_clicked(file, i, weak.clone())},
+        w.global::<FileManager>().on_fileitem_doubleclicked(
+            enclose! { (weak) move |file, i| filemanager::fileitem_doubleclicked(file, i, weak.clone())},
         );
         let tabs_adapter = w.global::<TabsAdapter>();
         tabs_adapter.on_breadcrumb_clicked(

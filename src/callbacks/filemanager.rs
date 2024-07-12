@@ -2,7 +2,6 @@ use crate::core;
 use crate::globals::config_lock;
 use crate::sort::call_current_sort;
 use crate::ui::*;
-use crate::utils::doubleclicks::check_for_dclick;
 use crate::utils::types;
 use crate::utils::types::i32_to_i64;
 use slint::Image;
@@ -19,17 +18,7 @@ use std::sync::OnceLock;
 use super::context_menu::ContextCallback;
 use super::tabs::get_breadcrumbs_for;
 
-//For now, there is no double click handler, CHANGE TO DOUBLE CLICK WHEN/IF IT'S IMPLEMENTED
-pub fn fileitem_clicked(item: FileItem, index: i32, mw: Rc<Weak<MainWindow>>) -> bool {
-    if check_for_dclick(index) {
-        fileitem_doubleclicked(item, mw);
-        return true;
-    } else {
-        return false;
-    }
-}
-
-pub fn fileitem_doubleclicked(item: FileItem, mw: Rc<Weak<MainWindow>>) {
+pub fn fileitem_doubleclicked(item: FileItem, _i: i32, mw: Rc<Weak<MainWindow>>) {
     set_current_tab_file(
         TabItem {
             internal_path: item.path,
@@ -56,9 +45,11 @@ pub fn set_current_tab_file(mut item: TabItem, mw: Rc<Weak<MainWindow>>, remembe
     }
     tabs.set_breadcrumbs(Rc::new(VecModel::from(get_breadcrumbs_for(&item))).into());
     tabs.invoke_set_current_tab(item);
-    w.global::<FileManager>()
-        .set_files(Rc::new(VecModel::from(files)).into());
+    let filemanager = w.global::<FileManager>();
+
+    filemanager.set_files(Rc::new(VecModel::from(files)).into());
     call_current_sort(mw);
+    filemanager.set_selected_index(-1);
 }
 
 pub fn format_size(i: _i64) -> SharedString {
