@@ -1,5 +1,6 @@
 [env]
 SLINT_BACKEND = "winit-skia"
+SLINT_ENABLE_EXPERIMENTAL_FEATURES = "1"
 
 [build]
 rustc-wrapper = "sccache"

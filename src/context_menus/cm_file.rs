@@ -1,12 +1,89 @@
 use crate::{
-    callbacks::filemanager::set_current_tab_file, clipboard, file_properties::setup_properties,
-    ui::*, utils::error_handling::log_error_str,
+    callbacks::{context_menu::ContextCallback, filemanager::set_current_tab_file},
+    clipboard,
+    core::run_command,
+    file_properties::setup_properties,
+    globals::config_lock,
+    ui::*,
+    utils::error_handling::log_error_str,
 };
-use slint::{ComponentHandle, LogicalPosition, Weak};
+use slint::{ComponentHandle, Image, LogicalPosition, Model, SharedPixelBuffer, VecModel, Weak};
 use std::{path::Path, rc::Rc};
 
 pub fn open_with_default(item: FileItem, mw: Rc<Weak<MainWindow>>) {
-    println!("File clicked: {}", item.path);
+    let conf = config_lock();
+    if let Some(map) = conf.get_mapping_default(&item.extension) {
+        run_command(&(map.command.to_string() + " " + &item.path), mw);
+    }
+}
+
+/*
+ *  Shows a secondary context menu on the right
+ * */
+pub fn open_with(file: FileItem, mw: Rc<Weak<MainWindow>>) {
+    let w = mw.unwrap();
+    let ctx_adapter = w.global::<ContextAdapter>();
+
+    let mut menu: Vec<ContextItem> = Vec::new();
+
+    //TODO: Get shortcuts from config file
+    let conf = config_lock();
+
+    let quick_mapping = conf.get_mappings_quick(&file.extension);
+
+    for (i, mapping) in quick_mapping.iter().enumerate() {
+        menu.push(ContextItem {
+            display: (&mapping.display_name).into(),
+            callback_id: ContextCallback::OpenWithQuick as i32,
+            shortcut: "".into(),
+            icon: Image::from_rgb8(SharedPixelBuffer::new(0, 0)),
+            has_separator: if i == quick_mapping.len() - 1 {
+                true
+            } else {
+                false
+            },
+            click_on_hover: false,
+            internal_id: i as i32,
+        });
+    }
+    menu.push(ContextItem {
+        display: ("Manage").into(),
+        callback_id: ContextCallback::ManageQuick as i32,
+        shortcut: "".into(),
+        icon: Image::from_rgb8(SharedPixelBuffer::new(0, 0)),
+        has_separator: false,
+        click_on_hover: false,
+        internal_id: 0,
+    });
+
+    //Show the secondary menu where it needs to be
+    let theme = w.global::<Theme>().get_current();
+    ctx_adapter.set_secondary_items(Rc::new(VecModel::from(menu)).into());
+    ctx_adapter.set_secondary_x_pos(ctx_adapter.get_x_pos() + 200.0);
+    ctx_adapter.set_secondary_y_pos(
+        ctx_adapter.get_y_pos()
+            + (get_index(&ctx_adapter) as f32 * theme.context_menu_entry_height)
+            + 1.0,
+    );
+    ctx_adapter.set_current_hover_callback_id(ContextCallback::OpenWith as i32);
+    ctx_adapter.set_is_secondary_visible(true);
+}
+
+pub fn open_with_quick(context_item: &ContextItem, file: FileItem, mw: Rc<Weak<MainWindow>>) {
+    let conf = config_lock();
+    let vec = conf.get_mappings_quick(&file.extension);
+    run_command(
+        &(vec[context_item.internal_id as usize].command.to_string() + " " + &file.path),
+        mw,
+    );
+}
+
+fn get_index(ctx_adapter: &ContextAdapter) -> i32 {
+    ctx_adapter
+        .get_items()
+        .iter()
+        .position(|f| f.callback_id == ContextCallback::OpenWith as i32)
+        .unwrap() as i32
 }
 
 pub fn copy(item: FileItem) {

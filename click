@@ -32,7 +32,7 @@ fn main() {
     //Initialization sequence
     //TODO: Optimize this
     {
-        let mut conf = config_lock();
+        let conf = config_lock();
         let drives = drives::get_drives();
         w.global::<SidebarItems>().set_drive_list(drives.into());
         w.global::<FileManager>().set_files(
@@ -60,8 +60,6 @@ fn main() {
         //Default sort
         //TODO use config
         qdfm::sort::sort_by_name(weak.clone(), true, true);
-
-        conf.init_mappings();
     }
     //Callbacks
     {
@@ -118,11 +116,9 @@ fn main() {
             .on_recalculate_bitmask(
                 enclose! { (prop_weak) move |m| properties::recalculate_bitmask(m, prop_weak.clone())},
             );
+
         w.global::<ContextAdapter>().on_menuitem_click(
             enclose! { (weak) move |f, callback_item| context_menu::menuitem_click(f,callback_item, weak.clone(), prop_win.as_weak())},
-        );
-        w.global::<ContextAdapter>().on_menuitem_hover(
-            enclose! { (weak) move |callback_item| context_menu::menuitem_hover(callback_item, weak.clone())},
         );
     }
     w.run().unwrap();

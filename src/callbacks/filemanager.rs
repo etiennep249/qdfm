@@ -67,20 +67,41 @@ pub fn show_context_menu(x: f32, y: f32, file: FileItem, mw: Rc<Weak<MainWindow>
     let mut menu: Vec<ContextItem> = Vec::new();
 
     //TODO: Get shortcuts from config file
+    let conf = config_lock();
 
-    menu.push(ContextItem {
-        display: "Open With <default>".into(),
-        callback_id: ContextCallback::OpenWithDefault as i32,
-        shortcut: "".into(),
-        icon: Image::from_rgb8(SharedPixelBuffer::new(0, 0)),
-        has_separator: true,
-    });
+    let default_mapping = conf.get_mapping_default(&file.extension);
+    let quick_mapping = conf.get_mappings_quick(&file.extension);
+
+    if default_mapping.is_some() {
+        menu.push(ContextItem {
+            display: ("Open With ".to_owned() + &default_mapping.unwrap().display_name).into(),
+            callback_id: ContextCallback::OpenWithDefault as i32,
+            shortcut: "".into(),
+            icon: Image::from_rgb8(SharedPixelBuffer::new(0, 0)),
+            has_separator: true,
+            click_on_hover: false,
+            internal_id: 0,
+        });
+    }
+    if !quick_mapping.is_empty() {
+        menu.push(ContextItem {
+            display: ("Open With").into(),
+            callback_id: ContextCallback::OpenWith as i32,
+            shortcut: "▶".into(),
+            icon: Image::from_rgb8(SharedPixelBuffer::new(0, 0)),
+            has_separator: true,
+            click_on_hover: true,
+            internal_id: 0,
+        });
+    }
     menu.push(ContextItem {
         display: "Cut".into(),
         callback_id: ContextCallback::Cut as i32,
         shortcut: "".into(),
         icon: Image::from_rgb8(SharedPixelBuffer::new(0, 0)),
         has_separator: false,
+        click_on_hover: false,
+        internal_id: 0,
     });
     menu.push(ContextItem {
         display: "Copy".into(),
@@ -88,6 +109,8 @@ pub fn show_context_menu(x: f32, y: f32, file: FileItem, mw: Rc<Weak<MainWindow>
         shortcut: "".into(),
         icon: Image::from_rgb8(SharedPixelBuffer::new(0, 0)),
         has_separator: false,
+        click_on_hover: false,
+        internal_id: 0,
     });
     if file.is_dir {
         menu.push(ContextItem {
@@ -96,6 +119,8 @@ pub fn show_context_menu(x: f32, y: f32, file: FileItem, mw: Rc<Weak<MainWindow>
             shortcut: "".into(),
             icon: Image::from_rgb8(SharedPixelBuffer::new(0, 0)),
             has_separator: true,
+            click_on_hover: false,
+            internal_id: 0,
         });
     } else {
         menu.push(ContextItem {
@@ -104,6 +129,8 @@ pub fn show_context_menu(x: f32, y: f32, file: FileItem, mw: Rc<Weak<MainWindow>
             shortcut: "".into(),
             icon: Image::from_rgb8(SharedPixelBuffer::new(0, 0)),
             has_separator: true,
+            click_on_hover: false,
+            internal_id: 0,
         });
     }
     menu.push(ContextItem {
@@ -112,6 +139,8 @@ pub fn show_context_menu(x: f32, y: f32, file: FileItem, mw: Rc<Weak<MainWindow>
         shortcut: "".into(),
         icon: Image::from_rgb8(SharedPixelBuffer::new(0, 0)),
         has_separator: true,
+        click_on_hover: false,
+        internal_id: 0,
     });
     menu.push(ContextItem {
         display: "Properties".into(),
@@ -119,6 +148,8 @@ pub fn show_context_menu(x: f32, y: f32, file: FileItem, mw: Rc<Weak<MainWindow>
         shortcut: "".into(),
         icon: Image::from_rgb8(SharedPixelBuffer::new(0, 0)),
         has_separator: false,
+        click_on_hover: false,
+        internal_id: 0,
     });
 
     ctx_adapter.set_items(Rc::new(VecModel::from(menu)).into());

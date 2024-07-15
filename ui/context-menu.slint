@@ -8,13 +8,21 @@ export struct ContextItem {
     shortcut: string,
     callback_id: int,
     has_separator: bool,
+    click_on_hover: bool,
+    internal_id: int, //Can be used for various internal purposes, does NOT affect UI
 }
 export global ContextAdapter {
     in-out property <length> x-pos;
     in-out property <length> y-pos;
     in-out property <[ContextItem]> items;
+    in-out property <[ContextItem]> secondary-items;
+    in-out property <length> secondary-x-pos;
+    in-out property <length> secondary-y-pos;
+    in property <int> current_hover_callback_id;
+    in-out property <bool> is_secondary_visible: false;
     callback show_context_menu(length, length, FileItem);
     callback menuitem_click(FileItem, ContextItem);
+    callback menuitem_hover(ContextItem);
 }
 
 export component ContextMenuItem inherits Rectangle {
@@ -23,6 +31,7 @@ export component ContextMenuItem inherits Rectangle {
     in property <string> display;
     in property <image> icon;
     in property <string> shortcut;
+    in property <bool> is_secondary: false;
     in property <ContextItem> context_item;
     height: Theme.current.context-menu-entry-height;
     width: menu_width - 2px - (Theme.current.context-menu-left-padding * 2);
@@ -43,6 +52,13 @@ export component ContextMenuItem inherits Rectangle {
 
         clicked => {
             ContextAdapter.menuitem_click(FileManager.files[FileManager.selected_index], context_item);
+        }
+        changed has-hover => {
+            if context_item.click-on-hover {
+                ContextAdapter.menuitem_click(FileManager.files[FileManager.selected_index], context_item);
+            } else if !is_secondary {
+                ContextAdapter.menuitem_hover(context_item);
+            }
         }
     }
 
@@ -76,6 +92,28 @@ export component ContextMenu inherits Rectangle {
         icon: item.icon;
         has_separator: item.has_separator;
         menu_width: menu_width;
+        y: (i * Theme.current.context-menu-entry-height) + parent.border-width + Theme.current.context-menu-top-padding;
+    }
+}
+
+export component SecondaryContextMenu inherits Rectangle {
+    private property <length> menu_width: 200px;
+    background: Theme.current.context-menu-background-color;
+    border-color: Theme.current.context-menu-border-color;
+    border-width: 1px;
+    border-radius: 2px;
+    width: menu_width;
+    height: (Theme.current.context-menu-entry-height * ContextAdapter.secondary-items.length) + (Theme.current.context-menu-top-padding * 2);
+    x: ContextAdapter.secondary-x-pos;
+    y: ContextAdapter.secondary-y-pos;
+
+    for item[i] in ContextAdapter.secondary-items: ContextMenuItem {
+        context_item: item;
+        display: item.display;
+        icon: item.icon;
+        has_separator: item.has_separator;
+        menu_width: menu_width;
+        is_secondary: true;
         y: (i * Theme.current.context-menu-entry-height) + parent.border-width + Theme.current.context-menu-top-padding;
     }
 }

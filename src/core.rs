@@ -1,4 +1,5 @@
 use magic::cookie::{DatabasePaths, Flags};
+use slint::Weak;
 use syscalls::syscall0;
 
 use crate::{
@@ -9,6 +10,8 @@ use std::{
     collections::HashMap,
     ffi::OsStr,
     fs::{self, Metadata},
+    process::Command,
+    rc::Rc,
     time::SystemTime,
 };
 
@@ -56,6 +59,12 @@ pub fn generate_files_for_path(path: &str) -> Vec<FileItem> {
                             .unwrap_or_else(|| "N/A")
                             .into(),
                         is_link: f.file_type().unwrap().is_symlink(),
+                        extension: f
+                            .path()
+                            .extension()
+                            .and_then(OsStr::to_str)
+                            .unwrap_or("")
+                            .into(),
                     }
                 } else {
                     bad_file()
@@ -174,5 +183,12 @@ pub fn bad_file() -> FileItem {
         date: _i64 { a: 0, b: -1 }, //-1 Used as error condition, faster than comparing strings
         file_type: "Unknown / Bad file".into(),
         is_link: false,
+        extension: "".into(),
     }
+}
+pub fn run_command(command: &str, _mw: Rc<Weak<MainWindow>>) {
+    Command::new("setsid")
+        .args(command.split(" ").collect::<Vec<&str>>())
+        .spawn()
+        .expect("failed to execute process");
 }

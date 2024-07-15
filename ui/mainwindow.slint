@@ -5,7 +5,7 @@ import { FileManager, FileItem } from "filemanager.slint";
 import { Theme } from "theme.slint";
 import { HSeparator } from "utils.slint";
 import { ColumnHeadersAdapter } from "colheaders.slint";
-import { ContextMenu, ContextAdapter, ContextItem } from "context-menu.slint";
+import { ContextMenu, ContextAdapter, ContextItem, SecondaryContextMenu } from "context-menu.slint";
 import { PropertiesWindow, PropertiesAdapter } from "properties.slint";
 
 export { FileManager, SidebarItems, TabsAdapter, Theme, ColumnHeadersAdapter, ContextAdapter, ContextItem, PropertiesWindow, PropertiesAdapter }
@@ -16,10 +16,15 @@ export component MainWindow inherits Window {
     private property <length> nav_arrows_height: 30px;
     background: Theme.current.background-color-main;
     ctx_popup := Rectangle {
-        //close-on-click: false;
         visible: false;
         z: 15;
         ContextMenu { }
+    }
+
+    secondary_ctx_popup := Rectangle {
+        visible <=> ContextAdapter.is_secondary_visible;
+        z: 15;
+        SecondaryContextMenu { }
     }
 
     title: "QDFM";
@@ -40,6 +45,7 @@ export component MainWindow inherits Window {
 
     public function hide_context_menu() {
         ctx_popup.visible = false;
+        secondary-ctx-popup.visible = false;
         fullscreen-area.visible = false;
     }
 
