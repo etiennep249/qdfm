@@ -42,6 +42,7 @@ pub fn menuitem_click(
         c if c == ContextCallback::OpenWithQuick as i32 => {
             cm_file::open_with_quick(&context_item, file, mw)
         }
+        c if c == ContextCallback::ManageQuick as i32 => cm_file::manage_quick(file, mw),
         _ => (),
     }
     if !context_item.click_on_hover {

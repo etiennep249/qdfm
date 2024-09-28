@@ -1,0 +1,73 @@
+import { StandardButton, Button, ListView } from "std-widgets.slint";
+
+struct OpenWithMapping {
+    name: string,
+    cmd: string,
+}
+
+export global ManageOpenWithAdapter {
+    callback ok();
+    callback cancel();
+    in-out property <[OpenWithMapping]> mappings;
+    in-out property <OpenWithMapping> default_mapping;
+}
+
+export component ManageOpenWithWindow inherits Window {
+    height: 500px;
+    width: 480px;
+    in-out property <length> win_height <=> self.height;
+    in-out property <length> win_width <=> self.width;
+
+    title: "Manage Extension Mappings";
+
+    ListView {
+        width: parent.width - 20px;
+        x: 10px;
+
+        height: 300px;
+
+        for m in ManageOpenWithAdapter.mappings: Rectangle {
+            height: 30px;
+            background: blue;
+            Text {
+                x: 0;
+                text: m.name;
+            }
+
+            if m.name == ManageOpenWithAdapter.default_mapping.name: Text {
+                x: parent.width - 10px - self.width;
+                horizontal-alignment: right;
+                text: "(default)";
+                font-weight: 800;
+            }
+        }
+    }
+
+    cancel_btn := StandardButton {
+        kind: cancel;
+        x: parent.width - self.width - 10px;
+        y: parent.height - 45px;
+
+        clicked => {
+            ManageOpenWithAdapter.cancel();
+        }
+    }
+
+    open_with_btn := Button {
+        text: "Open With (Browse)";
+        x: parent.width - cancel-btn.width - self.width - 20px;
+        y: parent.height - 45px;
+        clicked => {
+            ManageOpenWithAdapter.ok();
+        }
+    }
+
+    ok_btn := Button {
+        text: "Save";
+        x: parent.width - cancel-btn.width - open_with_btn.width - self.width - 30px;
+        y: parent.height - 45px;
+        clicked => {
+            ManageOpenWithAdapter.ok();
+        }
+    }
+}

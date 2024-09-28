@@ -45,7 +45,7 @@ impl Config {
                 String::from(
                     r#"{
                         "sh": {"display_name": "Bash", "command": "/usr/local/bin/st /bin/bash"},
-                        "txt": { "display_name" : "Nvim", "command": "/usr/local/bin/st /usr/bin/nvim"}
+                        "txt": { "display_name" : "Neovim", "command": "/usr/local/bin/st /usr/bin/nvim"}
                     }"#,
                 ),
             ),

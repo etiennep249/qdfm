@@ -2,8 +2,10 @@ use crate::{
     callbacks::{context_menu::ContextCallback, filemanager::set_current_tab_file},
     clipboard,
     core::run_command,
+    enclose,
     file_properties::setup_properties,
     globals::config_lock,
+    manage_open_with,
     ui::*,
     utils::error_handling::log_error_str,
 };
@@ -133,4 +135,26 @@ pub fn show_properties(
     prop_win.window().set_position(LogicalPosition { x, y });
     setup_properties(item, prop_win.global::<PropertiesAdapter>(), prop_win_rc);
     prop_win.show().unwrap();
+}
+
+pub fn manage_quick(file: FileItem, mw: Rc<Weak<MainWindow>>) {
+    let win = ManageOpenWithWindow::new().unwrap();
+
+    let main_win = mw.unwrap();
+    let pos = main_win.window().position();
+    let x = pos.x as f32 + (main_win.get_win_width() / 2.0) - (win.get_win_width() / 2.0);
+    let y = pos.y as f32 + (main_win.get_win_height() / 2.0) - (win.get_win_height() / 2.0);
+
+    win.window().set_position(LogicalPosition { x, y });
+
+    let adp = win.global::<ManageOpenWithAdapter>();
+    let rc = Rc::new(win.as_weak());
+
+    adp.on_ok(enclose! { (rc) move || manage_open_with::ok(rc.clone())});
+    adp.on_cancel(enclose! { (rc) move || manage_open_with::cancel(rc.clone())});
+
+    manage_open_with::setup_manage_open_with(adp, file);
+
+    //setup_properties(item, prop_win.global::<PropertiesAdapter>(), prop_win_rc);
+    win.show().unwrap();
 }

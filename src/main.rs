@@ -1,30 +1,21 @@
 use qdfm::callbacks::utils::format_size_detailed;
-use qdfm::callbacks::*;
 use qdfm::core::generate_files_for_path;
 use qdfm::drives;
 use qdfm::globals::config_lock;
 use qdfm::ui::*;
+use qdfm::{callbacks::*, enclose};
 use slint::VecModel;
 use std::rc::Rc;
-
-//https://github.com/rust-lang/rfcs/issues/2407#issuecomment-385291238
-//Replace with https://github.com/rust-lang/rfcs/pull/3512
-//When/if it gets merged
-macro_rules! enclose {
-    ( ($( $x:ident ),*) $y:expr ) => {
-        {
-            $(let $x = $x.clone();)*
-            $y
-        }
-    };
-}
 
 fn main() {
     //Use winit
     let backend = i_slint_backend_winit::Backend::new().unwrap();
     slint::platform::set_platform(Box::new(backend)).unwrap();
 
+    //MainWindow
     let w: MainWindow = MainWindow::new().unwrap();
+
+    //PropertiesWindow
     let prop_win = PropertiesWindow::new().unwrap();
     let prop_weak = Rc::new(prop_win.as_weak());
 
