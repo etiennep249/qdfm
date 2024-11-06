@@ -33,6 +33,7 @@ impl Config {
         HashMap::from([
             (String::from("max_nav_history"), String::from("6")),
             (String::from("default_path"), String::from("/")),
+            (String::from("terminal"), String::from("st")),
             (String::from("theme"), String::from("dark")),
             (
                 //<name>:<width_percent>:<0/1/2 not_selected/ascending/descending>

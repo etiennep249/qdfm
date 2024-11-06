@@ -186,7 +186,7 @@ pub fn bad_file() -> FileItem {
         extension: "".into(),
     }
 }
-pub fn run_command(command: &str, _mw: Rc<Weak<MainWindow>>) {
+pub fn run_command(command: &str) {
     Command::new("setsid")
         .args(command.split(" ").collect::<Vec<&str>>())
         .spawn()

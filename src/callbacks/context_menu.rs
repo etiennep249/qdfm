@@ -28,7 +28,7 @@ pub fn menuitem_click(
         c if c == ContextCallback::ShowProperties as i32 => {
             cm_file::show_properties(file, mw, prop_win)
         }
-        c if c == ContextCallback::OpenWithDefault as i32 => cm_file::open_with_default(file, mw),
+        c if c == ContextCallback::OpenWithDefault as i32 => cm_file::open_with_default(file),
         c if c == ContextCallback::OpenWith as i32 => cm_file::open_with(file, mw),
         c if c == ContextCallback::Copy as i32 => cm_file::copy(file),
         c if c == ContextCallback::Cut as i32 => cm_file::cut(file),
@@ -40,7 +40,7 @@ pub fn menuitem_click(
         }
         c if c == ContextCallback::Delete as i32 => cm_file::delete(file, mw),
         c if c == ContextCallback::OpenWithQuick as i32 => {
-            cm_file::open_with_quick(&context_item, file, mw)
+            cm_file::open_with_quick(&context_item, file)
         }
         c if c == ContextCallback::ManageQuick as i32 => cm_file::manage_quick(file, mw),
         _ => (),

@@ -12,10 +12,10 @@ use crate::{
 use slint::{ComponentHandle, Image, LogicalPosition, Model, SharedPixelBuffer, VecModel, Weak};
 use std::{path::Path, rc::Rc};
 
-pub fn open_with_default(item: FileItem, mw: Rc<Weak<MainWindow>>) {
+pub fn open_with_default(item: FileItem) {
     let conf = config_lock();
     if let Some(map) = conf.get_mapping_default(&item.extension) {
-        run_command(&(map.command.to_string() + " " + &item.path), mw);
+        run_command(&(map.command.to_string() + " " + &item.path));
     }
 }
 
@@ -71,13 +71,10 @@ pub fn open_with(file: FileItem, mw: Rc<Weak<MainWindow>>) {
     ctx_adapter.set_is_secondary_visible(true);
 }
 
-pub fn open_with_quick(context_item: &ContextItem, file: FileItem, mw: Rc<Weak<MainWindow>>) {
+pub fn open_with_quick(context_item: &ContextItem, file: FileItem) {
     let conf = config_lock();
     let vec = conf.get_mappings_quick(&file.extension);
-    run_command(
-        &(vec[context_item.internal_id as usize].command.to_string() + " " + &file.path),
-        mw,
-    );
+    run_command(&(vec[context_item.internal_id as usize].command.to_string() + " " + &file.path));
 }
 
 fn get_index(ctx_adapter: &ContextAdapter) -> i32 {
@@ -152,6 +149,10 @@ pub fn manage_quick(file: FileItem, mw: Rc<Weak<MainWindow>>) {
 
     adp.on_ok(enclose! { (rc) move || manage_open_with::ok(rc.clone())});
     adp.on_cancel(enclose! { (rc) move || manage_open_with::cancel(rc.clone())});
+    let filename = file.path.clone();
+    adp.on_open_with(
+        enclose! { (rc) move |term| manage_open_with::open_with(rc.clone(), term, filename.clone())},
+    );
 
     manage_open_with::setup_manage_open_with(adp, file);
 
