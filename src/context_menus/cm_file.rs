@@ -9,13 +9,21 @@ use crate::{
     ui::*,
     utils::error_handling::log_error_str,
 };
-use slint::{ComponentHandle, Image, LogicalPosition, Model, SharedPixelBuffer, VecModel, Weak};
+use slint::{
+    ComponentHandle, Image, LogicalPosition, Model, SharedPixelBuffer, SharedString, VecModel, Weak,
+};
 use std::{path::Path, rc::Rc};
 
 pub fn open_with_default(item: FileItem) {
     let conf = config_lock();
-    if let Some(map) = conf.get_mapping_default(&item.extension) {
-        run_command(&(map.command.to_string() + " " + &item.path));
+    if let Some(default) = conf.get_mapping_default(&item.extension) {
+        if let Some(cmd) = conf
+            .get_mappings_quick(&item.extension)
+            .iter()
+            .find(|m| m.display_name == *default)
+        {
+            run_command(&(cmd.command.to_string() + " " + &item.path));
+        }
     }
 }
 
@@ -147,12 +155,15 @@ pub fn manage_quick(file: FileItem, mw: Rc<Weak<MainWindow>>) {
     let adp = win.global::<ManageOpenWithAdapter>();
     let rc = Rc::new(win.as_weak());
 
+    adp.set_extension(file.extension.clone().into());
+
     adp.on_ok(enclose! { (rc) move || manage_open_with::ok(rc.clone())});
     adp.on_cancel(enclose! { (rc) move || manage_open_with::cancel(rc.clone())});
     let filename = file.path.clone();
     adp.on_open_with(
         enclose! { (rc) move |term| manage_open_with::open_with(rc.clone(), term, filename.clone())},
     );
+    adp.on_set_default(move |ext, s| manage_open_with::set_default(ext, s));
 
     manage_open_with::setup_manage_open_with(adp, file);
 

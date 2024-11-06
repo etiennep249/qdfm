@@ -9,7 +9,7 @@ use crate::utils::error_handling::log_error_str;
 
 pub struct Config {
     map: HashMap<String, String>,
-    extension_mappings_default: Option<HashMap<String, Mapping>>,
+    extension_mappings_default: Option<HashMap<String, String>>,
     extension_mappings_quick: Option<HashMap<String, Vec<Mapping>>>,
 }
 
@@ -45,8 +45,8 @@ impl Config {
                 String::from("extension_mappings_default"),
                 String::from(
                     r#"{
-                        "sh": {"display_name": "Bash", "command": "/usr/local/bin/st /bin/bash"},
-                        "txt": { "display_name" : "Neovim", "command": "/usr/local/bin/st /usr/bin/nvim"}
+                        "sh": "Bash",
+                        "txt": "Neovim"
                     }"#,
                 ),
             ),
@@ -69,7 +69,6 @@ impl Config {
     }
     //"Safe" to unwrap
     pub fn get<T: FromStr>(&self, k: &str) -> Option<T> {
-        //TODO: REMOVE MUT
         let res = self.map.get(k).unwrap().parse::<T>();
         if res.is_err() {
             log_error_str(&("Invalid configuration for key ".to_owned() + k));
@@ -122,7 +121,7 @@ impl Config {
     /*
      *  These two functions retrieve the extension mappings from the configuration
      * */
-    pub fn get_mapping_default(&self, extension: &str) -> Option<&Mapping> {
+    pub fn get_mapping_default(&self, extension: &str) -> Option<&String> {
         self.extension_mappings_default
             .as_ref()
             .unwrap()
@@ -151,7 +150,7 @@ impl Config {
 
     pub fn init_mappings_default(&mut self) -> Result<(), Error> {
         let config_string: String = self.get("extension_mappings_default").unwrap();
-        let json: HashMap<String, Mapping> = serde_json::from_str(&config_string)?;
+        let json: HashMap<String, String> = serde_json::from_str(&config_string)?;
 
         self.extension_mappings_default = Some(json);
         Ok(())
@@ -162,5 +161,13 @@ impl Config {
 
         self.extension_mappings_quick = Some(json);
         Ok(())
+    }
+
+    pub fn set_default_for(&mut self, ext: &str, name: &str) {
+        if let Some(ref mut mappings) = self.extension_mappings_default {
+            if let Some(value) = mappings.get_mut(ext) {
+                *value = name.into();
+            }
+        }
     }
 }

@@ -1,4 +1,6 @@
 import { StandardButton, Button, ListView } from "std-widgets.slint";
+import { PropertiesItem } from "properties.slint";
+import { Theme } from "theme.slint";
 
 struct OpenWithMapping {
     name: string,
@@ -9,37 +11,118 @@ export global ManageOpenWithAdapter {
     callback ok();
     callback cancel();
     callback open_with(bool);
+    callback set_default(string, string);
+    callback edit_mapping();
     in-out property <[OpenWithMapping]> mappings;
     in-out property <OpenWithMapping> default_mapping;
+    in-out property <int> selected_mapping: 0;
+    in property <string> extension: "?";
 }
 
 export component ManageOpenWithWindow inherits Window {
-    height: 500px;
+    height: 560px;
     width: 480px;
     in-out property <length> win_height <=> self.height;
     in-out property <length> win_width <=> self.width;
 
     title: "Manage Extension Mappings";
 
-    ListView {
+    title := Text {
+        height: 30px;
+        x: 10px;
+        y: 15px;
+        font-size: 14px;
+        text: "Currently viewing mappings for ." + ManageOpenWithAdapter.extension + " files";
+    }
+
+    list := Rectangle {
         width: parent.width - 20px;
         x: 10px;
-
+        y: title.height + 10px;
         height: 300px;
 
-        for m in ManageOpenWithAdapter.mappings: Rectangle {
-            height: 30px;
-            background: blue;
-            Text {
-                x: 0;
-                text: m.name;
+        border-color: white;
+        border-radius: 6px;
+        border-width: 1px;
+        ListView {
+            height: parent.height - 20px;
+            width: parent.width;
+            y: 10px;
+            for m[i] in ManageOpenWithAdapter.mappings: Rectangle {
+                in property <bool> is_default: m.name == ManageOpenWithAdapter.default_mapping.name;
+                background: i == ManageOpenWithAdapter.selected_mapping ? Theme.current.selected-file-color : transparent;
+                border-radius: 2px;
+                height: 30px;
+                width: parent.width - 20px;
+                x: parent.x + 10px;
+                TouchArea {
+                    pointer-event(e) => {
+                        if e.kind == PointerEventKind.down && e.button == PointerEventButton.left {
+                            ManageOpenWithAdapter.selected_mapping = i;
+                        }
+                    }
+                    Text {
+                        x: 2px;
+                        text: (is_default ? "(Default) " : "") + m.name;
+                    }
+
+                    Button {
+                        enabled: !is_default;
+                        x: parent.width - 10px - self.width;
+                        height: parent.height - 2px;
+                        text: "Set Default";
+                        clicked => {
+                            ManageOpenWithAdapter.selected_mapping = i;
+                            ManageOpenWithAdapter.default_mapping.name = m.name;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    move_up_btn := Button {
+        text: "↑ Add ↑";
+        x: parent.width - self.width - 10px;
+        y: list.y + list.height + 10px;
+    }
+
+    update_btn := Button {
+        text: "↻ Update ↺";
+        x: parent.width - self.width - move-up-btn.width - 20px;
+        y: list.y + list.height + 10px;
+    }
+
+    remove_btn := Button {
+        text: "✘ Remove ✘";
+        x: parent.width - self.width - move-up-btn.width - update-btn.width - 30px;
+        y: list.y + list.height + 10px;
+    }
+
+    detail := Rectangle {
+        width: parent.width - 20px;
+        x: 10px;
+        y: list.height + list.y + move-up-btn.height + 20px;
+        height: 100px;
+
+        border-color: white;
+        border-radius: 5px;
+        border-width: 1px;
+        VerticalLayout {
+            y: 30px;
+            height: parent.height;
+            width: root.width * 0.9;
+            alignment: LayoutAlignment.start;
+            spacing: 45px;
+
+            display := PropertiesItem {
+                display_text: "Display";
+                value: ManageOpenWithAdapter.mappings[ManageOpenWithAdapter.selected_mapping].name;
             }
 
-            if m.name == ManageOpenWithAdapter.default_mapping.name: Text {
-                x: parent.width - 10px - self.width;
-                horizontal-alignment: right;
-                text: "(default)";
-                font-weight: 800;
+            PropertiesItem {
+                display_text: "Command";
+                value: ManageOpenWithAdapter.mappings[ManageOpenWithAdapter.selected_mapping].cmd;
             }
         }
     }
@@ -78,6 +161,7 @@ export component ManageOpenWithWindow inherits Window {
         y: parent.height - 45px;
         clicked => {
             ManageOpenWithAdapter.ok();
+            ManageOpenWithAdapter.set_default(ManageOpenWithAdapter.extension, ManageOpenWithAdapter.default_mapping.name);
         }
     }
 }

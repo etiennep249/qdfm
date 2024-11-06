@@ -74,7 +74,7 @@ pub fn show_context_menu(x: f32, y: f32, file: FileItem, mw: Rc<Weak<MainWindow>
 
     if default_mapping.is_some() {
         menu.push(ContextItem {
-            display: ("Open With ".to_owned() + &default_mapping.unwrap().display_name).into(),
+            display: ("Open With ".to_owned() + &default_mapping.unwrap()).into(),
             callback_id: ContextCallback::OpenWithDefault as i32,
             shortcut: "".into(),
             icon: Image::from_rgb8(SharedPixelBuffer::new(0, 0)),

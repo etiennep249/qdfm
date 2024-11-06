@@ -17,8 +17,8 @@ pub fn setup_manage_open_with(adp: ManageOpenWithAdapter, file: FileItem) {
     if default.is_some() {
         let default = default.unwrap().clone();
         adp.set_default_mapping(OpenWithMapping {
-            cmd: default.command.into(),
-            name: default.display_name.into(),
+            cmd: "N/A".into(),
+            name: default.into(),
         });
     }
     adp.set_mappings(
@@ -60,4 +60,9 @@ pub fn open_with(win: Rc<Weak<ManageOpenWithWindow>>, with_term: bool, filename:
     } else {
         //TODO
     }
+}
+
+pub fn set_default(ext: SharedString, s: SharedString) {
+    let mut conf = config_lock();
+    conf.set_default_for(&ext, &s);
 }
