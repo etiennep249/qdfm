@@ -1,3 +1,4 @@
+use crate::context_menus::cm_file::open_with_default;
 use crate::core;
 use crate::globals::config_lock;
 use crate::sort::call_current_sort;
@@ -19,16 +20,28 @@ use super::context_menu::ContextCallback;
 use super::tabs::get_breadcrumbs_for;
 
 pub fn fileitem_doubleclicked(item: FileItem, _i: i32, mw: Rc<Weak<MainWindow>>) {
-    set_current_tab_file(
-        TabItem {
-            internal_path: item.path,
-            text: item.file_name.clone(),
-            text_length: item.file_name.len() as i32,
-            selected: true,
-        },
-        mw,
-        true,
-    );
+    if item.is_dir {
+        set_current_tab_file(
+            TabItem {
+                internal_path: item.path,
+                text: item.file_name.clone(),
+                text_length: item.file_name.len() as i32,
+                selected: true,
+            },
+            mw,
+            true,
+        );
+    } else {
+        //Care with config lock, needs to be dropped before call to open_with_default
+        let is_some = {
+            let conf = config_lock();
+            let default_mapping = conf.get_mapping_default(&item.extension);
+            default_mapping.is_some()
+        };
+        if is_some {
+            open_with_default(item);
+        }
+    }
 }
 
 pub fn set_current_tab_file(mut item: TabItem, mw: Rc<Weak<MainWindow>>, remember: bool) {
@@ -65,11 +78,10 @@ pub fn show_context_menu(x: f32, y: f32, file: FileItem, mw: Rc<Weak<MainWindow>
 
     let mut menu: Vec<ContextItem> = Vec::new();
 
-    //TODO: Get shortcuts from config file
     let conf = config_lock();
 
     let default_mapping = conf.get_mapping_default(&file.extension);
-    let quick_mapping = conf.get_mappings_quick(&file.extension);
+    //let quick_mapping = conf.get_mappings_quick(&file.extension);
 
     if default_mapping.is_some() {
         menu.push(ContextItem {
@@ -82,7 +94,7 @@ pub fn show_context_menu(x: f32, y: f32, file: FileItem, mw: Rc<Weak<MainWindow>
             internal_id: 0,
         });
     }
-    if !quick_mapping.is_empty() {
+    if !file.is_dir {
         menu.push(ContextItem {
             display: ("Open With").into(),
             callback_id: ContextCallback::OpenWith as i32,
@@ -93,6 +105,7 @@ pub fn show_context_menu(x: f32, y: f32, file: FileItem, mw: Rc<Weak<MainWindow>
             internal_id: 0,
         });
     }
+
     menu.push(ContextItem {
         display: "Cut".into(),
         callback_id: ContextCallback::Cut as i32,

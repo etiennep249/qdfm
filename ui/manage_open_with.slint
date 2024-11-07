@@ -14,7 +14,7 @@ export global ManageOpenWithAdapter {
     callback set_default(string, string);
     callback add_mapping(OpenWithMapping);
     callback remove_mapping(int);
-    in-out property <[OpenWithMapping]> mappings;
+    in-out property <[OpenWithMapping]> mappings: [];
     in-out property <OpenWithMapping> default_mapping;
     in-out property <int> selected_mapping: 0;
     in property <string> extension: "?";
@@ -43,7 +43,7 @@ export component ManageOpenWithWindow inherits Window {
         x: 10px;
         y: 15px;
         font-size: 14px;
-        text: "Currently viewing mappings for ." + ManageOpenWithAdapter.extension + " files";
+        text: ManageOpenWithAdapter.extension == "" ? "Currently viewing mappings for files without an extension" : ("Currently viewing mappings for ." + ManageOpenWithAdapter.extension + " files");
     }
 
     list := Rectangle {

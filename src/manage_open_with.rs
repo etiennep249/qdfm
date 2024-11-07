@@ -41,11 +41,11 @@ pub fn setup_manage_open_with(adp: ManageOpenWithAdapter, file: FileItem) {
 
 pub fn ok(win: Rc<Weak<ManageOpenWithWindow>>, ext: SharedString) {
     let win = win.unwrap();
-
-    config_lock().set_mappings_quick(
+    let adp = win.global::<ManageOpenWithAdapter>();
+    let mut conf = config_lock();
+    conf.set_mappings_quick(
         &ext,
-        win.global::<ManageOpenWithAdapter>()
-            .get_mappings()
+        adp.get_mappings()
             .iter()
             .map(|open_with_mapping| Mapping {
                 display_name: open_with_mapping.name.to_string(),
@@ -53,6 +53,8 @@ pub fn ok(win: Rc<Weak<ManageOpenWithWindow>>, ext: SharedString) {
             })
             .collect::<Vec<Mapping>>(),
     );
+
+    conf.set_default_for(&ext, &adp.get_default_mapping().name);
 
     win.hide().ok();
 }

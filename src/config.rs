@@ -167,6 +167,8 @@ impl Config {
         if let Some(ref mut mappings) = self.extension_mappings_default {
             if let Some(value) = mappings.get_mut(ext) {
                 *value = name.into();
+            } else {
+                mappings.insert(ext.to_string(), name.into());
             }
         }
     }
@@ -175,6 +177,8 @@ impl Config {
         if let Some(ref mut mappings) = self.extension_mappings_quick {
             if let Some(vec) = mappings.get_mut(ext) {
                 *vec = in_vec;
+            } else {
+                mappings.insert(ext.to_string(), in_vec);
             }
         }
     }
