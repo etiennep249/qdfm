@@ -1,5 +1,4 @@
 use magic::cookie::{DatabasePaths, Flags};
-use slint::Weak;
 use syscalls::syscall0;
 
 use crate::{
@@ -11,7 +10,6 @@ use std::{
     ffi::OsStr,
     fs::{self, Metadata},
     process::Command,
-    rc::Rc,
     time::SystemTime,
 };
 

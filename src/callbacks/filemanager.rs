@@ -46,7 +46,6 @@ pub fn set_current_tab_file(mut item: TabItem, mw: Rc<Weak<MainWindow>>, remembe
     tabs.set_breadcrumbs(Rc::new(VecModel::from(get_breadcrumbs_for(&item))).into());
     tabs.invoke_set_current_tab(item);
     let filemanager = w.global::<FileManager>();
-
     filemanager.set_files(Rc::new(VecModel::from(files)).into());
     call_current_sort(mw);
     filemanager.set_selected_index(-1);

@@ -1,12 +1,16 @@
 use std::rc::Rc;
 
-use slint::{ComponentHandle, SharedString, VecModel, Weak};
+use slint::{ComponentHandle, Model, SharedString, VecModel, Weak};
 
 use crate::{
+    config::Mapping,
     core::run_command,
     globals::config_lock,
     ui::*,
-    utils::{error_handling::log_error_str, file_picker::open_file_picker},
+    utils::{
+        error_handling::{log_error_str, user_notice},
+        file_picker::open_file_picker,
+    },
 };
 
 pub fn setup_manage_open_with(adp: ManageOpenWithAdapter, file: FileItem) {
@@ -35,8 +39,22 @@ pub fn setup_manage_open_with(adp: ManageOpenWithAdapter, file: FileItem) {
     );
 }
 
-pub fn ok(win: Rc<Weak<ManageOpenWithWindow>>) {
-    win.unwrap().hide().ok();
+pub fn ok(win: Rc<Weak<ManageOpenWithWindow>>, ext: SharedString) {
+    let win = win.unwrap();
+
+    config_lock().set_mappings_quick(
+        &ext,
+        win.global::<ManageOpenWithAdapter>()
+            .get_mappings()
+            .iter()
+            .map(|open_with_mapping| Mapping {
+                display_name: open_with_mapping.name.to_string(),
+                command: open_with_mapping.cmd.to_string(),
+            })
+            .collect::<Vec<Mapping>>(),
+    );
+
+    win.hide().ok();
 }
 
 pub fn cancel(win: Rc<Weak<ManageOpenWithWindow>>) {
@@ -58,11 +76,40 @@ pub fn open_with(win: Rc<Weak<ManageOpenWithWindow>>, with_term: bool, filename:
         run_command(&cmd);
         win.unwrap().hide().ok();
     } else {
-        //TODO
+        //TODO xdg not supported? Also parse error type
     }
 }
 
 pub fn set_default(ext: SharedString, s: SharedString) {
     let mut conf = config_lock();
     conf.set_default_for(&ext, &s);
+}
+
+pub fn add_mapping(win: Rc<Weak<ManageOpenWithWindow>>, mapping: OpenWithMapping) {
+    let win = win.unwrap();
+    if let Some(mappings) = win
+        .global::<ManageOpenWithAdapter>()
+        .get_mappings()
+        .as_any()
+        .downcast_ref::<VecModel<OpenWithMapping>>()
+    {
+        //Check to make sure it isn't already there.
+        if mappings.iter().find(|m| m.name == mapping.name).is_none() {
+            mappings.push(mapping);
+        } else {
+            user_notice("There is already an existing mapping with that name.");
+        }
+    }
+}
+
+pub fn remove_mapping(win: Rc<Weak<ManageOpenWithWindow>>, i: usize) {
+    let win = win.unwrap();
+    if let Some(mappings) = win
+        .global::<ManageOpenWithAdapter>()
+        .get_mappings()
+        .as_any()
+        .downcast_ref::<VecModel<OpenWithMapping>>()
+    {
+        mappings.remove(i);
+    }
 }

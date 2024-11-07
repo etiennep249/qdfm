@@ -9,9 +9,7 @@ use crate::{
     ui::*,
     utils::error_handling::log_error_str,
 };
-use slint::{
-    ComponentHandle, Image, LogicalPosition, Model, SharedPixelBuffer, SharedString, VecModel, Weak,
-};
+use slint::{ComponentHandle, Image, LogicalPosition, Model, SharedPixelBuffer, VecModel, Weak};
 use std::{path::Path, rc::Rc};
 
 pub fn open_with_default(item: FileItem) {
@@ -157,13 +155,19 @@ pub fn manage_quick(file: FileItem, mw: Rc<Weak<MainWindow>>) {
 
     adp.set_extension(file.extension.clone().into());
 
-    adp.on_ok(enclose! { (rc) move || manage_open_with::ok(rc.clone())});
+    adp.on_ok(enclose! { (rc) move |ext| manage_open_with::ok(rc.clone(), ext)});
     adp.on_cancel(enclose! { (rc) move || manage_open_with::cancel(rc.clone())});
     let filename = file.path.clone();
     adp.on_open_with(
         enclose! { (rc) move |term| manage_open_with::open_with(rc.clone(), term, filename.clone())},
     );
     adp.on_set_default(move |ext, s| manage_open_with::set_default(ext, s));
+    adp.on_remove_mapping(
+        enclose! { (rc) move |i| manage_open_with::remove_mapping(rc.clone(), i as usize)},
+    );
+    adp.on_add_mapping(
+        enclose! { (rc) move |mapping| manage_open_with::add_mapping(rc.clone(), mapping)},
+    );
 
     manage_open_with::setup_manage_open_with(adp, file);
 

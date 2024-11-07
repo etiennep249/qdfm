@@ -53,15 +53,14 @@ export global PropertiesAdapter {
 }
 
 export component PropertiesItem inherits Rectangle {
-    in property <string> display_text;
-    in-out property <string> value;
+    in-out property <string> display_text <=> label.text;
+    in-out property <string> value <=> input.text;
     in property <bool> readonly;
     in property <bool> enabled: true;
     private property <length> pad: 10px;
     forward-focus: input;
     label := Text {
         x: 0;
-        text: display_text;
         horizontal-alignment: right;
         width: parent.width * 0.15;
     }
@@ -69,7 +68,6 @@ export component PropertiesItem inherits Rectangle {
     input := LineEdit {
         x: label.width + pad;
         width: (parent.width * 0.85) - pad;
-        text <=> value;
         read-only: readonly;
         enabled: parent.enabled;
     }

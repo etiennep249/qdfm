@@ -170,4 +170,12 @@ impl Config {
             }
         }
     }
+
+    pub fn set_mappings_quick(&mut self, ext: &str, in_vec: Vec<Mapping>) {
+        if let Some(ref mut mappings) = self.extension_mappings_quick {
+            if let Some(vec) = mappings.get_mut(ext) {
+                *vec = in_vec;
+            }
+        }
+    }
 }
