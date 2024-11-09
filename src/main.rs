@@ -1,11 +1,16 @@
+use i_slint_backend_winit::{WinitWindowAccessor, WinitWindowEventResult};
 use qdfm::callbacks::utils::format_size_detailed;
 use qdfm::core::generate_files_for_path;
 use qdfm::drives;
 use qdfm::globals::config_lock;
 use qdfm::ui::*;
+use qdfm::utils::drag_and_drop::{dnd_move, dnd_press, dnd_release, move_file, xdnd_init};
+use qdfm::utils::error_handling::log_error_str;
 use qdfm::{callbacks::*, enclose};
 use slint::VecModel;
 use std::rc::Rc;
+use winit::event::WindowEvent;
+use winit::raw_window_handle::{HasWindowHandle, RawWindowHandle};
 
 fn main() {
     //Use winit
@@ -53,7 +58,54 @@ fn main() {
         qdfm::sort::sort_by_name(weak.clone(), true, true);
 
         conf.init_mappings();
+        let window_id = w.window().with_winit_window(|w| {
+            if let Ok(handle) = w.window_handle() {
+                match handle.as_raw() {
+                    RawWindowHandle::Xcb(h) => {
+                        return h.window.get();
+                    }
+                    RawWindowHandle::Xlib(h) => {
+                        return h.window as u32;
+                    }
+                    RawWindowHandle::Wayland(h) => {
+                        /*TODO*/
+                        return 0;
+                    }
+                    _ => (),
+                }
+            } else {
+                log_error_str("Could not get the window handle. Things may not work.");
+            }
+            0
+        });
+
+        if window_id.is_some() {
+            xdnd_init(window_id.unwrap());
+        }
     }
+
+    // Listen to window events
+    {
+        let weak = weak.clone();
+        w.window()
+            .on_winit_window_event(move |_, we: &WindowEvent| -> WinitWindowEventResult {
+                match we {
+                    WindowEvent::DroppedFile(buf) => {
+                        let win = weak.unwrap();
+                        let current_path = win
+                            .global::<TabsAdapter>()
+                            .invoke_get_current_tab()
+                            .internal_path;
+                        if let Some(buf_str) = buf.to_str() {
+                            move_file(weak.clone(), buf_str, &current_path);
+                        }
+                    }
+                    _ => {}
+                }
+                WinitWindowEventResult::Propagate
+            });
+    }
+
     //Callbacks
     {
         let sidebaritems = w.global::<SidebarItems>();
@@ -84,6 +136,10 @@ fn main() {
         );
         w.global::<FileManager>()
             .on_format_size(move |i| filemanager::format_size(i));
+        w.global::<FileManager>().on_pressed(move || dnd_press());
+        w.global::<FileManager>().on_released(move || dnd_release());
+        w.global::<FileManager>()
+            .on_moved(move |x, y| dnd_move(x, y));
         w.global::<FileManager>()
             .on_format_date(move |i| filemanager::format_date(i));
         w.global::<ContextAdapter>()

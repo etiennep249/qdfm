@@ -12,3 +12,4 @@ file.svg & folder.svg - CC-BY - Dazzle UI - https://www.svgrepo.com/author/Dazzl
 Dependencies:
 
 XDG_DESKTOP_PORTAL and an implementation.
+libxcb 1.12+

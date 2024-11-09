@@ -20,6 +20,9 @@ export global FileManager {
     /*The actual files listed*/
     in-out property <int> selected_index: -1;
     callback fileitem_doubleclicked(FileItem, int);
+    callback pressed();
+    callback released();
+    callback moved(float, float);
     pure callback format_size(_i64) -> string;
     pure callback format_date(_i64) -> string;
 }
@@ -108,6 +111,10 @@ export component FileWidget inherits Rectangle {
             FileManager.fileitem_doubleclicked(file, self_index);
         }
 
+        moved => {
+            FileManager.moved((self.absolute-position.x + self.mouse-x) / 1px, (self.absolute-position.y + self.mouse-y) / 1px);
+        }
+
         pointer-event(e) => {
             if (e.button == PointerEventButton.right && e.kind == PointerEventKind.down) {
                 //Right click
@@ -116,6 +123,9 @@ export component FileWidget inherits Rectangle {
                 FileManager.selected-index = self-index;
             } else if (e.button == PointerEventButton.left && e.kind == PointerEventKind.down) {
                 FileManager.selected-index = self-index;
+                FileManager.pressed();
+            } else if (e.button == PointerEventButton.left && e.kind == PointerEventKind.up) {
+                FileManager.released();
             }
         }
     }

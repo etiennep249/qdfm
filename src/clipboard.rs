@@ -4,7 +4,6 @@ use crate::{
 use arboard::{Clipboard, SetExtLinux};
 use slint::Weak;
 use std::{
-    ffi::OsStr,
     fs::read_link,
     path::Path,
     rc::Rc,
@@ -57,27 +56,21 @@ pub fn paste_file(path: &Path, mw: Rc<Weak<MainWindow>>) {
     }
     let text = text.replace("file://", "");
     let from = Path::new(&text);
-    let dir = std::fs::read_dir(path);
-    if dir.is_err() {
-        log_error_str(&format!("Cannot access {}", path.to_string_lossy()));
+    if from.file_name().is_none() {
+        log_error_str("Invalid filename");
         return;
     }
-    let already_exists = dir.unwrap().find(|entry| match entry {
-        Ok(f) => {
-            let b = from.file_name();
-            if b.is_some() {
-                return f.file_name() == b.unwrap_or(&(OsStr::new("")));
-            } else {
-                return false;
-            }
-        }
-        Err(_) => false,
-    });
 
-    if already_exists.is_some() {
+    let file_exists = file_exists_in_dir(&text, from.file_name().unwrap().to_str().unwrap());
+
+    if file_exists.is_err() {
+        return;
+    } else if file_exists.unwrap() == true {
+        //TODO
         log_error_str("already exists TODO prompt for rename");
         return;
     }
+
     let buf = CUT_BUFFER.get_or_init(|| Mutex::new(String::new())).lock();
     if buf.is_err() {
         log_error_str("Cut buffer could not be accessed.");
@@ -185,3 +178,48 @@ pub fn paste_file(path: &Path, mw: Rc<Weak<MainWindow>>) {
         false,
     );
 }
+
+pub fn file_exists_in_dir(dir_path: &str, filename: &str) -> Result<bool, ()> {
+    let dir = std::fs::read_dir(dir_path);
+    if dir.is_err() {
+        log_error_str(&format!("Cannot access {}", dir_path));
+        return Err(());
+    }
+    let already_exists = dir.unwrap().find(|entry| match entry {
+        Ok(f) => {
+            return f.file_name() == filename;
+        }
+        Err(_) => false,
+    });
+    if already_exists.is_some() {
+        return Ok(true);
+    } else {
+        return Ok(false);
+    }
+}
+
+/**
+  Called when a file is dropped in the window
+  The file is moved from its original location to the current folder
+*/
+pub fn move_file(mw: Rc<Weak<MainWindow>>, buf: &str, destination: &str) {
+    if file_exists_in_dir(destination, buf) == Ok(false) {
+        if let Some(filename) = buf.split("/").last() {
+            if std::fs::copy(buf, destination.to_owned() + "/" + &filename).is_ok() {
+                if std::fs::remove_file(buf).is_err() {
+                    log_error_str(
+                        "Could not remove the original file, so it was copied instead of moved.",
+                    );
+                }
+            }
+        }
+    }
+    //Refresh UI
+    set_current_tab_file(
+        mw.unwrap().global::<TabsAdapter>().invoke_get_current_tab(),
+        mw,
+        false,
+    );
+}
+
+//TODO BIG TODO implement drag and drop from qdfm to some other window ON WAYLAND

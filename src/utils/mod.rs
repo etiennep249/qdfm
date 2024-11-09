@@ -1,5 +1,6 @@
 use std::{fs::File, io::Read};
 
+pub mod drag_and_drop;
 pub mod error_handling;
 pub mod file_picker;
 pub mod types;
