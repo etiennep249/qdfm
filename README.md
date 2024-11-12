@@ -13,3 +13,8 @@ Dependencies:
 
 XDG_DESKTOP_PORTAL and an implementation.
 libxcb 1.12+
+
+Winit:
+
+Currently using a forked winit since it doesn't support drag and drop.
+event_processor.rs and platform::mod.rs are the only modified files

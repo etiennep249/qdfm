@@ -7,3 +7,4 @@ pub fn log_error_str(msg: &str) {
 pub fn user_notice(msg: &str) {
     println!("{}", msg);
 }
+pub fn log_debug(msg: &str) {}

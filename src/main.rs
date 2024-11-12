@@ -67,7 +67,7 @@ fn main() {
                     RawWindowHandle::Xlib(h) => {
                         return h.window as u32;
                     }
-                    RawWindowHandle::Wayland(h) => {
+                    RawWindowHandle::Wayland(_) => {
                         /*TODO*/
                         return 0;
                     }
@@ -136,10 +136,12 @@ fn main() {
         );
         w.global::<FileManager>()
             .on_format_size(move |i| filemanager::format_size(i));
-        w.global::<FileManager>().on_pressed(move || dnd_press());
-        w.global::<FileManager>().on_released(move || dnd_release());
         w.global::<FileManager>()
-            .on_moved(move |x, y| dnd_move(x, y));
+            .on_pressed(enclose! { (weak) move || dnd_press(weak.clone())});
+        w.global::<FileManager>()
+            .on_released(enclose! { (weak) move || dnd_release(weak.clone())});
+        w.global::<FileManager>()
+            .on_moved(enclose! { (weak) move |x, y| dnd_move(weak.clone(), x, y)});
         w.global::<FileManager>()
             .on_format_date(move |i| filemanager::format_date(i));
         w.global::<ContextAdapter>()
