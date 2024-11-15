@@ -50,9 +50,9 @@ export component MainWindow inherits Window {
         fullscreen-area.visible = false;
     }
 
-    callback context_menu(length, length, FileItem);
-    context-menu(x, y, file) => {
-        ContextAdapter.show_context_menu(x,y,file);
+    callback context_menu(length, length);
+    context-menu(x, y) => {
+        ContextAdapter.show_context_menu(x,y);
         ctx_popup.visible = true;
         fullscreen-area.visible = true;
     }
@@ -83,8 +83,8 @@ export component MainWindow inherits Window {
         TabWidget_ {
             tabs: TabsAdapter.tabs;
             current-tab: TabsAdapter.current-tab-idx;
-            context-menu(x, y, file) => {
-                root.context-menu(x,y,file);
+            context-menu(x, y) => {
+                root.context-menu(x,y);
             }
         }
     }

@@ -20,8 +20,8 @@ export global ContextAdapter {
     in-out property <length> secondary-y-pos;
     in property <int> current_hover_callback_id;
     in-out property <bool> is_secondary_visible: false;
-    callback show_context_menu(length, length, FileItem);
-    callback menuitem_click(FileItem, ContextItem);
+    callback show_context_menu(length, length);
+    callback menuitem_click(ContextItem);
     callback menuitem_hover(ContextItem);
 }
 
@@ -51,11 +51,11 @@ export component ContextMenuItem inherits Rectangle {
         }
 
         clicked => {
-            ContextAdapter.menuitem_click(FileManager.files[FileManager.selected_index], context_item);
+            ContextAdapter.menuitem_click(context_item);
         }
         changed has-hover => {
             if context_item.click-on-hover {
-                ContextAdapter.menuitem_click(FileManager.files[FileManager.selected_index], context_item);
+                ContextAdapter.menuitem_click(context_item);
             } else if !is_secondary {
                 ContextAdapter.menuitem_hover(context_item);
             }

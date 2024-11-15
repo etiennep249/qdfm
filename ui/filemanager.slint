@@ -16,15 +16,29 @@ export struct FileItem {
 //For current tab only
 export global FileManager {
     in-out property <string> path;
+
+    /*Allows higher performance when seleting single files*/
+    /*DO NOT USE TO CHECK IF A FILE IS SELECTED, IT'S VISUAL ONLY AND MIGHT BE WRONG*/
+    /*It may also use visual_selected even when it's a single selection.*/
+    /*This index also corresponds to the last selected index in a multi selection*/
+    in-out property <int> single_selected_index: -1;
+    in-out property <bool> is_single_selected: false;
+
     in-out property <[FileItem]> files;
-    /*The actual files listed*/
-    in-out property <int> selected_index: -1;
+    in-out property <[bool]> visual_selected;
     callback fileitem_doubleclicked(FileItem, int);
     callback pressed();
     callback released();
     callback moved(float, float);
     pure callback format_size(_i64) -> string;
     pure callback format_date(_i64) -> string;
+    callback is_index_selected(int) -> bool;
+    callback add_to_selected(int, FileItem);
+    callback remove_from_selected(int);
+    callback reset_selected();
+    callback set_single_selected(int, FileItem);
+    callback is_nothing_selected() -> bool;
+    callback shift_select(int);
 }
 
 export component NameWithIcon inherits Rectangle {
@@ -85,8 +99,9 @@ export component FileItemConditional inherits Rectangle {
 export component FileWidget inherits Rectangle {
     in property <FileItem> file;
     in property <int> self_index;
-    private property <bool> selected: self-index == FileManager.selected-index;
-    callback context-menu(length, length, FileItem);
+    private property <bool> selected: 
+    FileManager.is_single_selected ? FileManager.single_selected_index == self_index : FileManager.visual_selected[self_index];
+    callback context-menu(length, length);
     background: selected ? Theme.current.selected-file-color : transparent;
     border-radius: 2px;
     height: file.date.b == -1 ? 0 : 30px;
@@ -119,10 +134,28 @@ export component FileWidget inherits Rectangle {
             if (e.button == PointerEventButton.right && e.kind == PointerEventKind.down) {
                 //Right click
                 //Pass absolute x and y for the context menu
-                root.context-menu(self.absolute-position.x + self.mouse-x, self.absolute-position.y + self.mouse-y, file);
-                FileManager.selected-index = self-index;
+                if FileManager.is_index_selected(self_index) {
+                    root.context-menu(self.absolute-position.x + self.mouse-x, self.absolute-position.y + self.mouse-y);
+                } else {
+                    FileManager.set_single_selected(self_index, file);
+                    root.context-menu(self.absolute-position.x + self.mouse-x, self.absolute-position.y + self.mouse-y);
+                }
             } else if (e.button == PointerEventButton.left && e.kind == PointerEventKind.down) {
-                FileManager.selected-index = self-index;
+                if e.modifiers.control == true && !FileManager.is_index_selected(self_index) {
+                    FileManager.add_to_selected(self_index, file);
+                } else if e.modifiers.control == true && FileManager.is_index_selected(self_index) {
+                    FileManager.remove_from_selected(self_index);
+                } else if e.modifiers.shift == true && FileManager.is_nothing_selected() {
+                    FileManager.add_to_selected(self_index, file);
+                } else if e.modifiers.shift == true && FileManager.is_index_selected(self_index) {
+                    FileManager.shift_select(self_index);
+                } else if e.modifiers.shift == true && !FileManager.is_nothing_selected() {
+                    FileManager.shift_select(self_index);
+                } else if !FileManager.is_index_selected(self_index) {
+                    FileManager.set_single_selected(self_index, file);
+                } else if FileManager.is_index_selected(self_index) && !FileManager.is_single_selected {
+                    FileManager.set_single_selected(self_index, file);
+                }
                 FileManager.pressed();
             } else if (e.button == PointerEventButton.left && e.kind == PointerEventKind.up) {
                 FileManager.released();

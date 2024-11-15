@@ -5,19 +5,23 @@ use arboard::{Clipboard, SetExtLinux};
 use slint::Weak;
 use std::{
     fs::read_link,
-    path::Path,
+    path::{Path, PathBuf},
     rc::Rc,
+    str::FromStr,
     sync::{Mutex, OnceLock},
 };
 use walkdir::WalkDir;
 
-static CUT_BUFFER: OnceLock<Mutex<String>> = OnceLock::new();
+///Contains the files to delete after the paste
+static CUT_BUFFER: OnceLock<Mutex<Vec<FileItem>>> = OnceLock::new();
 
-pub fn copy_file(file: FileItem) {
+pub fn copy_file(files: Vec<FileItem>) {
     std::thread::spawn(move || {
         if let Ok(mut clip) = Clipboard::new() {
-            let ret = clip.set().wait().text(format!("file://{}", file.path));
-            if ret.is_err() {
+            let text = files
+                .iter()
+                .fold(String::new(), |lhs, rhs| lhs + "file://" + &rhs.path + "\n");
+            if clip.set().wait().text(text).is_err() {
                 log_error_str("Could not set the clipboard text");
             }
         } else {
@@ -26,19 +30,19 @@ pub fn copy_file(file: FileItem) {
     });
 }
 
-pub fn cut_file(file: FileItem) {
-    let buf = CUT_BUFFER.get_or_init(|| Mutex::new(String::new())).lock();
+pub fn cut_file(files: Vec<FileItem>) {
+    let buf = CUT_BUFFER.get_or_init(|| Mutex::new(Vec::new())).lock();
 
     if let Ok(mut buf_lock) = buf {
-        *buf_lock = String::from(&file.path);
-        drop(buf_lock);
+        *buf_lock = files.clone();
+        copy_file(files);
+    } else {
+        log_error_str("Could not get the cut buffer. The operation has been canceled.");
     }
-
-    copy_file(file);
 }
 
-//TODO: progress bar
-pub fn paste_file(path: &Path, mw: Rc<Weak<MainWindow>>) {
+//TODO: progress bar and thread
+pub fn paste_file(to_path: &Path, mw: Rc<Weak<MainWindow>>) {
     let clipboard = Clipboard::new();
     if clipboard.is_err() {
         log_error_str("Could not find a clipboard.");
@@ -54,122 +58,153 @@ pub fn paste_file(path: &Path, mw: Rc<Weak<MainWindow>>) {
         //Content is not a file, move on
         return;
     }
-    let text = text.replace("file://", "");
-    let from = Path::new(&text);
-    if from.file_name().is_none() {
-        log_error_str("Invalid filename");
-        return;
-    }
 
-    let file_exists = file_exists_in_dir(&text, from.file_name().unwrap().to_str().unwrap());
+    //Unwrap is supposedly infallible
+    let mut paths: Vec<PathBuf> = text
+        .split("\n")
+        .map(|s| PathBuf::from_str(&s.replace("file://", "")).unwrap())
+        .collect();
 
-    if file_exists.is_err() {
-        return;
-    } else if file_exists.unwrap() == true {
-        //TODO
-        log_error_str("already exists TODO prompt for rename");
-        return;
-    }
+    //Since the last path is going to contain a newline but not a separating one,
+    //Remove it from the list of paths
+    paths.remove(paths.len() - 1);
 
-    let buf = CUT_BUFFER.get_or_init(|| Mutex::new(String::new())).lock();
+    let buf = CUT_BUFFER.get_or_init(|| Mutex::new(Vec::new())).lock();
     if buf.is_err() {
         log_error_str("Cut buffer could not be accessed.");
         return;
     }
     //If this gets set to false, we don't delete the original in case of a Cut/Paste
     let mut all_success = true;
-    let buf_lock = buf.unwrap();
+    let mut buf_lock = buf.unwrap();
 
-    // We are copying a directory
-    if from.is_dir() {
-        let base_dir_path = from.parent().unwrap().to_string_lossy().to_string();
-        let mut dir = String::new();
-        //Loop over every file we have to copy
-        for entry_res in WalkDir::new(&from) {
-            if entry_res.is_err() {
-                //Not sure what could cause this, but do not interrupt everything for one bad file.
-                //Do not copy the original if this happens however.
-                log_error_str(&format!(
+    for path in paths.iter() {
+        // We are copying a directory
+        if path.is_dir() {
+            //Check if the folder already exists
+            let exists = file_exists_in_dir(
+                to_path.to_str().unwrap(),
+                path.file_name().unwrap().to_str().unwrap(),
+            );
+            if exists.is_err() {
+                return;
+            } else if exists == Ok(true) {
+                //TODO:
+                log_error_str("already exists TODO prompt for rename");
+                return;
+            }
+
+            let base_dir_path = path.parent().unwrap().to_string_lossy().to_string();
+            let mut dir = String::new();
+            //Loop over every file we have to copy
+            for entry_res in WalkDir::new(&path) {
+                if entry_res.is_err() {
+                    //Not sure what could cause this, but do not interrupt everything for one bad file.
+                    //Do not copy the original if this happens however.
+                    log_error_str(&format!(
                     "File cannot be accessed. Skipping. Perhaps a permission issue? Error Text: {}",
                     entry_res.err().unwrap().to_string(),
                 ));
-                all_success = false;
-                continue;
-            }
-            let entry = entry_res.unwrap();
-
-            //Sub-item is a directory
-            if entry.path().is_dir() {
-                dir = entry
-                    .path()
-                    .to_string_lossy()
-                    .strip_prefix(&(base_dir_path.clone() + "/"))
-                    .unwrap()
-                    .to_string();
-                let is_err = if entry.path_is_symlink() {
-                    std::os::unix::fs::symlink(read_link(entry.path()).unwrap(), path.join(&dir))
-                        .is_err()
-                } else {
-                    std::fs::create_dir_all(path.join(&dir)).is_err()
-                };
-                if is_err {
-                    log_error_str("Could not create the directory. Canceling operations. Some files may already have been copied.");
-                    return;
-                }
-            //Sub-item is a file
-            } else {
-                let to = path.join(&dir).join(entry.file_name());
-                let is_err = if entry.file_type().is_symlink() {
-                    std::os::unix::fs::symlink(&read_link(entry.path()).unwrap(), &to).is_err()
-                } else {
-                    std::fs::copy(entry.path(), to).is_err()
-                };
-                if is_err {
-                    log_error_str(&format!(
-                        "File could not be pasted: {}",
-                        entry.path().to_string_lossy()
-                    ));
                     all_success = false;
+                    continue;
+                }
+                let entry = entry_res.unwrap();
+
+                //Sub-item is a directory
+                if entry.path().is_dir() {
+                    dir = entry
+                        .path()
+                        .to_string_lossy()
+                        .strip_prefix(&(base_dir_path.clone() + "/"))
+                        .unwrap()
+                        .to_string();
+                    let is_err = if entry.path_is_symlink() {
+                        std::os::unix::fs::symlink(
+                            read_link(entry.path()).unwrap(),
+                            to_path.join(&dir),
+                        )
+                        .is_err()
+                    } else {
+                        std::fs::create_dir_all(to_path.join(&dir)).is_err()
+                    };
+                    if is_err {
+                        log_error_str("Could not create the directory. Canceling operations. Some files may already have been copied.");
+                        return;
+                    }
+                //Sub-item is a file
+                } else {
+                    let to = to_path.join(&dir).join(entry.file_name());
+                    let is_err = if entry.file_type().is_symlink() {
+                        std::os::unix::fs::symlink(&read_link(entry.path()).unwrap(), &to).is_err()
+                    } else {
+                        std::fs::copy(entry.path(), to).is_err()
+                    };
+                    if is_err {
+                        log_error_str(&format!(
+                            "File could not be pasted: {}",
+                            entry.path().to_string_lossy()
+                        ));
+                        all_success = false;
+                    }
                 }
             }
-        }
-    //We are copying a file
-    } else if from.is_file() {
-        //Copy the file to the new destination, or create a simlink if needed
-        let to = path.join(from.file_name().unwrap());
-        let is_err = if from.is_symlink() {
-            std::os::unix::fs::symlink(read_link(from).unwrap(), &to).is_err()
-        } else {
-            std::fs::copy(from, to).is_err()
-        };
-        if is_err {
-            log_error_str(&format!(
-                "File could not be copied: {}",
-                from.to_string_lossy()
-            ));
-            all_success = false;
+        //We are copying a file
+        } else if path.is_file() {
+            //Check if the folder already exists
+            let exists = file_exists_in_dir(
+                to_path.to_str().unwrap(),
+                path.file_name().unwrap().to_str().unwrap(),
+            );
+            if exists.is_err() {
+                return;
+            } else if exists == Ok(true) {
+                //TODO:
+                log_error_str("already exists TODO prompt for rename");
+                return;
+            }
+
+            //Copy the file to the new destination, or create a simlink if needed
+            let to = to_path.join(path.file_name().unwrap());
+            let is_err = if path.is_symlink() {
+                std::os::unix::fs::symlink(read_link(path).unwrap(), &to).is_err()
+            } else {
+                std::fs::copy(path, to).is_err()
+            };
+            if is_err {
+                log_error_str(&format!(
+                    "File could not be copied: {}",
+                    path.to_string_lossy()
+                ));
+                all_success = false;
+            }
         }
     }
 
     //If this was a Cut/Paste operation, delete the original (unless this was a partial success)
-    if *buf_lock == from.to_string_lossy() {
+    if buf_lock.len() > 0 {
         if !all_success {
             log_error_str(
-                "Not all operations succeeded, the original file/folder has not been deleted during the Cut/Paste operation.",
+                "Not all operations succeeded, the original file(s) and/or folder(s) have not been deleted during the Cut/Paste operation.",
             );
         } else {
-            if from.is_dir() {
-                if std::fs::remove_dir_all(from).is_err() {
-                    log_error_str(
-                        "Source directory could not be removed during Cut/Paste operation.",
-                    );
-                }
-            } else {
-                if std::fs::remove_file(from).is_err() {
-                    log_error_str("Source file could not be removed during Cut/Paste operation.");
+            for path in paths.iter() {
+                if path.is_dir() {
+                    if std::fs::remove_dir_all(path).is_err() {
+                        log_error_str(
+                            &format!("Source directory could not be removed during Cut/Paste operation. Directory: {}", path.to_str().unwrap_or("None"))
+                        );
+                    }
+                } else {
+                    if std::fs::remove_file(path).is_err() {
+                        log_error_str(&format!(
+                            "Source file could not be removed during Cut/Paste operation. File: {}",
+                            path.to_str().unwrap_or("None")
+                        ));
+                    }
                 }
             }
         }
+        *buf_lock = Vec::new();
     }
     //Refresh UI
     set_current_tab_file(
@@ -221,5 +256,3 @@ pub fn move_file(mw: Rc<Weak<MainWindow>>, buf: &str, destination: &str) {
         false,
     );
 }
-
-//TODO BIG TODO implement drag and drop from qdfm to some other window ON WAYLAND

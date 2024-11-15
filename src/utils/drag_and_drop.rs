@@ -1,32 +1,27 @@
 use super::error_handling::{log_debug, log_error_str};
 use crate::callbacks::filemanager::set_current_tab_file;
 use crate::clipboard::file_exists_in_dir;
-use crate::globals::{qdfm_win_id, set_qdfm_win_id, x_conn_lock};
+use crate::globals::{qdfm_win_id, selected_files_lock, set_qdfm_win_id, x_conn_lock};
 use crate::ui::*;
 use core::{panic, str};
-use dbus::arg::Append;
-use i_slint_backend_winit::WinitWindowAccessor;
-use slint::{ComponentHandle, Model, Weak};
+
+use slint::{ComponentHandle, Weak};
 use std::collections::HashMap;
 use std::error::Error;
 use std::ops::Shl;
 use std::rc::Rc;
-use std::sync::mpsc::{channel, Receiver, Sender};
+use std::sync::mpsc::Receiver;
 use std::sync::{Mutex, MutexGuard, OnceLock};
-use std::thread::{sleep, sleep_ms, spawn};
+use std::thread::spawn;
 use std::time::Duration;
-use winit::window::{Cursor, CursorIcon};
-use x11rb::protocol::xproto::{MapState, SELECTION_NOTIFY_EVENT};
+use x11rb::protocol::xproto::SELECTION_NOTIFY_EVENT;
 
-use x11rb::connection::{Connection, RequestConnection};
-use x11rb::protocol::xinput::PropertyEvent;
+use x11rb::connection::Connection;
 use x11rb::protocol::xproto::{
-    Allow, Atom, AtomEnum, ChangeWindowAttributesAux, ClientMessageData, ClientMessageEvent,
-    ConnectionExt, EventMask, PropMode, SelectionNotifyEvent,
+    Atom, AtomEnum, ClientMessageEvent, ConnectionExt, EventMask, PropMode, SelectionNotifyEvent,
 };
 use x11rb::protocol::Event;
 use x11rb::rust_connection::RustConnection;
-use x11rb::wrapper::ConnectionExt as _;
 use x11rb::CURRENT_TIME;
 
 /**
@@ -72,6 +67,7 @@ struct XdndInfo {
     got_status: bool, //We don't send more than one XdndPosition per XdndStatus.
     version: u32,
     data_to_send: String,
+    is_dnd_drag: bool,
 }
 // Sync to be accessible in the listener thread
 static XDND_INFO: OnceLock<Mutex<XdndInfo>> = OnceLock::new();
@@ -86,6 +82,7 @@ fn xdnd_info_lock() -> MutexGuard<'static, XdndInfo> {
                 got_status: true, //Start to true for the first XdndPosition
                 version: 0,
                 data_to_send: String::new(),
+                is_dnd_drag: false,
             })
         })
         .lock()
@@ -108,23 +105,24 @@ fn reset_xdndinfo(update_has_listening_thread: bool) {
     info.got_status = true;
     info.version = 0;
     info.data_to_send = String::new();
+    info.is_dnd_drag = false;
 }
 
-pub fn dnd_press(mw: Rc<Weak<MainWindow>>) {
+pub fn dnd_press(_: Rc<Weak<MainWindow>>) {
+    let files = selected_files_lock();
+    if files.len() != 1 {
+        return;
+    }
+
     let c = x_conn_lock();
     let qdfm_id = qdfm_win_id();
 
     //The current window is currently our own
     let mut info = xdnd_info_lock();
     info.current_window = qdfm_id;
-    let mw = mw.unwrap();
-    let fm = mw.global::<FileManager>();
-    info.data_to_send = String::from("file://")
-        + &fm
-            .get_files()
-            .row_data(fm.get_selected_index() as usize)
-            .unwrap()
-            .path;
+    info.is_dnd_drag = true;
+
+    info.data_to_send = String::from("file://") + &files.iter().next().unwrap().1.path;
     if c.set_selection_owner(qdfm_id, atom("XdndSelection"), CURRENT_TIME)
         .is_err()
     {
@@ -133,6 +131,9 @@ pub fn dnd_press(mw: Rc<Weak<MainWindow>>) {
 }
 
 pub fn dnd_release(_: Rc<Weak<MainWindow>>) {
+    if !xdnd_info_lock().is_dnd_drag {
+        return;
+    }
     let xdnd_info = xdnd_info_lock();
     let target_win = xdnd_info.exchange_started_with;
     let can_accept = xdnd_info.can_accept;
@@ -152,6 +153,9 @@ pub fn dnd_release(_: Rc<Weak<MainWindow>>) {
 }
 
 pub fn dnd_move(_: Rc<Weak<MainWindow>>, x: f32, y: f32) {
+    if !xdnd_info_lock().is_dnd_drag {
+        return;
+    }
     let c = x_conn_lock();
 
     //Loop over every screen to look for the window we are hovering

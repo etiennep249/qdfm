@@ -3,7 +3,10 @@ import {_i64} from "utils.slint";
 import { LineEdit, Button, StandardButton, TabWidget, CheckBox, ComboBox } from "std-widgets.slint";
 
 export global PropertiesAdapter {
-    in property <FileItem> file;
+
+    //Important to save the selected files here as the rust global selected files may have changed
+    //Since this window was opened.
+    in-out property <[FileItem]> files;
 
     //I do not use the type from file as it may not be accurate. (extension based)
     //This type is longer to compute but more accurate.
@@ -15,6 +18,9 @@ export global PropertiesAdapter {
     in property <string> ctime;
 
     in-out property <string> filename;
+    in-out property <string> location; //Multi-file only
+    in property <_i64> directory_size;
+    in property <bool> is_directory_calculated: false;
 
     /*Permissions*/
     in property <[string]> owners;
@@ -22,12 +28,21 @@ export global PropertiesAdapter {
     in-out property <string> owner_value;
     in-out property <string> group_value;
     in property <bool> is_root;
-    in property <int> perm_bits;
+
+    //Storing it all in one int doesn't really work
+    //Since slint has no bitwise AND and using a callback
+    //Has issues with the property not being notified
+    //As it's only indirectly used as an argument
+    in property <bool> o_r;
+    in property <bool> o_w;
+    in property <bool> o_x;
+    in property <bool> g_r;
+    in property <bool> g_w;
+    in property <bool> g_x;
+    in property <bool> a_r;
+    in property <bool> a_w;
+    in property <bool> a_x;
     in property <string> perm_bits_str;
-
-    in property <_i64> directory_size;
-    in property <bool> is_directory_calculated: false;
-
     in property <bool> gid_dirty: false;
     in property <bool> uid_dirty: false;
     in property <bool> perm_bits_dirty: false;
@@ -46,10 +61,8 @@ export global PropertiesAdapter {
     pure callback format_size_detailed(_i64) -> string;
     callback cancel();
     callback ok();
-    pure callback bitmask(int, int) -> bool;
 
-    callback recalculate_bitmask(int);
-    callback validate_perm_bits_str(string);
+    callback recalculate_bitmask();
 }
 
 export component PropertiesItem inherits Rectangle {
@@ -104,8 +117,8 @@ export component PropertiesWindow inherits Window {
 
                 PropertiesItem {
                     width: parent.width;
-                    display_text: "Path:";
-                    value: PropertiesAdapter.file.path;
+                    display_text: PropertiesAdapter.files.length == 1 ? "Path:" : "Located:";
+                    value: PropertiesAdapter.files.length == 1 ? PropertiesAdapter.files[0].path : PropertiesAdapter.location;
                     readonly: true;
                 }
 
@@ -126,15 +139,15 @@ export component PropertiesWindow inherits Window {
                 PropertiesItem {
                     width: parent.width;
                     display_text: "Size:";
-                    value: PropertiesAdapter.file.is-dir ? PropertiesAdapter.format_size_detailed(PropertiesAdapter.directory_size) : PropertiesAdapter.format_size_detailed(PropertiesAdapter.file.size);
+                    value: PropertiesAdapter.files[0].is-dir || PropertiesAdapter.files.length > 1 ? PropertiesAdapter.format_size_detailed(PropertiesAdapter.directory_size) : PropertiesAdapter.format_size_detailed(PropertiesAdapter.files[0].size);
                     readonly: true;
-                    enabled: !PropertiesAdapter.file.is-dir || (PropertiesAdapter.file.is-dir && PropertiesAdapter.is_directory_calculated);
+                    enabled: !PropertiesAdapter.files[0].is-dir || PropertiesAdapter.is_directory_calculated;
                 }
 
                 PropertiesItem {
                     width: parent.width;
                     display_text: "Modified:";
-                    value: FileManager.format_date(PropertiesAdapter.file.date);
+                    value: PropertiesAdapter.files.length == 1 ? FileManager.format_date(PropertiesAdapter.files[0].date) : "N/A";
                     readonly: true;
                 }
 
@@ -207,10 +220,9 @@ export component PropertiesWindow inherits Window {
                     o_r := CheckBox {
                         width: parent.width * 0.12;
                         //100 000 000
-                        private property <int> mask: 256;
-                        checked: PropertiesAdapter.bitmask(mask, PropertiesAdapter.perm_bits);
+                        checked <=> PropertiesAdapter.o_r;
                         toggled => {
-                            PropertiesAdapter.recalculate_bitmask(mask);
+                            PropertiesAdapter.recalculate_bitmask();
                             PropertiesAdapter.perm_bits_dirty = true;
                         }
                     }
@@ -218,10 +230,9 @@ export component PropertiesWindow inherits Window {
                     o_w := CheckBox {
                         width: parent.width * 0.12;
                         //010 000 000
-                        private property <int> mask: 128;
-                        checked: PropertiesAdapter.bitmask(mask, PropertiesAdapter.perm_bits);
+                        checked <=> PropertiesAdapter.o_w;
                         toggled => {
-                            PropertiesAdapter.recalculate_bitmask(mask);
+                            PropertiesAdapter.recalculate_bitmask();
                             PropertiesAdapter.perm_bits_dirty = true;
                         }
                     }
@@ -229,10 +240,9 @@ export component PropertiesWindow inherits Window {
                     o_x := CheckBox {
                         width: parent.width * 0.12;
                         //001 000 000
-                        private property <int> mask: 64;
-                        checked: PropertiesAdapter.bitmask(mask, PropertiesAdapter.perm_bits);
+                        checked <=> PropertiesAdapter.o_x;
                         toggled => {
-                            PropertiesAdapter.recalculate_bitmask(mask);
+                            PropertiesAdapter.recalculate_bitmask();
                             PropertiesAdapter.perm_bits_dirty = true;
                         }
                     }
@@ -247,10 +257,9 @@ export component PropertiesWindow inherits Window {
                     g_r := CheckBox {
                         width: parent.width * 0.12;
                         //000 100 000
-                        private property <int> mask: 32;
-                        checked: PropertiesAdapter.bitmask(mask, PropertiesAdapter.perm_bits);
+                        checked <=> PropertiesAdapter.g_r;
                         toggled => {
-                            PropertiesAdapter.recalculate_bitmask(mask);
+                            PropertiesAdapter.recalculate_bitmask();
                             PropertiesAdapter.perm_bits_dirty = true;
                         }
                     }
@@ -258,10 +267,9 @@ export component PropertiesWindow inherits Window {
                     g_w := CheckBox {
                         width: parent.width * 0.12;
                         //000 010 000
-                        private property <int> mask: 16;
-                        checked: PropertiesAdapter.bitmask(mask, PropertiesAdapter.perm_bits);
+                        checked <=> PropertiesAdapter.g_w;
                         toggled => {
-                            PropertiesAdapter.recalculate_bitmask(mask);
+                            PropertiesAdapter.recalculate_bitmask();
                             PropertiesAdapter.perm_bits_dirty = true;
                         }
                     }
@@ -269,10 +277,9 @@ export component PropertiesWindow inherits Window {
                     g_x := CheckBox {
                         width: parent.width * 0.12;
                         //000 001 000
-                        private property <int> mask: 8;
-                        checked: PropertiesAdapter.bitmask(mask, PropertiesAdapter.perm_bits);
+                        checked <=> PropertiesAdapter.g_x;
                         toggled => {
-                            PropertiesAdapter.recalculate_bitmask(mask);
+                            PropertiesAdapter.recalculate_bitmask();
                             PropertiesAdapter.perm_bits_dirty = true;
                         }
                     }
@@ -287,10 +294,9 @@ export component PropertiesWindow inherits Window {
                     a_r := CheckBox {
                         width: parent.width * 0.12;
                         //000 000 100
-                        private property <int> mask: 4;
-                        checked: PropertiesAdapter.bitmask(mask, PropertiesAdapter.perm_bits);
+                        checked <=> PropertiesAdapter.a_r;
                         toggled => {
-                            PropertiesAdapter.recalculate_bitmask(mask);
+                            PropertiesAdapter.recalculate_bitmask();
                             PropertiesAdapter.perm_bits_dirty = true;
                         }
                     }
@@ -298,10 +304,9 @@ export component PropertiesWindow inherits Window {
                     a_w := CheckBox {
                         width: parent.width * 0.12;
                         //000 000 010
-                        private property <int> mask: 2;
-                        checked: PropertiesAdapter.bitmask(mask, PropertiesAdapter.perm_bits);
+                        checked <=> PropertiesAdapter.a_w;
                         toggled => {
-                            PropertiesAdapter.recalculate_bitmask(mask);
+                            PropertiesAdapter.recalculate_bitmask();
                             PropertiesAdapter.perm_bits_dirty = true;
                         }
                     }
@@ -309,10 +314,9 @@ export component PropertiesWindow inherits Window {
                     a_x := CheckBox {
                         width: parent.width * 0.12;
                         //000 000 001
-                        private property <int> mask: 1;
-                        checked: PropertiesAdapter.bitmask(mask, PropertiesAdapter.perm_bits);
+                        checked <=> PropertiesAdapter.a_x;
                         toggled => {
-                            PropertiesAdapter.recalculate_bitmask(mask);
+                            PropertiesAdapter.recalculate_bitmask();
                             PropertiesAdapter.perm_bits_dirty = true;
                         }
                     }

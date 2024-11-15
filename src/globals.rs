@@ -1,9 +1,10 @@
 use std::{
-    ptr::null_mut,
+    collections::HashMap,
     sync::{Mutex, MutexGuard, OnceLock},
 };
 
 use crate::config::Config;
+use crate::ui::*;
 use sysinfo::{System, SystemExt};
 use x11rb::{
     connect,
@@ -26,6 +27,30 @@ pub fn config_lock() -> MutexGuard<'static, Config> {
         Err(_) => {
             panic!("Could not get SYSINFO lock.");
         }
+    }
+}
+
+//(index, file)
+static SELECTED_FILES: OnceLock<Mutex<HashMap<i32, FileItem>>> = OnceLock::new();
+pub fn selected_files_lock() -> MutexGuard<'static, HashMap<i32, FileItem>> {
+    match SELECTED_FILES
+        .get_or_init(|| Mutex::new(HashMap::new()))
+        .lock()
+    {
+        Ok(e) => e,
+        Err(_) => {
+            panic!("Could not get SELECTED_FILES lock.");
+        }
+    }
+}
+///Returns the selected file if there is exactly one selected. Otherwise returns None
+pub fn get_selected_file(
+    selected_files: &MutexGuard<'static, HashMap<i32, FileItem>>,
+) -> Option<FileItem> {
+    if selected_files.len() != 1 {
+        None
+    } else {
+        Some(selected_files.iter().next().unwrap().1.clone())
     }
 }
 

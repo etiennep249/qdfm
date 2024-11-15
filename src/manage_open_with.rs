@@ -13,30 +13,36 @@ use crate::{
     },
 };
 
-pub fn setup_manage_open_with(adp: ManageOpenWithAdapter, file: FileItem) {
+pub fn setup_manage_open_with(adp: ManageOpenWithAdapter, files: Rc<Vec<FileItem>>) {
     let conf = config_lock();
-    let default = conf.get_mapping_default(&file.extension);
-    let mappings = conf.get_mappings_quick(&file.extension);
+    let ext = adp.get_extension();
 
-    if default.is_some() {
-        let default = default.unwrap().clone();
-        adp.set_default_mapping(OpenWithMapping {
-            cmd: "N/A".into(),
-            name: default.into(),
-        });
+    //If there is one file or all the files have the same extension
+    if ext != "NOEXT" {
+        let file = files[0].clone();
+        let default = conf.get_mapping_default(&file.extension);
+        let mappings = conf.get_mappings_quick(&file.extension);
+
+        if default.is_some() {
+            let default = default.unwrap().clone();
+            adp.set_default_mapping(OpenWithMapping {
+                cmd: "N/A".into(),
+                name: default.into(),
+            });
+        }
+        adp.set_mappings(
+            Rc::new(VecModel::from(
+                mappings
+                    .iter()
+                    .map(|m| OpenWithMapping {
+                        cmd: SharedString::from(&m.command),
+                        name: SharedString::from(&m.display_name),
+                    })
+                    .collect::<Vec<OpenWithMapping>>(),
+            ))
+            .into(),
+        );
     }
-    adp.set_mappings(
-        Rc::new(VecModel::from(
-            mappings
-                .iter()
-                .map(|m| OpenWithMapping {
-                    cmd: SharedString::from(&m.command),
-                    name: SharedString::from(&m.display_name),
-                })
-                .collect::<Vec<OpenWithMapping>>(),
-        ))
-        .into(),
-    );
 }
 
 pub fn ok(win: Rc<Weak<ManageOpenWithWindow>>, ext: SharedString) {
@@ -63,19 +69,21 @@ pub fn cancel(win: Rc<Weak<ManageOpenWithWindow>>) {
     win.unwrap().hide().ok();
 }
 
-pub fn open_with(win: Rc<Weak<ManageOpenWithWindow>>, with_term: bool, filename: SharedString) {
+pub fn open_with(win: Rc<Weak<ManageOpenWithWindow>>, with_term: bool, files: Rc<Vec<FileItem>>) {
     if let Ok(file_chosen) = open_file_picker() {
-        let cmd = if !with_term {
-            file_chosen + " " + &filename
-        } else {
-            if let Some(term) = config_lock().get::<String>("terminal") {
-                term + " " + &file_chosen + " " + &filename
+        for file in files.iter() {
+            let cmd = if !with_term {
+                file_chosen.to_owned() + " " + &file.file_name
             } else {
-                log_error_str("No valid terminal. Fix your config.");
-                return;
-            }
-        };
-        run_command(&cmd);
+                if let Some(term) = config_lock().get::<String>("terminal") {
+                    term + " " + &file_chosen + " " + &file.file_name
+                } else {
+                    log_error_str("No valid terminal. Fix your config.");
+                    return;
+                }
+            };
+            run_command(&cmd);
+        }
         win.unwrap().hide().ok();
     } else {
         //TODO xdg not supported? Also parse error type

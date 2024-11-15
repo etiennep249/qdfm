@@ -17,6 +17,8 @@ export global ManageOpenWithAdapter {
     in-out property <[OpenWithMapping]> mappings: [];
     in-out property <OpenWithMapping> default_mapping;
     in-out property <int> selected_mapping: 0;
+
+    //If equal to NOEXT, then multiple files are selected with different extensions
     in property <string> extension: "?";
 }
 
@@ -43,7 +45,7 @@ export component ManageOpenWithWindow inherits Window {
         x: 10px;
         y: 15px;
         font-size: 14px;
-        text: ManageOpenWithAdapter.extension == "" ? "Currently viewing mappings for files without an extension" : ("Currently viewing mappings for ." + ManageOpenWithAdapter.extension + " files");
+        text: ManageOpenWithAdapter.extension == "" ? "Currently viewing mappings for files without an extension" : ManageOpenWithAdapter.extension == "NOEXT" ? "Multi-file Selection. Mappings will be unavailable." : ("Currently viewing mappings for ." + ManageOpenWithAdapter.extension + " files");
     }
 
     list := Rectangle {
@@ -110,7 +112,7 @@ export component ManageOpenWithWindow inherits Window {
         text: "↑ Add ↑";
         x: parent.width - self.width - 10px;
         y: list.y + list.height + 10px;
-
+        enabled: ManageOpenWithAdapter.extension != "NOEXT";
         clicked => {
             ManageOpenWithAdapter.add_mapping({ name: display.value, cmd: cmd.value });
             ManageOpenWithAdapter.selected_mapping = ManageOpenWithAdapter.mappings.length - 1;
@@ -123,7 +125,7 @@ export component ManageOpenWithWindow inherits Window {
         text: "↻ Update ↺";
         x: parent.width - self.width - move-up-btn.width - 20px;
         y: list.y + list.height + 10px;
-
+        enabled: ManageOpenWithAdapter.extension != "NOEXT";
         clicked => {
             ManageOpenWithAdapter.mappings[ManageOpenWithAdapter.selected_mapping] = { name: display.value, cmd: cmd.value };
             display.clear-focus();
@@ -135,6 +137,7 @@ export component ManageOpenWithWindow inherits Window {
         text: "✘ Remove ✘";
         x: parent.width - self.width - move-up-btn.width - update-btn.width - 30px;
         y: list.y + list.height + 10px;
+        enabled: ManageOpenWithAdapter.extension != "NOEXT";
         clicked => {
             ManageOpenWithAdapter.remove_mapping(ManageOpenWithAdapter.selected_mapping);
             ManageOpenWithAdapter.selected_mapping = -1;
@@ -161,11 +164,13 @@ export component ManageOpenWithWindow inherits Window {
 
             display := PropertiesItem {
                 display_text: "Name";
+                enabled: ManageOpenWithAdapter.extension != "NOEXT";
                 value: ManageOpenWithAdapter.mappings[ManageOpenWithAdapter.selected_mapping].name;
             }
 
             cmd := PropertiesItem {
                 display_text: "Command";
+                enabled: ManageOpenWithAdapter.extension != "NOEXT";
                 value: ManageOpenWithAdapter.mappings[ManageOpenWithAdapter.selected_mapping].cmd;
             }
         }
@@ -203,6 +208,7 @@ export component ManageOpenWithWindow inherits Window {
         text: "Save";
         x: parent.width - cancel-btn.width - open_with_btn.width - open-with-term-btn.width - self.width - 40px;
         y: parent.height - 45px;
+        enabled: ManageOpenWithAdapter.extension != "NOEXT";
         clicked => {
             ManageOpenWithAdapter.ok(ManageOpenWithAdapter.extension);
             ManageOpenWithAdapter.set_default(ManageOpenWithAdapter.extension, ManageOpenWithAdapter.default_mapping.name);

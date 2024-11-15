@@ -1,3 +1,4 @@
+use filemanager::set_current_tab_file;
 use i_slint_backend_winit::{WinitWindowAccessor, WinitWindowEventResult};
 use qdfm::callbacks::utils::format_size_detailed;
 use qdfm::core::generate_files_for_path;
@@ -24,6 +25,8 @@ fn main() {
     let prop_win = PropertiesWindow::new().unwrap();
     let prop_weak = Rc::new(prop_win.as_weak());
 
+    //TODO: Review what can be done in threads
+
     let weak = Rc::new(w.as_weak());
     //Initialization sequence
     //TODO: Optimize this
@@ -43,7 +46,7 @@ fn main() {
             .set_headers(Rc::new(conf.get_headers()).into());
 
         //Temp, default breadcrumbs path
-        w.global::<TabsAdapter>().set_breadcrumbs(
+        /*w.global::<TabsAdapter>().set_breadcrumbs(
             [TabItem {
                 internal_path: "/".into(),
                 text: "".into(),
@@ -51,6 +54,16 @@ fn main() {
                 text_length: 1,
             }]
             .into(),
+        );*/
+        set_current_tab_file(
+            TabItem {
+                internal_path: "/".into(),
+                text: "".into(),
+                selected: false,
+                text_length: 1,
+            },
+            weak.clone(),
+            false,
         );
 
         //Default sort
@@ -134,19 +147,30 @@ fn main() {
         w.global::<ColumnHeadersAdapter>().on_adjust_size(
             enclose! { (weak) move |header, offset, original| headers::on_header_resize(header, offset, original, weak.clone())},
         );
-        w.global::<FileManager>()
-            .on_format_size(move |i| filemanager::format_size(i));
-        w.global::<FileManager>()
-            .on_pressed(enclose! { (weak) move || dnd_press(weak.clone())});
-        w.global::<FileManager>()
-            .on_released(enclose! { (weak) move || dnd_release(weak.clone())});
-        w.global::<FileManager>()
-            .on_moved(enclose! { (weak) move |x, y| dnd_move(weak.clone(), x, y)});
-        w.global::<FileManager>()
-            .on_format_date(move |i| filemanager::format_date(i));
-        w.global::<ContextAdapter>()
-            .on_show_context_menu(
-                 enclose! { (weak) move |x,y,file| filemanager::show_context_menu(x,y,file,weak.clone())});
+
+        let file_manager = w.global::<FileManager>();
+        file_manager.on_format_size(move |i| filemanager::format_size(i));
+        file_manager.on_pressed(enclose! { (weak) move || dnd_press(weak.clone())});
+        file_manager.on_released(enclose! { (weak) move || dnd_release(weak.clone())});
+        file_manager.on_moved(enclose! { (weak) move |x, y| dnd_move(weak.clone(), x, y)});
+        file_manager.on_format_date(move |i| filemanager::format_date(i));
+        file_manager.on_add_to_selected(
+            enclose! { (weak) move |i, f| filemanager::add_to_selected(weak.clone(), i, f)},
+        );
+        file_manager.on_is_index_selected(|i| filemanager::is_index_selected(i));
+        file_manager.on_remove_from_selected(
+            enclose! { (weak) move |i| filemanager::remove_from_selected(weak.clone(), i)},
+        );
+        file_manager.on_reset_selected(
+            enclose! { (weak) move || filemanager::reset_selected(weak.clone())},
+        );
+        file_manager.on_set_single_selected(
+            enclose! { (weak) move |i, f| filemanager::set_single_selected(weak.clone(),i, f)},
+        );
+        file_manager
+            .on_shift_select(enclose! { (weak) move |i| filemanager::shift_select(weak.clone(),i)});
+        file_manager.on_is_nothing_selected(move || filemanager::is_nothing_selected());
+
         prop_win
             .global::<PropertiesAdapter>()
             .on_format_size_detailed(move |i| format_size_detailed(i));
@@ -161,16 +185,17 @@ fn main() {
             .on_cancel(enclose! { (prop_weak) move || properties::cancel(prop_weak.clone())});
         prop_win
             .global::<PropertiesAdapter>()
-            .on_bitmask(move |a, b| properties::bitmask(a, b));
-        prop_win
-            .global::<PropertiesAdapter>()
             .on_recalculate_bitmask(
-                enclose! { (prop_weak) move |m| properties::recalculate_bitmask(m, prop_weak.clone())},
+                enclose! { (prop_weak) move || properties::recalculate_bitmask(prop_weak.clone())},
             );
-        w.global::<ContextAdapter>().on_menuitem_click(
-            enclose! { (weak) move |f, callback_item| context_menu::menuitem_click(f,callback_item, weak.clone(), prop_win.as_weak())},
+        let ctx_adp = w.global::<ContextAdapter>();
+        ctx_adp.on_show_context_menu(
+            enclose! { (weak) move |x,y| filemanager::show_context_menu(x,y,weak.clone())},
         );
-        w.global::<ContextAdapter>().on_menuitem_hover(
+        ctx_adp.on_menuitem_click(
+            enclose! { (weak) move |callback_item| context_menu::menuitem_click(callback_item, weak.clone(), prop_win.as_weak())},
+        );
+        ctx_adp.on_menuitem_hover(
             enclose! { (weak) move |callback_item| context_menu::menuitem_hover(callback_item, weak.clone())},
         );
     }
