@@ -8,8 +8,9 @@ import { ColumnHeadersAdapter } from "colheaders.slint";
 import { ContextMenu, ContextAdapter, ContextItem, SecondaryContextMenu } from "context-menu.slint";
 import { PropertiesWindow, PropertiesAdapter } from "properties.slint";
 import { ManageOpenWithAdapter, ManageOpenWithWindow } from "manage_open_with.slint";
+import { ProgressWindow, ProgressAdapter } from "progress_window.slint";
 
-export { FileManager, SidebarItems, TabsAdapter, Theme, ColumnHeadersAdapter, ContextAdapter, ContextItem, PropertiesWindow, PropertiesAdapter , ManageOpenWithWindow, ManageOpenWithAdapter}
+export { FileManager, SidebarItems, TabsAdapter, Theme, ColumnHeadersAdapter, ContextAdapter, ContextItem, PropertiesWindow, PropertiesAdapter , ManageOpenWithWindow, ManageOpenWithAdapter, ProgressWindow, ProgressAdapter}
 
 export component MainWindow inherits Window {
     in-out property <length> win_height <=> self.height;

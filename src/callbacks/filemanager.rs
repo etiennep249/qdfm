@@ -2,6 +2,7 @@ use crate::context_menus::cm_file::open_with_default;
 use crate::core;
 use crate::globals::config_lock;
 use crate::globals::selected_files_lock;
+use crate::globals::selected_files_try_lock;
 use crate::sort::call_current_sort;
 use crate::ui::*;
 use crate::utils::types;
@@ -18,6 +19,8 @@ use std::rc::Rc;
 use std::sync::Mutex;
 use std::sync::MutexGuard;
 use std::sync::OnceLock;
+use std::thread::sleep;
+use std::time::Duration;
 
 use super::context_menu::ContextCallback;
 use super::tabs::get_breadcrumbs_for;
@@ -109,14 +112,24 @@ pub fn remove_from_selected(mw: Rc<Weak<MainWindow>>, i: i32) {
     set_selected_visual(mw, i, false);
 }
 
+//Will give it a couple tries, but not guaranteed to work.
+//CANNOT be blocking with a regular lock here since this is likely called
+//from a scope that already has the lock.
 pub fn reset_selected(mw: Rc<Weak<MainWindow>>) {
-    selected_files_lock().drain();
-    let mw = mw.unwrap();
-    let fm = mw.global::<FileManager>();
-    fm.set_is_single_selected(false);
-    let visual_selected = fm.get_visual_selected();
-    for i in 0..visual_selected.row_count() {
-        visual_selected.set_row_data(i, false);
+    let mut attempts = 0;
+    while attempts < 15 {
+        if let Ok(mut sel_files) = selected_files_try_lock() {
+            sel_files.drain();
+            let mw = mw.unwrap();
+            let fm = mw.global::<FileManager>();
+            fm.set_is_single_selected(false);
+            let visual_selected = fm.get_visual_selected();
+            for i in 0..visual_selected.row_count() {
+                visual_selected.set_row_data(i, false);
+            }
+        }
+        attempts += 1;
+        sleep(Duration::from_millis(5));
     }
 }
 
@@ -163,7 +176,8 @@ pub fn init_selected_visual(mw: Rc<Weak<MainWindow>>, row_count: usize) {
         .set_visual_selected(Rc::new(VecModel::from(vec![false; row_count])).into());
 }
 
-///Important!! YOU MUST DROP SELECTED_FILES BEFORE CALLING THIS
+//TODO: Better refresh. Perhaps a queue? Don't want UI to abruptly refresh when background
+//operations finish. That or make this function non-distruptive, maintain selected files.
 pub fn set_current_tab_file(mut item: TabItem, mw: Rc<Weak<MainWindow>>, remember: bool) {
     let files = core::generate_files_for_path(item.internal_path.as_str());
     if item.internal_path == "/" {
@@ -188,7 +202,7 @@ pub fn set_current_tab_file(mut item: TabItem, mw: Rc<Weak<MainWindow>>, remembe
 }
 
 pub fn format_size(i: _i64) -> SharedString {
-    types::format_size(i32_to_i64((i.a, i.b)), false)
+    types::format_size(i32_to_i64((i.a, i.b)) as u64, false)
 }
 pub fn format_date(i: _i64) -> SharedString {
     types::format_date(i32_to_i64((i.a, i.b)))

@@ -10,7 +10,10 @@ use crate::{
     utils::error_handling::log_error_str,
 };
 use slint::{ComponentHandle, Image, LogicalPosition, Model, SharedPixelBuffer, VecModel, Weak};
-use std::{path::Path, rc::Rc};
+use std::{
+    path::{Path, PathBuf},
+    rc::Rc,
+};
 
 pub fn open_with_default(files: Vec<FileItem>) {
     let conf = config_lock();
@@ -139,40 +142,14 @@ pub fn paste(here: bool, mw: Rc<Weak<MainWindow>>) {
         let file_lock = selected_files_lock();
         if let Some(f) = get_selected_file(&file_lock) {
             drop(file_lock);
-            clipboard::paste_file(Path::new(&(f.path.to_string())), mw);
+            clipboard::paste_file(PathBuf::from(&(f.path.to_string())), mw);
         }
     } else {
         //TODO:
     }
 }
 pub fn delete(mw: Rc<Weak<MainWindow>>) {
-    let mut selected_files = selected_files_lock();
-    for file in selected_files.values() {
-        let ret = if file.is_dir {
-            std::fs::remove_dir_all(Path::new(&file.path.to_string()))
-        } else {
-            std::fs::remove_file(Path::new(&file.path.to_string()))
-        };
-        if ret.is_err() {
-            log_error_str(&format!(
-                "Could not delete \"{}\". Error Text: {}",
-                file.path,
-                ret.err().unwrap().to_string()
-            ))
-        }
-    }
-    //Those files should not be selected anymore
-    selected_files.drain();
-
-    //Or set_current_tab_file deadlocks
-    drop(selected_files);
-
-    //Refresh UI
-    set_current_tab_file(
-        mw.unwrap().global::<TabsAdapter>().invoke_get_current_tab(),
-        mw,
-        false,
-    );
+    clipboard::delete(mw);
 }
 pub fn show_properties(mw: Rc<Weak<MainWindow>>, prop_win_rc: Weak<PropertiesWindow>) {
     /*

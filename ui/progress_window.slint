@@ -1,0 +1,86 @@
+import { Theme } from "theme.slint";
+import { StandardButton, Button, ProgressIndicator } from "std-widgets.slint";
+
+
+export global ProgressAdapter {
+    callback close();
+    callback pause();
+    in property <float> progress: 0;
+    in property <string> progress_text: "";
+    in property <string> remaining_text: "";
+}
+
+export component ProgressWindow inherits Window {
+    height: 200px;
+    width: 480px;
+    in-out property <length> win_height <=> self.height;
+    in-out property <length> win_width <=> self.width;
+
+    title: "QDFM";
+
+    cancel_btn := StandardButton {
+        kind: cancel;
+        x: parent.width - self.width - 10px;
+        y: parent.height - 45px;
+
+        clicked => {
+            ProgressAdapter.close();
+        }
+    }
+
+    pause_btn := Button {
+        text: "Pause";
+        x: parent.width - self.width - cancel-btn.width - 20px;
+        y: parent.height - 45px;
+
+        clicked => {
+            ProgressAdapter.pause();
+        }
+    }
+
+    progress := ProgressIndicator {
+        y: 30px;
+        height: 40px;
+        indeterminate: false;
+        progress <=> ProgressAdapter.progress;
+        visible: true;
+        width: parent.width - 40px;
+        x: 20px;
+    }
+
+    status-label := Text {
+        font-size: 14px;
+        horizontal-alignment: TextHorizontalAlignment.right;
+        text: "Status:";
+        y: progress.y + progress.height + 20px;
+        width: 100px;
+        x: 10px;
+    }
+
+    status-value := Text {
+        font-size: 14px;
+        horizontal-alignment: TextHorizontalAlignment.left;
+        text <=> ProgressAdapter.progress_text;
+        y: progress.y + progress.height + 20px;
+        width: parent.width - 20px;
+        x: status-label.x + status-label.width + 10px;
+    }
+
+    remaining-label := Text {
+        font-size: 14px;
+        horizontal-alignment: TextHorizontalAlignment.right;
+        text: "Remaining:";
+        y: progress.y + progress.height + 50px;
+        width: 100px;
+        x: 10px;
+    }
+
+    remaining-value := Text {
+        font-size: 14px;
+        horizontal-alignment: TextHorizontalAlignment.left;
+        text <=> ProgressAdapter.remaining_text;
+        y: progress.y + progress.height + 50px;
+        width: parent.width - 20px;
+        x: status-label.x + status-label.width + 10px;
+    }
+}

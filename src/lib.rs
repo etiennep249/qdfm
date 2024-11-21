@@ -11,6 +11,7 @@ pub mod file_properties;
 pub mod globals;
 pub mod key_events;
 pub mod manage_open_with;
+pub mod progress_window;
 pub mod sort;
 pub mod utils;
 

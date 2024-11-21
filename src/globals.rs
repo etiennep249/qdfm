@@ -1,6 +1,6 @@
 use std::{
     collections::HashMap,
-    sync::{Mutex, MutexGuard, OnceLock},
+    sync::{Mutex, MutexGuard, OnceLock, TryLockError},
 };
 
 use crate::config::Config;
@@ -42,6 +42,14 @@ pub fn selected_files_lock() -> MutexGuard<'static, HashMap<i32, FileItem>> {
             panic!("Could not get SELECTED_FILES lock.");
         }
     }
+}
+pub fn selected_files_try_lock() -> Result<
+    MutexGuard<'static, HashMap<i32, FileItem>>,
+    TryLockError<MutexGuard<'static, HashMap<i32, FileItem>>>,
+> {
+    SELECTED_FILES
+        .get_or_init(|| Mutex::new(HashMap::new()))
+        .try_lock()
 }
 ///Returns the selected file if there is exactly one selected. Otherwise returns None
 pub fn get_selected_file(

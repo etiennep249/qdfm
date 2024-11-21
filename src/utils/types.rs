@@ -13,7 +13,7 @@ const KIB: f64 = 1024.0;
 const MIB: f64 = 1024.0 * KIB;
 const GIB: f64 = 1024.0 * MIB;
 const TIB: f64 = 1024.0 * GIB;
-pub fn format_size(i: i64, detailed: bool) -> SharedString {
+pub fn format_size(i: u64, detailed: bool) -> SharedString {
     let f = i as f64;
     let suffix;
     let mut formatted = (format!(
