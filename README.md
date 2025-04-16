@@ -1,10 +1,12 @@
 # QDFM File Manager
 A lightweight file manager written in Rust with the Slint GUI library.
+
 It is still a work in progress. Currently only works on X11, wayland support planned.
 
 # Dependencies:
 
 XDG_DESKTOP_PORTAL and an implementation.
+
 libxcb 1.12+
 
 # Winit:
