@@ -3,6 +3,8 @@ A lightweight file manager written in Rust with the Slint GUI library.
 
 It is still a work in progress. Currently only works on X11, wayland support planned.
 
+Meant as an alternative to dolphin/nautilus without any dependencies on KDE/GNOME, useable with any WM.
+
 # Dependencies:
 
 XDG_DESKTOP_PORTAL and an implementation.
