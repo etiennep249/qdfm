@@ -1,5 +1,5 @@
-import { StandardListView, ProgressIndicator, ScrollView} from "std-widgets.slint";
-import { DriveList, SidebarItems , NavArrows} from "sidebar.slint";
+import { StandardListView, ProgressIndicator, ScrollView } from "std-widgets.slint";
+import { DriveList, SidebarItems , NavArrows } from "sidebar.slint";
 import { TabWidget_, TabsAdapter } from "tabs.slint";
 import { FileManager, FileItem } from "filemanager.slint";
 import { Theme } from "theme.slint";
@@ -9,8 +9,9 @@ import { ContextMenu, ContextAdapter, ContextItem, SecondaryContextMenu } from "
 import { PropertiesWindow, PropertiesAdapter } from "properties.slint";
 import { ManageOpenWithAdapter, ManageOpenWithWindow } from "manage_open_with.slint";
 import { ProgressWindow, ProgressAdapter } from "progress_window.slint";
+import { RenameWindow, RenameAdapter } from "rename_window.slint";
 
-export { FileManager, SidebarItems, TabsAdapter, Theme, ColumnHeadersAdapter, ContextAdapter, ContextItem, PropertiesWindow, PropertiesAdapter , ManageOpenWithWindow, ManageOpenWithAdapter, ProgressWindow, ProgressAdapter}
+export { FileManager, SidebarItems, TabsAdapter, Theme, ColumnHeadersAdapter, ContextAdapter, ContextItem, PropertiesWindow, PropertiesAdapter , ManageOpenWithWindow, ManageOpenWithAdapter, ProgressWindow, ProgressAdapter, RenameWindow, RenameAdapter }
 
 export component MainWindow inherits Window {
     in-out property <length> win_height <=> self.height;

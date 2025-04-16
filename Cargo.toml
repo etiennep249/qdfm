@@ -18,11 +18,14 @@ chrono = {version = "*", default-features=false, features=["alloc", "clock"]}
 magic = "0.16.2"
 syscalls = { version="0.6.18", features=["x86", "x86_64", "aarch64", "arm"]}
 walkdir = "*"
-arboard = {version = "3.4.0", default-features=false, features=["wayland-data-control", "wl-clipboard-rs"]}
+arboard = {version = "3.4.1", default-features=false, features=["wayland-data-control", "wl-clipboard-rs"]}
 serde_json = "*"
 serde = "*"
 dbus = {version="0.9.7", default-features=false}
 x11rb = "0.13.1"
+
+#[dev-dependencies]
+#mockall = "*"
 
 [patch.crates-io]
 winit = { path = "winit"}

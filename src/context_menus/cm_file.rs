@@ -1,5 +1,5 @@
 use crate::{
-    callbacks::{context_menu::ContextCallback, filemanager::set_current_tab_file},
+    callbacks::context_menu::ContextCallback,
     clipboard,
     core::run_command,
     enclose,
@@ -7,7 +7,6 @@ use crate::{
     globals::{config_lock, get_selected_file, selected_files_lock},
     manage_open_with,
     ui::*,
-    utils::error_handling::log_error_str,
 };
 use slint::{ComponentHandle, Image, LogicalPosition, Model, SharedPixelBuffer, VecModel, Weak};
 use std::{
@@ -129,12 +128,12 @@ fn get_index(ctx_adapter: &ContextAdapter) -> i32 {
 ///See clipboard::copy
 ///Copied files are the selected ones
 pub fn copy() {
-    clipboard::copy_file(selected_files_lock().values().cloned().collect());
+    clipboard::copy::copy_file(selected_files_lock().values().cloned().collect(), false);
 }
 ///See clipboard::cut
 ///Cut files are the selected ones
 pub fn cut() {
-    clipboard::cut_file(selected_files_lock().values().cloned().collect());
+    clipboard::cut::cut_file(selected_files_lock().values().cloned().collect());
 }
 ///See clipboard::paste
 pub fn paste(here: bool, mw: Rc<Weak<MainWindow>>) {
@@ -142,14 +141,14 @@ pub fn paste(here: bool, mw: Rc<Weak<MainWindow>>) {
         let file_lock = selected_files_lock();
         if let Some(f) = get_selected_file(&file_lock) {
             drop(file_lock);
-            clipboard::paste_file(PathBuf::from(&(f.path.to_string())), mw);
+            clipboard::paste::paste_file(PathBuf::from(&(f.path.to_string())), mw);
         }
     } else {
         //TODO:
     }
 }
 pub fn delete(mw: Rc<Weak<MainWindow>>) {
-    clipboard::delete(mw);
+    clipboard::delete::delete(mw);
 }
 pub fn show_properties(mw: Rc<Weak<MainWindow>>, prop_win_rc: Weak<PropertiesWindow>) {
     /*

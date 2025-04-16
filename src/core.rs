@@ -184,6 +184,30 @@ pub fn bad_file() -> FileItem {
         extension: "".into(),
     }
 }
+pub fn empty_file() -> FileItem {
+    FileItem {
+        path: "".into(),
+        file_name: "".into(),
+        is_dir: false,
+        size: _i64 { a: 0, b: 0 },
+        date: _i64 { a: 0, b: 0 },
+        file_type: "Unknown / Bad file".into(),
+        is_link: false,
+        extension: "".into(),
+    }
+}
+pub fn empty_file_with_path(path: &str) -> FileItem {
+    FileItem {
+        path: path.into(),
+        file_name: "".into(),
+        is_dir: false,
+        size: _i64 { a: 0, b: 0 },
+        date: _i64 { a: 0, b: 0 },
+        file_type: "Unknown / Bad file".into(),
+        is_link: false,
+        extension: "".into(),
+    }
+}
 pub fn run_command(command: &str) {
     Command::new("setsid")
         .args(command.split(" ").collect::<Vec<&str>>())

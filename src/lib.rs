@@ -1,6 +1,9 @@
+//TODO: Don't need to import ui::* everywhere, just import what we need
 pub mod ui {
     slint::include_modules!();
 }
+
+//TODO: why pub
 pub mod callbacks;
 pub mod clipboard;
 pub mod config;
@@ -12,6 +15,7 @@ pub mod globals;
 pub mod key_events;
 pub mod manage_open_with;
 pub mod progress_window;
+mod rename_window;
 pub mod sort;
 pub mod utils;
 

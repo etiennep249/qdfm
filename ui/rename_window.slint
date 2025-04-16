@@ -1,0 +1,73 @@
+import { Button, LineEdit, CheckBox } from "std-widgets.slint";
+export global RenameAdapter {
+    in property <string> file_name;
+    in-out property <string> new_file_name;
+    in-out property <bool> apply_to_all;
+    in-out property <length> win_width: 430px;
+    in-out property <length> win_height: 166px;
+    callback overwrite(bool);
+    callback ignore(bool);
+    callback rename(string, bool);
+}
+
+export component RenameWindow inherits Window {
+
+    always-on-top: true;
+    height <=> RenameAdapter.win_height;
+    title: "QDFM";
+    width <=> RenameAdapter.win_width;
+    x: 0px;
+    y: 0px;
+    overwrite_btn := Button {
+        text: "Overwrite";
+        y: parent.height - self.height - 10px;
+        x: parent.width - self.width - 20px;
+        clicked => {
+            RenameAdapter.overwrite(apply-to-all.checked);
+        }
+    }
+
+    rename_btn := Button {
+        text: "Rename";
+        y: parent.height - self.height - 10px;
+        x: parent.width - self.width - overwrite-btn.width - 30px;
+        clicked => {
+            RenameAdapter.rename(filename.text, apply-to-all.checked);
+        }
+    }
+
+    ignore_btn := Button {
+        text: "Ignore";
+        y: parent.height - self.height - 10px;
+        x: parent.width - self.width - overwrite-btn.width - rename-btn.width - 40px;
+        clicked => {
+            RenameAdapter.ignore(apply-to-all.checked);
+        }
+    }
+
+    apply_to_all := CheckBox {
+        text: "Apply to All";
+        height: ignore-btn.height;
+        y: parent.height - self.height - 10px;
+        x: parent.width - self.width - overwrite-btn.width - rename-btn.width - ignore-btn.width - 50px;
+        checked <=> RenameAdapter.apply_to_all;
+    }
+
+    status_txt := Text {
+        font-size: 14px;
+        height: 57px;
+        overflow: TextOverflow.elide;
+        text: "'" + RenameAdapter.file_name + "' already exists. What should we do?";
+        y: 20px;
+        x: 20px;
+        width: parent.width - 40px;
+        wrap: TextWrap.word-wrap;
+    }
+
+    filename := LineEdit {
+        text: RenameAdapter.new_file_name;
+        y: 80px;
+        x: 20px;
+        width: parent.width - 40px;
+    }
+}

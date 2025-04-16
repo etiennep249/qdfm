@@ -13,6 +13,7 @@ use std::rc::Rc;
 use winit::event::WindowEvent;
 use winit::raw_window_handle::{HasWindowHandle, RawWindowHandle};
 
+//TODO: Leak some globals
 fn main() {
     //Use winit
     let backend = i_slint_backend_winit::Backend::new().unwrap();
