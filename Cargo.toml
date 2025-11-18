@@ -8,12 +8,10 @@ license = "GPLv3"
 
 [dependencies]
 sysinfo = "0.29.10"
-#Do we need std in slint?
-#Using git for latest features, may want to change it to crates.io later
-slint = { version = "*", default-features=false, features=["std", "backend-winit", "renderer-skia-opengl", "compat-1-2"], git = "https://github.com/slint-ui/slint" } #Use vulkan when fixed
+slint = { version = "1.14.1", default-features=false, features=["std", "backend-winit", "renderer-skia-opengl", "compat-1-2"]} #Use vulkan when fixed
 winit = "0.30.5"
-i-slint-core = { version="*", git = "https://github.com/slint-ui/slint" }
-i-slint-backend-winit = { version="*", git = "https://github.com/slint-ui/slint" }
+i-slint-core = { version="1.14.1"}
+i-slint-backend-winit = { version="1.14.1"}
 chrono = {version = "*", default-features=false, features=["alloc", "clock"]}
 magic = "0.16.2"
 syscalls = { version="0.6.18", features=["x86", "x86_64", "aarch64", "arm"]}
@@ -31,7 +29,7 @@ x11rb = "0.13.1"
 winit = { path = "winit"}
 
 [build-dependencies]
-slint-build = { version = "*", git = "https://github.com/slint-ui/slint"}
+slint-build = { version = "1.14.1"}
 
 [profile.release]
 opt-level = 'z'

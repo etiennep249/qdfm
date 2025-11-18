@@ -1,5 +1,5 @@
 use filemanager::set_current_tab_file;
-use i_slint_backend_winit::{WinitWindowAccessor, WinitWindowEventResult};
+use i_slint_backend_winit::{EventResult, WinitWindowAccessor};
 use qdfm::callbacks::utils::format_size_detailed;
 use qdfm::core::generate_files_for_path;
 use qdfm::drives;
@@ -102,7 +102,7 @@ fn main() {
     {
         let weak = weak.clone();
         w.window()
-            .on_winit_window_event(move |_, we: &WindowEvent| -> WinitWindowEventResult {
+            .on_winit_window_event(move |_, we: &WindowEvent| -> EventResult {
                 match we {
                     WindowEvent::DroppedFile(buf) => {
                         let win = weak.unwrap();
@@ -116,7 +116,7 @@ fn main() {
                     }
                     _ => {}
                 }
-                WinitWindowEventResult::Propagate
+                EventResult::Propagate
             });
     }
 
