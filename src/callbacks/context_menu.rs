@@ -1,3 +1,4 @@
+use crate::context_menus::context_items::{get_ci, get_ci_capacity};
 use crate::globals::config_lock;
 use crate::ui::*;
 use crate::{context_menus as cm, ui};
@@ -60,95 +61,32 @@ pub fn menuitem_hover(context_item: ContextItem) {
 }
 
 pub fn show_context_menu(x: f32, y: f32) {
-    //TODO: have all of these items stored somewhere so we dont genereate everytime
-    //Also don't do all that in the main thread. Or maybe it doesn't matter anyway since we don't
-    //need the UI to update in the split second before the context menu shows
     ui::run_with_main_window(move |mw| {
-        let mut menu: Vec<ContextItem> = Vec::new();
+        let mut menu: Vec<ContextItem> = Vec::with_capacity(get_ci_capacity());
 
         let conf = config_lock();
 
         let default_mapping =
             selection::get_common_extension().and_then(|f| conf.get_mapping_default(&f));
 
+        //Only offer 'open with' if we have mappings for the file's extension
         if default_mapping.is_some() {
-            menu.push(ContextItem {
-                display: ("Open With ".to_owned() + &default_mapping.unwrap()).into(),
-                callback_id: ContextCallback::OpenWithDefault as i32,
-                shortcut: "".into(),
-                icon: Image::from_rgb8(SharedPixelBuffer::new(0, 0)),
-                has_separator: true,
-                click_on_hover: false,
-                internal_id: 0,
-            });
-            menu.push(ContextItem {
-                display: ("Open With").into(),
-                callback_id: ContextCallback::OpenWith as i32,
-                shortcut: "▶".into(),
-                icon: Image::from_rgb8(SharedPixelBuffer::new(0, 0)),
-                has_separator: true,
-                click_on_hover: true,
-                internal_id: 0,
-            });
+            let mut open_with_default = get_ci("open_with_default");
+            open_with_default.display =
+                ("Open With ".to_owned() + &default_mapping.unwrap()).into();
+            menu.push(open_with_default);
+            menu.push(get_ci("open_with"));
         }
 
-        menu.push(ContextItem {
-            display: "Cut".into(),
-            callback_id: ContextCallback::Cut as i32,
-            shortcut: "".into(),
-            icon: Image::from_rgb8(SharedPixelBuffer::new(0, 0)),
-            has_separator: false,
-            click_on_hover: false,
-            internal_id: 0,
-        });
-        menu.push(ContextItem {
-            display: "Copy".into(),
-            callback_id: ContextCallback::Copy as i32,
-            shortcut: "".into(),
-            icon: Image::from_rgb8(SharedPixelBuffer::new(0, 0)),
-            has_separator: false,
-            click_on_hover: false,
-            internal_id: 0,
-        });
+        menu.push(get_ci("cut"));
+        menu.push(get_ci("copy"));
         if selection::is_single_selected_directory() {
-            menu.push(ContextItem {
-                display: "Paste Into".into(),
-                callback_id: ContextCallback::PasteIntoSelected as i32,
-                shortcut: "".into(),
-                icon: Image::from_rgb8(SharedPixelBuffer::new(0, 0)),
-                has_separator: true,
-                click_on_hover: false,
-                internal_id: 0,
-            });
+            menu.push(get_ci("paste_into"));
         } else {
-            menu.push(ContextItem {
-                display: "Paste Here".into(),
-                callback_id: ContextCallback::PasteHere as i32,
-                shortcut: "".into(),
-                icon: Image::from_rgb8(SharedPixelBuffer::new(0, 0)),
-                has_separator: true,
-                click_on_hover: false,
-                internal_id: 0,
-            });
+            menu.push(get_ci("paste_here"));
         }
-        menu.push(ContextItem {
-            display: "Delete".into(),
-            callback_id: ContextCallback::Delete as i32,
-            shortcut: "".into(),
-            icon: Image::from_rgb8(SharedPixelBuffer::new(0, 0)),
-            has_separator: true,
-            click_on_hover: false,
-            internal_id: 0,
-        });
-        menu.push(ContextItem {
-            display: "Properties".into(),
-            callback_id: ContextCallback::ShowProperties as i32,
-            shortcut: "".into(),
-            icon: Image::from_rgb8(SharedPixelBuffer::new(0, 0)),
-            has_separator: false,
-            click_on_hover: false,
-            internal_id: 0,
-        });
+        menu.push(get_ci("delete"));
+        menu.push(get_ci("properties"));
 
         let ctx_adapter = mw.global::<ContextAdapter>();
         ctx_adapter.set_items(Rc::new(VecModel::from(menu)).into());
