@@ -2,8 +2,8 @@ use slint::ComponentHandle;
 use std::{collections::HashMap, rc::Rc};
 
 use crate::{
-    clipboard::delete::delete, core::empty_file, globals::selected_files_lock,
-    tests::clipboard::get_mainwindow,
+    callbacks::filemanager::selection::selected_files_write_tests, clipboard::delete::delete,
+    core::empty_file, tests::clipboard::get_mainwindow,
 };
 
 use super::create_test_directory;
@@ -32,7 +32,7 @@ pub fn test_delete() {
     folder.is_dir = true;
     folder.path = path.join("subfolder1").to_string_lossy().to_string().into();
 
-    *(selected_files_lock()) = HashMap::from([(0, file1), (1, file2_simlink)]);
+    *(selected_files_write_tests()) = HashMap::from([(0, file1), (1, file2_simlink)]);
 
     delete(rc.clone());
 
@@ -50,7 +50,7 @@ pub fn test_delete() {
     );
 
     //Delete everything
-    *(selected_files_lock()) = HashMap::from([(0, folder)]);
+    *(selected_files_write_tests()) = HashMap::from([(0, folder)]);
 
     delete(rc);
 

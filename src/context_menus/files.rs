@@ -1,18 +1,18 @@
 use crate::{
-    callbacks::context_menu::ContextCallback,
+    callbacks::{
+        context_menu::ContextCallback,
+        filemanager::selection::{self, selected_files_read},
+    },
     clipboard,
     core::run_command,
     enclose,
     file_properties::setup_properties,
-    globals::{config_lock, get_selected_file, selected_files_lock},
+    globals::config_lock,
     manage_open_with,
     ui::*,
 };
 use slint::{ComponentHandle, Image, LogicalPosition, Model, SharedPixelBuffer, VecModel, Weak};
-use std::{
-    path::{Path, PathBuf},
-    rc::Rc,
-};
+use std::{path::PathBuf, rc::Rc};
 
 pub fn open_with_default(files: Vec<FileItem>) {
     let conf = config_lock();
@@ -44,7 +44,7 @@ pub fn open_with(mw: Rc<Weak<MainWindow>>) {
      * mapping to open all the selected files with.*/
     let conf = config_lock();
     let extension = {
-        let files = selected_files_lock();
+        let files = selected_files_read();
         let mut iter = files.iter();
         if files.len() == 1 {
             Some(iter.next().unwrap().1.extension.clone())
@@ -103,7 +103,7 @@ pub fn open_with(mw: Rc<Weak<MainWindow>>) {
 ///Runs the command associated with the selected files extension
 ///Only call this if you are certain that every selected files have the same mapping
 pub fn open_with_quick(context_item: &ContextItem) {
-    let files = selected_files_lock();
+    let files = selected_files_read();
     let mut cmd = String::from("");
     let mut cmd_set = false;
     for (_, file) in files.iter() {
@@ -128,19 +128,17 @@ fn get_index(ctx_adapter: &ContextAdapter) -> i32 {
 ///See clipboard::copy
 ///Copied files are the selected ones
 pub fn copy() {
-    clipboard::copy::copy_file(selected_files_lock().values().cloned().collect(), false);
+    clipboard::copy::copy_file(selection::selected_files_clone(), false);
 }
 ///See clipboard::cut
 ///Cut files are the selected ones
 pub fn cut() {
-    clipboard::cut::cut_file(selected_files_lock().values().cloned().collect());
+    clipboard::cut::cut_file(selection::selected_files_clone());
 }
 ///See clipboard::paste
 pub fn paste(here: bool, mw: Rc<Weak<MainWindow>>) {
     if !here {
-        let file_lock = selected_files_lock();
-        if let Some(f) = get_selected_file(&file_lock) {
-            drop(file_lock);
+        if let Some(f) = selection::get_selected_file() {
             clipboard::paste::paste_file(PathBuf::from(&(f.path.to_string())), mw);
         }
     } else {
@@ -163,7 +161,7 @@ pub fn show_properties(mw: Rc<Weak<MainWindow>>, prop_win_rc: Weak<PropertiesWin
     let y = pos.y as f32 + (main_win.get_win_height() / 2.0) - (prop_win.get_win_height() / 2.0);
     prop_win.window().set_position(LogicalPosition { x, y });
     setup_properties(
-        selected_files_lock().values().cloned().collect(),
+        selection::selected_files_clone(),
         prop_win.global::<PropertiesAdapter>(),
         prop_win_rc,
     );
@@ -183,7 +181,7 @@ pub fn manage_quick(mw: Rc<Weak<MainWindow>>) {
     let adp = win.global::<ManageOpenWithAdapter>();
     let rc = Rc::new(win.as_weak());
 
-    let files: Vec<FileItem> = selected_files_lock().values().cloned().collect();
+    let files: Vec<FileItem> = selection::selected_files_clone();
 
     //If they all have the same extension, then we can use that extension's mappings
     let extension = {

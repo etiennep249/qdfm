@@ -1,6 +1,5 @@
 use crate::{
-    callbacks::filemanager::set_current_tab_file,
-    globals::selected_files_lock,
+    callbacks::filemanager::{selection::selected_files_read, set_current_tab_file},
     progress_window::show_progress_window,
     ui::{MainWindow, TabsAdapter},
     utils::error_handling::log_error_str,
@@ -15,7 +14,7 @@ pub fn delete(mww: Rc<Weak<MainWindow>>) {
     let mw = mww.clone().unwrap().as_weak();
     let thread = thread::spawn(move || {
         let (progress, recv) = channel();
-        let selected_files_lock = selected_files_lock();
+        let selected_files_lock = selected_files_read();
         let selected_files = selected_files_lock.values();
 
         if progress

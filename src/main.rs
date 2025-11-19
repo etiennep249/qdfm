@@ -165,23 +165,24 @@ fn main() {
         file_manager.on_moved(enclose! { (weak) move |x, y| dnd_move(weak.clone(), x, y)});
         file_manager.on_format_date(move |i| filemanager::format_date(i));
         file_manager.on_add_to_selected(
-            enclose! { (weak) move |i, f| filemanager::add_to_selected(weak.clone(), i, f)},
+            enclose! { (weak) move |i, f| filemanager::selection::add_to_selected(weak.clone(), i, f)},
         );
-        file_manager.on_is_index_selected(|i| filemanager::is_index_selected(i));
+        file_manager.on_is_index_selected(|i| filemanager::selection::is_index_selected(i));
         file_manager.on_remove_from_selected(
-            enclose! { (weak) move |i| filemanager::remove_from_selected(weak.clone(), i)},
+            enclose! { (weak) move |i| filemanager::selection::remove_from_selected(weak.clone(), i)},
         );
         file_manager.on_reset_selected(
-            enclose! { (weak) move || filemanager::reset_selected(weak.clone())},
+            enclose! { (weak) move || filemanager::selection::clear_selection(weak.clone())},
         );
         file_manager.on_set_single_selected(
-            enclose! { (weak) move |i, f| filemanager::set_single_selected(weak.clone(),i, f)},
+            enclose! { (weak) move |i, f| filemanager::selection::set_single_selected(weak.clone(),i, f)},
         );
-        file_manager
-            .on_shift_select(enclose! { (weak) move |i| filemanager::shift_select(weak.clone(),i)});
-        file_manager.on_is_nothing_selected(move || filemanager::is_nothing_selected());
+        file_manager.on_shift_select(
+            enclose! { (weak) move |i| filemanager::selection::shift_select(weak.clone(),i)},
+        );
+        file_manager.on_is_nothing_selected(move || filemanager::selection::is_nothing_selected());
         file_manager.on_clear_selection(
-            enclose! { (weak) move || filemanager::clear_selection(weak.clone())},
+            enclose! { (weak) move || filemanager::selection::clear_selection(weak.clone())},
         );
         prop_win
             .global::<PropertiesAdapter>()

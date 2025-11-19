@@ -1,15 +1,12 @@
-use crate::context_menus::cm_file::open_with_default;
+use crate::context_menus::files::open_with_default;
 use crate::core;
 use crate::globals::config_lock;
-use crate::globals::selected_files_lock;
-use crate::globals::selected_files_try_lock;
 use crate::sort::call_current_sort;
 use crate::ui::*;
 use crate::utils::types;
 use crate::utils::types::i32_to_i64;
 use slint::ComponentHandle;
 use slint::Image;
-use slint::Model;
 use slint::SharedPixelBuffer;
 use slint::SharedString;
 use slint::VecModel;
@@ -19,12 +16,14 @@ use std::rc::Rc;
 use std::sync::Mutex;
 use std::sync::MutexGuard;
 use std::sync::OnceLock;
-use std::thread::sleep;
-use std::time::Duration;
 
 use super::context_menu::ContextCallback;
 use super::tabs::get_breadcrumbs_for;
 
+pub mod selection;
+
+///When a file is double clicked, it is opened with the default mapping.
+///When a directory is double clicked, it is "moved into" or set as the new current directory.
 pub fn fileitem_doubleclicked(item: FileItem, _i: i32, mw: Rc<Weak<MainWindow>>) {
     if item.is_dir {
         set_current_tab_file(
@@ -49,135 +48,6 @@ pub fn fileitem_doubleclicked(item: FileItem, _i: i32, mw: Rc<Weak<MainWindow>>)
         }
     }
 }
-// Selected files functions
-pub fn is_index_selected(i: i32) -> bool {
-    selected_files_lock().contains_key(&i)
-}
-
-pub fn clear_selection(mw: Rc<Weak<MainWindow>>) {
-    reset_selected(mw);
-}
-
-pub fn add_to_selected(mw: Rc<Weak<MainWindow>>, i: i32, file: FileItem) {
-    let mut sel_files = selected_files_lock();
-    sel_files.insert(i, file);
-    set_selected_visual(mw.clone(), i, true);
-    let mw = mw.unwrap();
-    let fm = mw.global::<FileManager>();
-    if sel_files.len() == 2 {
-        fm.set_is_single_selected(false);
-    } else if sel_files.len() == 1 {
-        fm.set_is_single_selected(true);
-    }
-    fm.set_single_selected_index(i);
-}
-
-pub fn shift_select(mww: Rc<Weak<MainWindow>>, i: i32) {
-    let mut sel_files = selected_files_lock();
-    let mw = mww.unwrap();
-    let fm = mw.global::<FileManager>();
-    let last_selected_index = fm.get_single_selected_index();
-    let visual_selected = fm.get_visual_selected();
-
-    let was_clicked_selected = sel_files.contains_key(&i);
-
-    //To decide whether we go reverse or not
-    let range = if i < last_selected_index && !was_clicked_selected {
-        i..=last_selected_index
-    } else if i > last_selected_index && !was_clicked_selected {
-        last_selected_index..=i
-    } else if i < last_selected_index && was_clicked_selected {
-        (i + 1)..=last_selected_index
-    } else {
-        last_selected_index..=(i + 1)
-    };
-    for i in range {
-        if !was_clicked_selected {
-            sel_files.insert(i, fm.get_files().row_data(i as usize).unwrap());
-            visual_selected.set_row_data(i as usize, true);
-        } else {
-            sel_files.remove(&i);
-            visual_selected.set_row_data(i as usize, false);
-        }
-    }
-    fm.set_is_single_selected(false);
-    fm.set_single_selected_index(i);
-}
-
-pub fn remove_from_selected(mw: Rc<Weak<MainWindow>>, i: i32) {
-    let mut sel_files = selected_files_lock();
-    if sel_files.len() > 1 {
-        mw.unwrap()
-            .global::<FileManager>()
-            .set_is_single_selected(false);
-    }
-    sel_files.remove(&i);
-    set_selected_visual(mw, i, false);
-}
-
-//Will give it a couple tries, but not guaranteed to work.
-//CANNOT be blocking with a regular lock here since this is likely called
-//from a scope that already has the lock.
-pub fn reset_selected(mw: Rc<Weak<MainWindow>>) {
-    let mut attempts = 0;
-    while attempts < 15 {
-        if let Ok(mut sel_files) = selected_files_try_lock() {
-            sel_files.drain();
-            let mw = mw.unwrap();
-            let fm = mw.global::<FileManager>();
-            fm.set_is_single_selected(false);
-            let visual_selected = fm.get_visual_selected();
-            for i in 0..visual_selected.row_count() {
-                visual_selected.set_row_data(i, false);
-            }
-        }
-        attempts += 1;
-        sleep(Duration::from_millis(5));
-    }
-}
-
-pub fn set_single_selected(mw: Rc<Weak<MainWindow>>, i: i32, file: FileItem) {
-    let mut sel_files = selected_files_lock();
-    sel_files.drain();
-    sel_files.insert(i, file);
-
-    reset_selected_visual_list(mw.clone());
-    set_selected_visual(mw.clone(), i, true);
-    let mw = mw.unwrap();
-    let fm = mw.global::<FileManager>();
-
-    fm.set_is_single_selected(true);
-    fm.set_single_selected_index(i);
-}
-
-pub fn is_nothing_selected() -> bool {
-    selected_files_lock().is_empty()
-}
-
-pub fn set_selected_visual(mw: Rc<Weak<MainWindow>>, i: i32, val: bool) {
-    mw.unwrap()
-        .global::<FileManager>()
-        .get_visual_selected()
-        .set_row_data(i as usize, val);
-}
-pub fn reset_selected_visual_list(mw: Rc<Weak<MainWindow>>) {
-    let mw = mw.unwrap();
-    let fm = mw.global::<FileManager>();
-
-    fm.set_visual_selected(
-        Rc::new(VecModel::from(vec![
-            false;
-            fm.get_visual_selected().row_count()
-        ]))
-        .into(),
-    );
-}
-
-pub fn init_selected_visual(mw: Rc<Weak<MainWindow>>, row_count: usize) {
-    mw.unwrap()
-        .global::<FileManager>()
-        .set_visual_selected(Rc::new(VecModel::from(vec![false; row_count])).into());
-}
 
 //TODO: Better refresh. Perhaps a queue? Don't want UI to abruptly refresh when background
 //operations finish. That or make this function non-distruptive, maintain selected files.
@@ -200,8 +70,8 @@ pub fn set_current_tab_file(mut item: TabItem, mw: Rc<Weak<MainWindow>>, remembe
     let filemanager = w.global::<FileManager>();
     filemanager.set_files(Rc::new(VecModel::from(files)).into());
     call_current_sort(mw.clone());
-    reset_selected(mw.clone());
-    init_selected_visual(mw, files_len);
+    selection::clear_selection(mw.clone());
+    selection::init_selected_visual(mw, files_len);
 }
 
 pub fn format_size(i: _i64) -> SharedString {
@@ -211,31 +81,6 @@ pub fn format_date(i: _i64) -> SharedString {
     types::format_date(i32_to_i64((i.a, i.b)))
 }
 pub fn show_context_menu(x: f32, y: f32, mw: Rc<Weak<MainWindow>>) {
-    //To verify if everything is a file and their extension
-    //If they are, we can offer to open, and with the extension's mappings
-    let (file, file_count, all_files, same_mapping) = {
-        let files = selected_files_lock();
-        let mut iter = files.iter();
-        let first = iter.next().unwrap().1;
-        let mut same_file_type = true;
-        let mut same_extension = true;
-        for f in iter {
-            if f.1.extension != first.extension {
-                same_extension = false;
-            }
-            if f.1.is_dir != first.is_dir {
-                same_file_type = false;
-            }
-        }
-
-        (
-            first.clone(),
-            files.len(),
-            same_file_type && !first.is_dir,
-            same_extension,
-        )
-    };
-
     let w = mw.unwrap();
     let ctx_adapter = w.global::<ContextAdapter>();
 
@@ -245,11 +90,8 @@ pub fn show_context_menu(x: f32, y: f32, mw: Rc<Weak<MainWindow>>) {
 
     let conf = config_lock();
 
-    let default_mapping = if file_count > 1 && !same_mapping {
-        None
-    } else {
-        conf.get_mapping_default(&file.extension)
-    };
+    let default_mapping =
+        selection::get_common_extension().and_then(|f| conf.get_mapping_default(&f));
 
     if default_mapping.is_some() {
         menu.push(ContextItem {
@@ -261,8 +103,6 @@ pub fn show_context_menu(x: f32, y: f32, mw: Rc<Weak<MainWindow>>) {
             click_on_hover: false,
             internal_id: 0,
         });
-    }
-    if all_files {
         menu.push(ContextItem {
             display: ("Open With").into(),
             callback_id: ContextCallback::OpenWith as i32,
@@ -292,7 +132,7 @@ pub fn show_context_menu(x: f32, y: f32, mw: Rc<Weak<MainWindow>>) {
         click_on_hover: false,
         internal_id: 0,
     });
-    if file.is_dir && file_count == 1 {
+    if selection::is_single_selected_directory() {
         menu.push(ContextItem {
             display: "Paste Into".into(),
             callback_id: ContextCallback::PasteIntoSelected as i32,

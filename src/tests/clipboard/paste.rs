@@ -5,7 +5,6 @@ use crate::{
         paste::{paste_file, paste_file_with_checks, paste_folder_with_checks},
     },
     core::{empty_file, empty_file_with_path, generate_files_for_path},
-    globals::selected_files_lock,
     rename_window::{setup_rename_window, RenameOption, RenameWindowReturn},
     ui::FileItem,
 };

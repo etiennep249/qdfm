@@ -2,8 +2,7 @@ use arboard::Clipboard;
 use slint::{ComponentHandle, Weak};
 use std::{
     collections::VecDeque,
-    fs::{metadata, rename},
-    io::Write,
+    fs::metadata,
     path::PathBuf,
     rc::Rc,
     str::FromStr,

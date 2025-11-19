@@ -1,7 +1,9 @@
+use crate::context_menus as cm;
 use crate::ui::*;
-use crate::{context_menus::cm_file, globals::selected_files_lock};
 use slint::{ComponentHandle, Weak};
 use std::rc::Rc;
+
+use super::filemanager::selection;
 
 pub enum ContextCallback {
     OpenWithDefault,
@@ -16,6 +18,9 @@ pub enum ContextCallback {
     Delete,
 }
 
+///Triggered when a certain menu item is clicked.
+///Redirects the call to the proper callback based on the callback_id of the context item.
+///It also hides the context menu afterwards.
 pub fn menuitem_click(
     context_item: ContextItem,
     mw: Rc<Weak<MainWindow>>,
@@ -23,28 +28,34 @@ pub fn menuitem_click(
 ) {
     let mw_clone_do_not_pass = mw.clone();
     match context_item.callback_id {
-        c if c == ContextCallback::ShowProperties as i32 => cm_file::show_properties(mw, prop_win),
-        c if c == ContextCallback::OpenWithDefault as i32 => {
-            cm_file::open_with_default(selected_files_lock().values().cloned().collect())
+        c if c == ContextCallback::ShowProperties as i32 => {
+            cm::files::show_properties(mw, prop_win)
         }
-        c if c == ContextCallback::OpenWith as i32 => cm_file::open_with(mw),
-        c if c == ContextCallback::Copy as i32 => cm_file::copy(),
-        c if c == ContextCallback::Cut as i32 => cm_file::cut(),
-        c if c == ContextCallback::PasteIntoSelected as i32 => cm_file::paste(false, mw),
+        c if c == ContextCallback::OpenWithDefault as i32 => {
+            cm::files::open_with_default(selection::selected_files_clone())
+        }
+        c if c == ContextCallback::OpenWith as i32 => cm::files::open_with(mw),
+        c if c == ContextCallback::Copy as i32 => cm::files::copy(),
+        c if c == ContextCallback::Cut as i32 => cm::files::cut(),
+        c if c == ContextCallback::PasteIntoSelected as i32 => cm::files::paste(false, mw),
         /*c if c == ContextCallback::PasteHere as i32 => {
             cm_file::paste(
                 true, /*Path::new(&(file.path.to_string())).parent().unwrap(),*/ mw,
             )
         }*/
-        c if c == ContextCallback::Delete as i32 => cm_file::delete(mw),
-        c if c == ContextCallback::OpenWithQuick as i32 => cm_file::open_with_quick(&context_item),
-        c if c == ContextCallback::ManageQuick as i32 => cm_file::manage_quick(mw),
+        c if c == ContextCallback::Delete as i32 => cm::files::delete(mw),
+        c if c == ContextCallback::OpenWithQuick as i32 => {
+            cm::files::open_with_quick(&context_item)
+        }
+        c if c == ContextCallback::ManageQuick as i32 => cm::files::manage_quick(mw),
         _ => (),
     }
     if !context_item.click_on_hover {
         mw_clone_do_not_pass.unwrap().invoke_hide_context_menu();
     }
 }
+
+///Code to run when any context item in a context menu is hovered.
 pub fn menuitem_hover(context_item: ContextItem, mw: Rc<Weak<MainWindow>>) {
     let w = mw.unwrap();
     let ctx_adapter = w.global::<ContextAdapter>();

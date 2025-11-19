@@ -1,7 +1,8 @@
 use super::error_handling::{log_debug, log_error_str};
+use crate::callbacks::filemanager::selection;
 use crate::callbacks::filemanager::set_current_tab_file;
 use crate::clipboard::file_exists_in_dir;
-use crate::globals::{qdfm_win_id, selected_files_lock, set_qdfm_win_id, x_conn_lock};
+use crate::globals::{qdfm_win_id, set_qdfm_win_id, x_conn_lock};
 use crate::ui::*;
 use core::{panic, str};
 
@@ -109,8 +110,7 @@ fn reset_xdndinfo(update_has_listening_thread: bool) {
 }
 
 pub fn dnd_press(_: Rc<Weak<MainWindow>>) {
-    let files = selected_files_lock();
-    if files.len() != 1 {
+    if !selection::only_one_selected() {
         return;
     }
 
@@ -122,7 +122,8 @@ pub fn dnd_press(_: Rc<Weak<MainWindow>>) {
     info.current_window = qdfm_id;
     info.is_dnd_drag = true;
 
-    info.data_to_send = String::from("file://") + &files.iter().next().unwrap().1.path;
+    //TODO: send more than the first
+    info.data_to_send = String::from("file://") + &selection::get_selected_file().unwrap().path;
     if c.set_selection_owner(qdfm_id, atom("XdndSelection"), CURRENT_TIME)
         .is_err()
     {
