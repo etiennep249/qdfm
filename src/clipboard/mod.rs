@@ -1,9 +1,8 @@
 use copy::rename_or_copy_file;
-use slint::{ComponentHandle, Weak};
+use slint::Weak;
 
 use crate::{
-    callbacks::filemanager::set_current_tab_file,
-    ui::{FileItem, MainWindow, TabsAdapter},
+    ui::{self, FileItem, MainWindow},
     utils::{error_handling::log_error_str, types},
 };
 use std::{
@@ -104,7 +103,7 @@ pub fn file_exists_in_dir(dir_path: &str, filename: &str) -> Result<bool, ()> {
 ///  Called when a file is dropped in the window
 ///  The file is moved from its original location to the current folder
 ///
-pub fn move_file(mw: Rc<Weak<MainWindow>>, buf: &str, destination: &str) {
+pub fn move_file(buf: &str, destination: &str) {
     if file_exists_in_dir(destination, buf) == Ok(false) {
         if let Some(filename) = buf.split("/").last() {
             if rename_or_copy_file(
@@ -120,9 +119,5 @@ pub fn move_file(mw: Rc<Weak<MainWindow>>, buf: &str, destination: &str) {
         }
     }
     //Refresh UI
-    set_current_tab_file(
-        mw.unwrap().global::<TabsAdapter>().invoke_get_current_tab(),
-        mw,
-        false,
-    );
+    ui::send_message(ui::UIMessage::Refresh);
 }

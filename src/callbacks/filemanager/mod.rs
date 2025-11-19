@@ -1,41 +1,31 @@
 use crate::context_menus::files::open_with_default;
-use crate::core;
 use crate::globals::config_lock;
-use crate::sort::call_current_sort;
+use crate::ui;
 use crate::ui::*;
 use crate::utils::types;
 use crate::utils::types::i32_to_i64;
 use slint::ComponentHandle;
-use slint::Image;
-use slint::SharedPixelBuffer;
 use slint::SharedString;
-use slint::VecModel;
-use slint::Weak;
 use std::collections::VecDeque;
-use std::rc::Rc;
 use std::sync::Mutex;
 use std::sync::MutexGuard;
 use std::sync::OnceLock;
-
-use super::context_menu::ContextCallback;
-use super::tabs::get_breadcrumbs_for;
 
 pub mod selection;
 
 ///When a file is double clicked, it is opened with the default mapping.
 ///When a directory is double clicked, it is "moved into" or set as the new current directory.
-pub fn fileitem_doubleclicked(item: FileItem, _i: i32, mw: Rc<Weak<MainWindow>>) {
+pub fn fileitem_doubleclicked(item: FileItem, _i: i32) {
     if item.is_dir {
-        set_current_tab_file(
+        ui::send_message(UIMessage::SetCurrentTabFile(
             TabItem {
                 internal_path: item.path,
                 text: item.file_name.clone(),
                 text_length: item.file_name.len() as i32,
                 selected: true,
             },
-            mw,
             true,
-        );
+        ));
     } else {
         //Care with config lock, needs to be dropped before call to open_with_default
         let is_some = {
@@ -49,132 +39,11 @@ pub fn fileitem_doubleclicked(item: FileItem, _i: i32, mw: Rc<Weak<MainWindow>>)
     }
 }
 
-//TODO: Better refresh. Perhaps a queue? Don't want UI to abruptly refresh when background
-//operations finish. That or make this function non-distruptive, maintain selected files.
-pub fn set_current_tab_file(mut item: TabItem, mw: Rc<Weak<MainWindow>>, remember: bool) {
-    let files = core::generate_files_for_path(item.internal_path.as_str());
-    if item.internal_path == "/" {
-        item.text = "/".into();
-    }
-    let files_len = files.len();
-
-    let w = mw.unwrap();
-    let tabs = w.global::<TabsAdapter>();
-    tabs.set_path_shown(false);
-    if remember {
-        add_to_history(tabs.invoke_get_current_tab());
-    }
-
-    tabs.set_breadcrumbs(Rc::new(VecModel::from(get_breadcrumbs_for(&item))).into());
-    tabs.invoke_set_current_tab(item);
-    let filemanager = w.global::<FileManager>();
-    filemanager.set_files(Rc::new(VecModel::from(files)).into());
-    call_current_sort(mw.clone());
-    selection::clear_selection(mw.clone());
-    selection::init_selected_visual(mw, files_len);
-}
-
 pub fn format_size(i: _i64) -> SharedString {
     types::format_size(i32_to_i64((i.a, i.b)) as u64, false)
 }
 pub fn format_date(i: _i64) -> SharedString {
     types::format_date(i32_to_i64((i.a, i.b)))
-}
-pub fn show_context_menu(x: f32, y: f32, mw: Rc<Weak<MainWindow>>) {
-    let w = mw.unwrap();
-    let ctx_adapter = w.global::<ContextAdapter>();
-
-    //TODO: have all of these items stored somewhere so we dont genereate everytime
-
-    let mut menu: Vec<ContextItem> = Vec::new();
-
-    let conf = config_lock();
-
-    let default_mapping =
-        selection::get_common_extension().and_then(|f| conf.get_mapping_default(&f));
-
-    if default_mapping.is_some() {
-        menu.push(ContextItem {
-            display: ("Open With ".to_owned() + &default_mapping.unwrap()).into(),
-            callback_id: ContextCallback::OpenWithDefault as i32,
-            shortcut: "".into(),
-            icon: Image::from_rgb8(SharedPixelBuffer::new(0, 0)),
-            has_separator: true,
-            click_on_hover: false,
-            internal_id: 0,
-        });
-        menu.push(ContextItem {
-            display: ("Open With").into(),
-            callback_id: ContextCallback::OpenWith as i32,
-            shortcut: "▶".into(),
-            icon: Image::from_rgb8(SharedPixelBuffer::new(0, 0)),
-            has_separator: true,
-            click_on_hover: true,
-            internal_id: 0,
-        });
-    }
-
-    menu.push(ContextItem {
-        display: "Cut".into(),
-        callback_id: ContextCallback::Cut as i32,
-        shortcut: "".into(),
-        icon: Image::from_rgb8(SharedPixelBuffer::new(0, 0)),
-        has_separator: false,
-        click_on_hover: false,
-        internal_id: 0,
-    });
-    menu.push(ContextItem {
-        display: "Copy".into(),
-        callback_id: ContextCallback::Copy as i32,
-        shortcut: "".into(),
-        icon: Image::from_rgb8(SharedPixelBuffer::new(0, 0)),
-        has_separator: false,
-        click_on_hover: false,
-        internal_id: 0,
-    });
-    if selection::is_single_selected_directory() {
-        menu.push(ContextItem {
-            display: "Paste Into".into(),
-            callback_id: ContextCallback::PasteIntoSelected as i32,
-            shortcut: "".into(),
-            icon: Image::from_rgb8(SharedPixelBuffer::new(0, 0)),
-            has_separator: true,
-            click_on_hover: false,
-            internal_id: 0,
-        });
-    } else {
-        menu.push(ContextItem {
-            display: "Paste Here".into(),
-            callback_id: ContextCallback::PasteHere as i32,
-            shortcut: "".into(),
-            icon: Image::from_rgb8(SharedPixelBuffer::new(0, 0)),
-            has_separator: true,
-            click_on_hover: false,
-            internal_id: 0,
-        });
-    }
-    menu.push(ContextItem {
-        display: "Delete".into(),
-        callback_id: ContextCallback::Delete as i32,
-        shortcut: "".into(),
-        icon: Image::from_rgb8(SharedPixelBuffer::new(0, 0)),
-        has_separator: true,
-        click_on_hover: false,
-        internal_id: 0,
-    });
-    menu.push(ContextItem {
-        display: "Properties".into(),
-        callback_id: ContextCallback::ShowProperties as i32,
-        shortcut: "".into(),
-        icon: Image::from_rgb8(SharedPixelBuffer::new(0, 0)),
-        has_separator: false,
-        click_on_hover: false,
-        internal_id: 0,
-    });
-
-    ctx_adapter.set_items(Rc::new(VecModel::from(menu)).into());
-    ctx_adapter.set_x_pos(x + 1f32);
-    ctx_adapter.set_y_pos(y + 1f32);
 }
 
 /*
@@ -215,35 +84,35 @@ pub fn add_to_history(item: TabItem) {
     }
     hist.0.push_back(item);
 }
-pub fn get_prev_history(mw: Rc<Weak<MainWindow>>) -> Option<TabItem> {
+pub fn get_prev_history() -> Option<TabItem> {
     let mut hist = get_history();
     let item = hist.0.pop_back();
     match item {
         Some(e) => {
+            drop(hist);
             /*Push the path we were on to RHISTORY*/
-            mw.upgrade_in_event_loop(move |w| {
+            ui::run_with_main_window(|mw| {
                 get_history()
                     .1
-                    .push_back(w.global::<TabsAdapter>().invoke_get_current_tab());
-            })
-            .unwrap();
+                    .push_back(mw.global::<TabsAdapter>().invoke_get_current_tab());
+            });
             Some(e)
         }
         None => None,
     }
 }
-pub fn get_next_history(mw: Rc<Weak<MainWindow>>) -> Option<TabItem> {
+pub fn get_next_history() -> Option<TabItem> {
     let mut hist = get_history();
     let item = hist.1.pop_back();
     match item {
         Some(e) => {
+            drop(hist);
             /*Push the path we were on to LHISTORY*/
-            mw.upgrade_in_event_loop(move |w| {
+            ui::run_with_main_window(|mw| {
                 get_history()
-                    .0
-                    .push_back(w.global::<TabsAdapter>().invoke_get_current_tab());
-            })
-            .unwrap();
+                    .1
+                    .push_back(mw.global::<TabsAdapter>().invoke_get_current_tab());
+            });
             Some(e)
         }
         None => None,

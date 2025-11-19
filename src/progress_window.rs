@@ -4,10 +4,11 @@ use std::{
     time::{Duration, Instant},
 };
 
-use slint::{invoke_from_event_loop, ComponentHandle, LogicalPosition, SharedString, Weak};
+use slint::{ComponentHandle, LogicalPosition, SharedString, Weak};
 
 use crate::{
-    callbacks::filemanager::set_current_tab_file, enclose, ui::*,
+    enclose,
+    ui::{self, *},
     utils::error_handling::log_error_str,
 };
 
@@ -24,17 +25,12 @@ use crate::{
 ///The caller is responsible to check if send() returns a disconnect error. If so, it means
 ///that the user canceled the operation through the progress window. The caller should react
 ///accordingly
-pub fn show_progress_window(
-    mw: Weak<MainWindow>,
-    recv: Receiver<(f32, String, f64, bool)>,
-    interval: Duration,
-) {
+pub fn show_progress_window(recv: Receiver<(f32, String, f64, bool)>, interval: Duration) {
     //Unwrap everything. If it panics, no big deal, we just get no progress bar.
     //This will often be called in other threads, so need this invoke_from_event_loop
-    let res = invoke_from_event_loop(move || {
+    ui::run_with_main_window(move |main_win| {
         let win = ProgressWindow::new().unwrap();
 
-        let main_win = mw.unwrap();
         let pos = main_win.window().position();
         let x = pos.x as f32 + (main_win.get_win_width() / 2.0) - (win.get_win_width() / 2.0);
         let y = pos.y as f32 + (main_win.get_win_height() / 2.0) - (win.get_win_height() / 2.0);
@@ -50,7 +46,6 @@ pub fn show_progress_window(
         adp.on_pause(move || pause(weak.clone()));
 
         let weak = win.as_weak();
-        let main_weak = main_win.as_weak();
 
         //Thread to update UI
         std::thread::spawn(move || {
@@ -95,24 +90,12 @@ pub fn show_progress_window(
             //Sender probably dropped, get out and update UI
             weak.upgrade_in_event_loop(|w| {
                 w.hide().ok();
-                //Safe to unwrap since we're already in the event loop
-                //Refresh UI
-                set_current_tab_file(
-                    main_weak
-                        .unwrap()
-                        .global::<TabsAdapter>()
-                        .invoke_get_current_tab(),
-                    Rc::new(main_weak),
-                    false,
-                );
+                ui::send_message(UIMessage::Refresh);
             })
             .unwrap();
         });
         win.show().ok();
     });
-    if res.is_err() {
-        println!("Could not setup the progress window");
-    }
 }
 
 fn format_seconds(seconds: f64) -> SharedString {

@@ -10,6 +10,7 @@ use super::create_test_directory;
 
 #[test]
 pub fn test_delete() {
+    //TODO: Use ui/internal's global MW. This test will fail until then
     let rc = Rc::new(get_mainwindow().as_weak());
 
     let path = create_test_directory("delete", true);
@@ -34,7 +35,7 @@ pub fn test_delete() {
 
     *(selected_files_write_tests()) = HashMap::from([(0, file1), (1, file2_simlink)]);
 
-    delete(rc.clone());
+    delete();
 
     assert_eq!(path.join("subfolder1").join("file1").exists(), false);
     assert_eq!(
@@ -52,7 +53,7 @@ pub fn test_delete() {
     //Delete everything
     *(selected_files_write_tests()) = HashMap::from([(0, folder)]);
 
-    delete(rc);
+    delete();
 
     assert_eq!(path.join("subfolder1").exists(), false);
 }

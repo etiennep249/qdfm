@@ -13,12 +13,12 @@ use std::{
 use walkdir::WalkDir;
 
 use crate::{
-    callbacks::{filemanager::set_current_tab_file, properties::set_split_bitmask},
+    callbacks::properties::set_split_bitmask,
     core::{
         get_all_groups, get_all_users, get_file_encoding, get_file_magic_type, get_file_metadata,
         get_gid, get_uid, Group,
     },
-    ui::*,
+    ui::{self, *},
     utils::{
         error_handling::{log_error, log_error_str},
         types::{format_date, i32_to_i64, i64_to_i32},
@@ -493,7 +493,7 @@ pub fn calculate_directory_size(
 /*
  *  Save and close
  * */
-pub fn save(prop_win: Rc<Weak<PropertiesWindow>>, mw: Rc<Weak<MainWindow>>) {
+pub fn save(prop_win: Rc<Weak<PropertiesWindow>>) {
     let w = prop_win.unwrap();
     let prop_adp = w.global::<PropertiesAdapter>();
 
@@ -568,11 +568,7 @@ pub fn save(prop_win: Rc<Weak<PropertiesWindow>>, mw: Rc<Weak<MainWindow>>) {
     }
 
     //Refresh UI
-    set_current_tab_file(
-        mw.unwrap().global::<TabsAdapter>().invoke_get_current_tab(),
-        mw,
-        false,
-    );
+    ui::send_message(UIMessage::Refresh);
     w.hide().unwrap();
 }
 

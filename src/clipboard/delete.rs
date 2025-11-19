@@ -1,17 +1,15 @@
 use crate::{
-    callbacks::filemanager::{selection::selected_files_read, set_current_tab_file},
+    callbacks::filemanager::selection::selected_files_read,
     progress_window::show_progress_window,
-    ui::{MainWindow, TabsAdapter},
+    ui::{self},
     utils::error_handling::log_error_str,
 };
-use slint::{ComponentHandle, Weak};
-use std::{fs::metadata, path::Path, rc::Rc, sync::mpsc::channel, thread, time::Duration};
+use std::{fs::metadata, path::Path, sync::mpsc::channel, thread, time::Duration};
 use walkdir::WalkDir;
 
 use super::{format_size_and_filecount_progress_status, PROGRESS_WINDOW_BYTE_THRESHOLD};
 
-pub fn delete(mww: Rc<Weak<MainWindow>>) {
-    let mw = mww.clone().unwrap().as_weak();
+pub fn delete() {
     let thread = thread::spawn(move || {
         let (progress, recv) = channel();
         let selected_files_lock = selected_files_read();
@@ -51,7 +49,7 @@ pub fn delete(mww: Rc<Weak<MainWindow>>) {
         //Don't bother showing a progress window if the file is too small
         //Messages will just end up being sent nowhere/never read
         if total_size > PROGRESS_WINDOW_BYTE_THRESHOLD {
-            show_progress_window(mw.clone(), recv, Duration::from_millis(100));
+            show_progress_window(recv, Duration::from_millis(100));
         }
 
         if progress
@@ -163,14 +161,7 @@ pub fn delete(mww: Rc<Weak<MainWindow>>) {
 
         //If we didn't show the progress window, we need to refresh manually
         if total_size <= PROGRESS_WINDOW_BYTE_THRESHOLD {
-            mw.upgrade_in_event_loop(|w| {
-                set_current_tab_file(
-                    w.global::<TabsAdapter>().invoke_get_current_tab(),
-                    Rc::new(w.as_weak()),
-                    false,
-                );
-            })
-            .ok();
+            ui::send_message(ui::UIMessage::Refresh);
         }
     });
     #[cfg(test)]

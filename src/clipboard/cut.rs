@@ -5,7 +5,7 @@ use std::{sync::Mutex, thread};
 //TODO: Add a couple more spots where the CUT buffer gets cleared so we don't accidentally cut
 //something we cut an hour ago
 pub fn cut_file(files: Vec<FileItem>) {
-    let thread = thread::spawn(|| {
+    let _thread = thread::spawn(|| {
         let buf = CUT_BUFFER.get_or_init(|| Mutex::new(Vec::new())).lock();
 
         if let Ok(mut buf_lock) = buf {
@@ -16,5 +16,5 @@ pub fn cut_file(files: Vec<FileItem>) {
         }
     });
     #[cfg(test)]
-    thread.join().unwrap();
+    _thread.join().unwrap();
 }

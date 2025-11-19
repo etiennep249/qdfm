@@ -1,9 +1,8 @@
 use super::error_handling::{log_debug, log_error_str};
 use crate::callbacks::filemanager::selection;
-use crate::callbacks::filemanager::set_current_tab_file;
 use crate::clipboard::file_exists_in_dir;
 use crate::globals::{qdfm_win_id, set_qdfm_win_id, x_conn_lock};
-use crate::ui::*;
+use crate::ui::{self, *};
 use core::{panic, str};
 
 use slint::{ComponentHandle, Weak};
@@ -42,11 +41,7 @@ pub fn move_file(mw: Rc<Weak<MainWindow>>, buf: &str, destination: &str) {
         }
     }
     //Refresh UI
-    set_current_tab_file(
-        mw.unwrap().global::<TabsAdapter>().invoke_get_current_tab(),
-        mw,
-        false,
-    );
+    ui::send_message(UIMessage::Refresh);
 }
 //==============================================================================================
 //TODO BIG TODO implement drag and drop from qdfm to some other window ON WAYLAND
@@ -109,7 +104,7 @@ fn reset_xdndinfo(update_has_listening_thread: bool) {
     info.is_dnd_drag = false;
 }
 
-pub fn dnd_press(_: Rc<Weak<MainWindow>>) {
+pub fn dnd_press() {
     if !selection::only_one_selected() {
         return;
     }
@@ -131,7 +126,7 @@ pub fn dnd_press(_: Rc<Weak<MainWindow>>) {
     }
 }
 
-pub fn dnd_release(_: Rc<Weak<MainWindow>>) {
+pub fn dnd_release() {
     if !xdnd_info_lock().is_dnd_drag {
         return;
     }
@@ -153,7 +148,7 @@ pub fn dnd_release(_: Rc<Weak<MainWindow>>) {
     }
 }
 
-pub fn dnd_move(_: Rc<Weak<MainWindow>>, x: f32, y: f32) {
+pub fn dnd_move(x: f32, y: f32) {
     if !xdnd_info_lock().is_dnd_drag {
         return;
     }

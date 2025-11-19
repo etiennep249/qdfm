@@ -8,8 +8,8 @@ use std::rc::Rc;
 /*
  *  Save and close
  * */
-pub fn ok(prop_win: Rc<Weak<PropertiesWindow>>, mw: Rc<Weak<MainWindow>>) {
-    file_properties::save(prop_win, mw);
+pub fn ok(prop_win: Rc<Weak<PropertiesWindow>>) {
+    file_properties::save(prop_win);
 }
 pub fn cancel(prop_win: Rc<Weak<PropertiesWindow>>) {
     let w = prop_win.unwrap();

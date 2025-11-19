@@ -1,5 +1,5 @@
-use crate::ui::*;
-use slint::{Model, VecModel, Weak};
+use crate::ui::{self, *};
+use slint::{Model, VecModel};
 use std::{
     collections::HashMap,
     rc::Rc,
@@ -67,83 +67,84 @@ pub fn is_index_selected(i: i32) -> bool {
 
 ///Clears selection
 ///Requires a handle to the MainWindow to update the UI accordingly
-pub fn clear_selection(mw: Rc<Weak<MainWindow>>) {
+pub fn clear_selection() {
     let mut sel_files = selected_files_write();
     sel_files.drain();
-    let mw = mw.unwrap();
-    let fm = mw.global::<FileManager>();
-    fm.set_is_single_selected(false);
-    let visual_selected = fm.get_visual_selected();
-    for i in 0..visual_selected.row_count() {
-        visual_selected.set_row_data(i, false);
-    }
+    ui::run_with_main_window(|mw| {
+        let fm = mw.global::<FileManager>();
+        fm.set_is_single_selected(false);
+        let visual_selected = fm.get_visual_selected();
+        for i in 0..visual_selected.row_count() {
+            visual_selected.set_row_data(i, false);
+        }
+    });
 }
 
 ///Adds a file and its index to the selection while keeping what was previously selected
-///Requires a handle to the MainWindow to update the UI accordingly
-pub fn add_to_selected(mw: Rc<Weak<MainWindow>>, i: i32, file: FileItem) {
-    let mut sel_files = selected_files_write();
-    let mw = mw.unwrap();
-    sel_files.insert(i, file);
-    set_selected_visual(&mw, i, true);
-    let fm = mw.global::<FileManager>();
-    if sel_files.len() == 2 {
-        fm.set_is_single_selected(false);
-    } else if sel_files.len() == 1 {
-        fm.set_is_single_selected(true);
-    }
-    fm.set_single_selected_index(i);
+pub fn add_to_selected(i: i32, file: FileItem) {
+    ui::run_with_main_window(move |mw| {
+        let mut sel_files = selected_files_write();
+        sel_files.insert(i, file.clone());
+        set_selected_visual(&mw, i, true);
+        let fm = mw.global::<FileManager>();
+        if sel_files.len() == 2 {
+            fm.set_is_single_selected(false);
+        } else if sel_files.len() == 1 {
+            fm.set_is_single_selected(true);
+        }
+        fm.set_single_selected_index(i);
+    });
 }
 
-pub fn shift_select(mww: Rc<Weak<MainWindow>>, i: i32) {
-    let mut sel_files = selected_files_write();
-    let mw = mww.unwrap();
-    let fm = mw.global::<FileManager>();
-    let last_selected_index = fm.get_single_selected_index();
-    let visual_selected = fm.get_visual_selected();
+pub fn shift_select(i: i32) {
+    ui::run_with_main_window(move |mw| {
+        let mut sel_files = selected_files_write();
+        let fm = mw.global::<FileManager>();
+        let last_selected_index = fm.get_single_selected_index();
+        let visual_selected = fm.get_visual_selected();
 
-    let was_clicked_selected = sel_files.contains_key(&i);
+        let was_clicked_selected = sel_files.contains_key(&i);
 
-    //To decide whether we go reverse or not
-    let range = if i < last_selected_index && !was_clicked_selected {
-        i..=last_selected_index
-    } else if i > last_selected_index && !was_clicked_selected {
-        last_selected_index..=i
-    } else if i < last_selected_index && was_clicked_selected {
-        (i + 1)..=last_selected_index
-    } else {
-        last_selected_index..=(i + 1)
-    };
-    for i in range {
-        if !was_clicked_selected {
-            sel_files.insert(i, fm.get_files().row_data(i as usize).unwrap());
-            visual_selected.set_row_data(i as usize, true);
+        //To decide whether we go reverse or not
+        let range = if i < last_selected_index && !was_clicked_selected {
+            i..=last_selected_index
+        } else if i > last_selected_index && !was_clicked_selected {
+            last_selected_index..=i
+        } else if i < last_selected_index && was_clicked_selected {
+            (i + 1)..=last_selected_index
         } else {
-            sel_files.remove(&i);
-            visual_selected.set_row_data(i as usize, false);
+            last_selected_index..=(i + 1)
+        };
+        for i in range {
+            if !was_clicked_selected {
+                sel_files.insert(i, fm.get_files().row_data(i as usize).unwrap());
+                visual_selected.set_row_data(i as usize, true);
+            } else {
+                sel_files.remove(&i);
+                visual_selected.set_row_data(i as usize, false);
+            }
         }
-    }
-    fm.set_is_single_selected(false);
-    fm.set_single_selected_index(i);
+        fm.set_is_single_selected(false);
+        fm.set_single_selected_index(i);
+    });
 }
 
 ///Removes the file at this index from the selection
-///Requires a handle to the MainWindow to update the UI accordingly
-pub fn remove_from_selected(mw: Rc<Weak<MainWindow>>, i: i32) {
-    let mut sel_files = selected_files_write();
-    let mw = mw.unwrap();
-    if sel_files.len() > 1 {
-        mw.global::<FileManager>().set_is_single_selected(false);
-    }
-    sel_files.remove(&i);
-    set_selected_visual(&mw, i, false);
+pub fn remove_from_selected(i: i32) {
+    ui::run_with_main_window(move |mw| {
+        let mut sel_files = selected_files_write();
+        if sel_files.len() > 1 {
+            mw.global::<FileManager>().set_is_single_selected(false);
+        }
+        sel_files.remove(&i);
+        set_selected_visual(&mw, i, false);
+    });
 }
 
 ///Sets the file as the only selected file. Will clear the selection first.
-///Requires a handle to the MainWindow to update the UI accordingly
-pub fn set_single_selected(mw: Rc<Weak<MainWindow>>, i: i32, file: FileItem) {
-    clear_selection(mw.clone());
-    add_to_selected(mw, i, file);
+pub fn set_single_selected(i: i32, file: FileItem) {
+    clear_selection();
+    add_to_selected(i, file);
 }
 
 ///Returns true if nothing is selected
@@ -167,9 +168,8 @@ pub fn set_selected_visual(mw: &MainWindow, i: i32, val: bool) {
 ///Usually called when the current directory changes
 ///
 ///TODO: Necessary?
-pub fn init_selected_visual(mw: Rc<Weak<MainWindow>>, row_count: usize) {
-    mw.unwrap()
-        .global::<FileManager>()
+pub fn init_selected_visual(mw: &MainWindow, row_count: usize) {
+    mw.global::<FileManager>()
         .set_visual_selected(Rc::new(VecModel::from(vec![false; row_count])).into());
 }
 

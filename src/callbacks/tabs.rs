@@ -1,15 +1,12 @@
 use crate::{
-    ui::*,
+    ui::{self, *},
     utils::{error_handling::user_notice, is_directory_valid},
 };
 
-use slint::{SharedString, Weak};
-use std::rc::Rc;
+use slint::SharedString;
 
-use super::filemanager::set_current_tab_file;
-
-pub fn breadcrumb_clicked(item: TabItem, mw: Rc<Weak<MainWindow>>) {
-    set_current_tab_file(item, mw, true);
+pub fn breadcrumb_clicked(item: TabItem) {
+    ui::send_message(UIMessage::SetCurrentTabFile(item, true));
 }
 
 pub fn get_breadcrumbs_for(item: &TabItem) -> Vec<TabItem> {
@@ -32,7 +29,7 @@ pub fn get_breadcrumbs_for(item: &TabItem) -> Vec<TabItem> {
         .collect()
 }
 
-pub fn breadcrumb_accepted(mut s: SharedString, mw: Rc<Weak<MainWindow>>) {
+pub fn breadcrumb_accepted(mut s: SharedString) {
     if !is_directory_valid(&s) {
         user_notice("Invalid path!");
         return;
@@ -47,5 +44,5 @@ pub fn breadcrumb_accepted(mut s: SharedString, mw: Rc<Weak<MainWindow>>) {
         selected: true,
         text_length: -1,
     };
-    set_current_tab_file(item, mw, true);
+    ui::send_message(UIMessage::SetCurrentTabFile(item, true));
 }

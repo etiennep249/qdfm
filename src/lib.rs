@@ -1,5 +1,7 @@
 //TODO: Don't need to import ui::* everywhere, just import what we need
 pub mod ui {
+    pub mod ui_listener;
+    pub use ui_listener::*;
     slint::include_modules!();
 }
 

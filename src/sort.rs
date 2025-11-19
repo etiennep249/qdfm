@@ -1,7 +1,7 @@
 use std::{cmp::Ordering, rc::Rc};
 
 use crate::{ui::*, utils::types::i32_to_i64};
-use slint::{SortModel, Weak};
+use slint::SortModel;
 
 enum SortBy {
     Name,
@@ -19,7 +19,7 @@ fn set_current_sort(new_sort: SortBy, asc: bool) {
         CURRENT_ASC = asc;
     }
 }
-pub fn call_current_sort(mw: Rc<Weak<MainWindow>>) {
+pub fn call_current_sort(mw: &MainWindow) {
     unsafe {
         match CURRENT_SORT {
             SortBy::Name => sort_by_name(mw, CURRENT_ASC, false),
@@ -31,12 +31,11 @@ pub fn call_current_sort(mw: Rc<Weak<MainWindow>>) {
 
 //save: whether we need to modify the statics or not
 //It's a small optimization, we don't need do it if calling from call_current_sort
-pub fn sort_by_name(mw: Rc<Weak<MainWindow>>, ascending: bool, save: bool) {
+pub fn sort_by_name(mw: &MainWindow, ascending: bool, save: bool) {
     if save {
         set_current_sort(SortBy::Name, ascending);
     }
-    let mw_upgraded = mw.unwrap();
-    let fm = mw_upgraded.global::<FileManager>();
+    let fm = mw.global::<FileManager>();
     if ascending {
         fm.set_files(
             Rc::new(SortModel::new(fm.get_files(), |lhs, rhs| {
@@ -69,12 +68,11 @@ pub fn sort_by_name(mw: Rc<Weak<MainWindow>>, ascending: bool, save: bool) {
         );
     }
 }
-pub fn sort_by_date(mw: Rc<Weak<MainWindow>>, ascending: bool, save: bool) {
+pub fn sort_by_date(mw: &MainWindow, ascending: bool, save: bool) {
     if save {
         set_current_sort(SortBy::Date, ascending);
     }
-    let mw_upgraded = mw.unwrap();
-    let fm = mw_upgraded.global::<FileManager>();
+    let fm = mw.global::<FileManager>();
     if ascending {
         fm.set_files(
             Rc::new(SortModel::new(fm.get_files(), |lhs, rhs| {
@@ -115,12 +113,11 @@ pub fn sort_by_date(mw: Rc<Weak<MainWindow>>, ascending: bool, save: bool) {
         );
     }
 }
-pub fn sort_by_size(mw: Rc<Weak<MainWindow>>, ascending: bool, save: bool) {
+pub fn sort_by_size(mw: &MainWindow, ascending: bool, save: bool) {
     if save {
         set_current_sort(SortBy::Size, ascending);
     }
-    let mw_upgraded = mw.unwrap();
-    let fm = mw_upgraded.global::<FileManager>();
+    let fm = mw.global::<FileManager>();
     if ascending {
         fm.set_files(
             Rc::new(SortModel::new(fm.get_files(), |lhs, rhs| {

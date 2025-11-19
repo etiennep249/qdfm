@@ -1,10 +1,8 @@
 use arboard::Clipboard;
-use slint::{ComponentHandle, Weak};
 use std::{
     collections::VecDeque,
     fs::metadata,
     path::PathBuf,
-    rc::Rc,
     str::FromStr,
     sync::{
         mpsc::{channel, Sender},
@@ -16,10 +14,9 @@ use std::{
 use walkdir::WalkDir;
 
 use crate::{
-    callbacks::filemanager::set_current_tab_file,
     progress_window::show_progress_window,
     rename_window::{self, setup_rename_window, RenameOption},
-    ui::{MainWindow, TabsAdapter},
+    ui::{self},
     utils::error_handling::log_error_str,
 };
 
@@ -31,9 +28,7 @@ use super::{
 ///Pastes the selected file(s) in to_path.
 ///Done in another thread.
 //TODO: Implement copy ourselves so we can have progress info for large files
-pub fn paste_file(to_path: PathBuf, mw: Rc<Weak<MainWindow>>) {
-    //Get a weak ref to pass since we can't deref the Rc
-    let mw = mw.unwrap().as_weak();
+pub fn paste_file(to_path: PathBuf) {
     let _thread = thread::spawn(move || {
         let mut is_cut = false;
         let mut paths: Vec<PathBuf> = Vec::new();
@@ -104,7 +99,7 @@ pub fn paste_file(to_path: PathBuf, mw: Rc<Weak<MainWindow>>) {
             return;
         }
 
-        let rename_win = setup_rename_window(mw.clone());
+        let rename_win = setup_rename_window();
 
         //--------------------------------Calculate paste size ------------------------------------
         //Errors are ignored(since if it can't get metadata, good chance it can't read/copy either)
@@ -133,7 +128,7 @@ pub fn paste_file(to_path: PathBuf, mw: Rc<Weak<MainWindow>>) {
         //Don't bother showing a progress window if the file is too small
         //Messages will just end up being sent nowhere/never read
         if total > PROGRESS_WINDOW_BYTE_THRESHOLD as u64 {
-            show_progress_window(mw.clone(), recv, Duration::from_millis(100));
+            show_progress_window(recv, Duration::from_millis(100));
         }
         let total = total as i64;
 
@@ -282,14 +277,7 @@ pub fn paste_file(to_path: PathBuf, mw: Rc<Weak<MainWindow>>) {
 
         //If we didn't show the progress window, we need to refresh manually
         if total <= PROGRESS_WINDOW_BYTE_THRESHOLD {
-            mw.upgrade_in_event_loop(|w| {
-                set_current_tab_file(
-                    w.global::<TabsAdapter>().invoke_get_current_tab(),
-                    Rc::new(w.as_weak()),
-                    false,
-                );
-            })
-            .ok();
+            ui::send_message(ui::UIMessage::Refresh);
         }
     });
     #[cfg(test)]

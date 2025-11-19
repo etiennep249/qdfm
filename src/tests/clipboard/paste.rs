@@ -39,7 +39,7 @@ pub fn test_paste_file() {
         false,
     );
     let clip = Clipboard::new().unwrap().get_text().unwrap();
-    paste_file(target_dir.clone(), Rc::new(get_mainwindow().as_weak()));
+    paste_file(target_dir.clone());
     verify_untouched_test_directory(target_dir.join("paste_file"));
     assert_eq!(source_dir.exists(), true);
 
@@ -63,7 +63,7 @@ pub fn test_paste_file() {
         ],
         false,
     );
-    paste_file(target_dir.clone(), Rc::new(get_mainwindow().as_weak()));
+    paste_file(target_dir.clone());
 
     verify_untouched_test_directory(target_dir.join("paste_file1"));
     verify_untouched_test_directory(target_dir.join("paste_file2"));
@@ -103,7 +103,7 @@ pub fn test_paste_file() {
         empty_file_with_path("/tmp/qdfm_tests/link1".into()),
         empty_file_with_path("/tmp/qdfm_tests/link2".into()),
     ]);
-    paste_file(target_dir.clone(), Rc::new(get_mainwindow().as_weak()));
+    paste_file(target_dir.clone());
 
     verify_untouched_test_directory(target_dir.join("paste_file1"));
     verify_untouched_test_directory(target_dir.join("paste_file2"));
@@ -148,7 +148,7 @@ pub fn test_paste_file_with_checks() {
     let mut apply_to_all = false;
     let mut apply_to_all_option = RenameOption::Rename;
 
-    let rename_win = setup_rename_window(get_mainwindow().as_weak());
+    let rename_win = setup_rename_window();
     let (progress, _) = channel();
 
     //Test 1 - No Overwrite, full copy
@@ -526,7 +526,7 @@ pub fn test_paste_folder_with_checks() {
     let mut apply_to_all = false;
     let mut apply_to_all_option = RenameOption::Rename;
 
-    let rename_win = setup_rename_window(get_mainwindow().as_weak());
+    let rename_win = setup_rename_window();
     let (progress, _) = channel();
 
     //Test 1 - Basic

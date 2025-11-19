@@ -1,17 +1,13 @@
-use std::{
-    sync::{
-        mpsc::{channel, Receiver, Sender},
-        Arc, Mutex,
-    },
-    thread::sleep,
-    time::Duration,
+use std::sync::{
+    mpsc::{channel, Receiver, Sender},
+    Arc, Mutex,
 };
 
 use slint::{invoke_from_event_loop, ComponentHandle, LogicalPosition, SharedString, Weak};
 
 use crate::{
     enclose,
-    ui::{MainWindow, RenameAdapter, RenameWindow as RenameWindowUI},
+    ui::{self, RenameAdapter, RenameWindow as RenameWindowUI},
     utils::error_handling::log_error_str,
 };
 
@@ -49,7 +45,7 @@ pub enum RenameOption {
     Overwrite,
 }
 
-pub fn setup_rename_window(mw: Weak<MainWindow>) -> RenameWindow {
+pub fn setup_rename_window() -> RenameWindow {
     let win_mtx = Arc::new(Mutex::new(None));
     let ptr_mtx = Arc::new(Mutex::new(None));
     let (send, recv) = channel();
@@ -60,13 +56,12 @@ pub fn setup_rename_window(mw: Weak<MainWindow>) -> RenameWindow {
         _raw_window_ptr: ptr_mtx.clone(),
     };
 
-    invoke_from_event_loop(move || {
+    ui::run_with_main_window(move |main_win| {
         if let Ok(win) = RenameWindowUI::new() {
             if let Ok(mut lock) = win_mtx.lock() {
                 let adp = win.global::<RenameAdapter>();
                 //Position the window slightly top-right from center
                 //(Doing it here so it remembers the position in case the user moved it)
-                let main_win = mw.unwrap();
                 let pos = main_win.window().position();
                 let x =
                     pos.x as f32 + (main_win.get_win_width() / 1.7) - (adp.get_win_width() / 1.7);
@@ -91,8 +86,7 @@ pub fn setup_rename_window(mw: Weak<MainWindow>) -> RenameWindow {
         } else {
             log_error_str("Could not create the rename window");
         }
-    })
-    .ok();
+    });
     win
 }
 
@@ -103,6 +97,8 @@ impl RenameWindow {
     ///Filename will be the new name only if rename was chosen
     #[cfg(not(test))]
     pub fn show_rename_window(&self, filename: String) -> Result<RenameWindowReturn, ()> {
+        use std::{thread::sleep, time::Duration};
+
         const MAX_LOOPS: usize = 10;
         for _ in 0..MAX_LOOPS {
             if let Ok(win) = self.window.lock() {
