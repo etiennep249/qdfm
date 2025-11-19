@@ -39,6 +39,7 @@ export global FileManager {
     callback set_single_selected(int, FileItem);
     callback is_nothing_selected() -> bool;
     callback shift_select(int);
+    callback clear_selection();
 }
 
 export component NameWithIcon inherits Rectangle {

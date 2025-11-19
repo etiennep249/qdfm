@@ -146,6 +146,12 @@ export component TabWidgetBody inherits Rectangle {
                 self-index: i;
             }
         }
+
+        TouchArea {
+            clicked => {
+                FileManager.clear_selection();
+            }
+        }
     }
 }
 

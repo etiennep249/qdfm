@@ -50,9 +50,12 @@ pub fn fileitem_doubleclicked(item: FileItem, _i: i32, mw: Rc<Weak<MainWindow>>)
     }
 }
 // Selected files functions
-
 pub fn is_index_selected(i: i32) -> bool {
     selected_files_lock().contains_key(&i)
+}
+
+pub fn clear_selection(mw: Rc<Weak<MainWindow>>) {
+    reset_selected(mw);
 }
 
 pub fn add_to_selected(mw: Rc<Weak<MainWindow>>, i: i32, file: FileItem) {

@@ -422,17 +422,12 @@ pub fn xdnd_init(id: u32) {
     These are all safe to read/write to/from
 */
 
-static mut ATOM_MAP: OnceLock<HashMap<&str, Atom>> = OnceLock::new();
+static ATOM_MAP: OnceLock<HashMap<&str, Atom>> = OnceLock::new();
 
 ///Returns the atom associated with s
 fn atom(s: &str) -> Atom {
-    unsafe {
-        //Safe
-        let map = ATOM_MAP
-            .get()
-            .expect("Atom map not initialized" /*Impossible?*/);
-        *map.get(s).expect("Atom map does not contain this atom ")
-    }
+    let map = ATOM_MAP.get().expect("Atom map was never created");
+    *map.get(s).expect("Atom map does not contain this atom ")
 }
 
 fn xdnd_atom_setup() -> Result<(), Box<dyn Error>> {
@@ -452,24 +447,18 @@ fn xdnd_atom_setup() -> Result<(), Box<dyn Error>> {
     ];
 
     let mut atoms_cookies = HashMap::new();
-
-    //Init the map
-    unsafe {
-        ATOM_MAP.get_or_init(|| HashMap::new());
-    }
-
-    let atom_static_map: &mut HashMap<&str, u32> = unsafe { ATOM_MAP.get_mut().unwrap() };
     for atom in atoms_arr {
         atoms_cookies.insert(atom, c.intern_atom(false, atom.as_bytes())?);
     }
+    let mut atoms_reply = HashMap::new();
     for (atom_s, atom_v) in atoms_cookies {
-        atom_static_map.insert(atom_s, atom_v.reply()?.atom);
+        atoms_reply.insert(atom_s, atom_v.reply()?.atom);
     }
-
-    atom_static_map.insert(
+    atoms_reply.insert(
         "accepted_type",
         c.intern_atom(false, b"text/uri-list")?.reply()?.atom,
     );
+    ATOM_MAP.set(atoms_reply).expect("Failed to set atom map");
 
     Ok(())
 }
