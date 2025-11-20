@@ -2,15 +2,19 @@ use serde::{Deserialize, Serialize};
 use serde_json::Error;
 use slint::VecModel;
 
-use crate::ui::*;
+use crate::{
+    keybinds::keybind::{get_keybind, KeyBind},
+    ui::*,
+};
 use std::{collections::HashMap, str::FromStr};
 
 use crate::utils::error_handling::log_error_str;
 
 pub struct Config {
-    map: HashMap<String, String>,
+    map: HashMap<&'static str, String>,
     extension_mappings_default: Option<HashMap<String, String>>,
     extension_mappings_quick: Option<HashMap<String, Vec<Mapping>>>,
+    keybinds: Option<HashMap<KeyBind, String>>,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -26,34 +30,37 @@ impl Config {
             map: Config::default_config(),
             extension_mappings_default: None,
             extension_mappings_quick: None,
+            keybinds: None,
         }
     }
+    pub fn init(&mut self) {
+        self.init_mappings();
+        self.init_keybinds();
+    }
     //TODO: use json everywhere
-    fn default_config() -> HashMap<String, String> {
+    fn default_config() -> HashMap<&'static str, String> {
         HashMap::from([
-            (String::from("max_nav_history"), String::from("6")),
-            (String::from("default_path"), String::from("/")),
-            (String::from("terminal"), String::from("st")),
-            (String::from("theme"), String::from("dark")),
+            ("max_nav_history", "6".into()),
+            ("default_path", "/".into()),
+            ("terminal", "st".into()),
+            ("theme", "dark".into()),
             (
                 //<name>:<width_percent>:<0/1/2 not_selected/ascending/descending>
-                String::from("headers"),
-                String::from("name:70:1,size:15:0,date:20:0"),
+                "headers",
+                "name:70:1,size:15:0,date:20:0".into(),
             ),
-            (String::from("default_sort"), String::from("name")),
+            ("default_sort", "name".into()),
             (
-                String::from("extension_mappings_default"),
-                String::from(
-                    r#"{
+                "extension_mappings_default",
+                r#"{
                         "sh": "Bash",
                         "txt": "Neovim"
-                    }"#,
-                ),
+                    }"#
+                .into(),
             ),
             (
-                String::from("extension_mappings_quick"),
-                String::from(
-                    r#"{
+                "extension_mappings_quick",
+                r#"{
                         "sh":[
                             {"display_name": "Bash", "command": "/usr/local/bin/st /bin/bash"},
                             {"display_name": "Sh", "command": "/usr/local/bin/st /bin/sh"}
@@ -62,12 +69,19 @@ impl Config {
                             {"display_name": "Neovim", "command": "/usr/local/bin/st /bin/nvim"},
                             {"display_name": "Nano", "command": "/usr/local/bin/st /bin/nano"}
                         ]
-                    }"#,
-                ),
+                    }"#
+                .into(),
+            ),
+            (
+                "keybinds",
+                r#"{
+                        "ctrl a": "select_all"
+                    }"#
+                .into(),
             ),
         ])
     }
-    //"Safe" to unwrap
+    //"Safe" to unwrap, error will have been logged.
     pub fn get<T: FromStr>(&self, k: &str) -> Option<T> {
         let res = self.map.get(k).unwrap().parse::<T>();
         if res.is_err() {
@@ -135,7 +149,7 @@ impl Config {
             .unwrap_or(&Vec::new())
             .to_vec()
     }
-    pub fn init_mappings(&mut self) -> bool {
+    fn init_mappings(&mut self) -> bool {
         let mut ret = true;
         if let Err(e) = self.init_mappings_default() {
             log_error_str(&format!("Could not parse 'extension_mappings_default' from configuration. Please fix it and restart. Error: {}", e.to_string()));
@@ -148,14 +162,14 @@ impl Config {
         ret
     }
 
-    pub fn init_mappings_default(&mut self) -> Result<(), Error> {
+    fn init_mappings_default(&mut self) -> Result<(), Error> {
         let config_string: String = self.get("extension_mappings_default").unwrap();
         let json: HashMap<String, String> = serde_json::from_str(&config_string)?;
 
         self.extension_mappings_default = Some(json);
         Ok(())
     }
-    pub fn init_mappings_quick(&mut self) -> Result<(), Error> {
+    fn init_mappings_quick(&mut self) -> Result<(), Error> {
         let config_string: String = self.get("extension_mappings_quick").unwrap();
         let json: HashMap<String, Vec<Mapping>> = serde_json::from_str(&config_string)?;
 
@@ -181,5 +195,33 @@ impl Config {
                 mappings.insert(ext.to_string(), in_vec);
             }
         }
+    }
+    ///Returns a string representation of what to do when a given keybind is pressed
+    ///This is used to check if a particular key combination being pressed has a keybind,
+    ///and if so, what to do.
+    pub fn get_keybind_function(&mut self, keybind: KeyBind) -> Option<&String> {
+        if let Some(ref mut keybinds) = self.keybinds {
+            keybinds.get(&keybind)
+        } else {
+            None
+        }
+    }
+
+    ///This function parses the json keybinds into a hashmap
+    ///that can easily and quickly be indexed into
+    pub fn init_keybinds(&mut self) {
+        let config_string: String = self.get("keybinds").unwrap();
+        let Ok(json) = serde_json::from_str::<HashMap<String, String>>(&config_string) else {
+            log_error_str("Failed to parse keybinds JSON from config. 
+                Try an online JSON parser to verify your syntax and watch for trailing commas, which are not allowed.");
+            return;
+        };
+
+        let parsed_keybinds = json
+            .into_iter()
+            .filter_map(|(k, v)| get_keybind(&k).map(|key| (key, v)))
+            .collect();
+
+        self.keybinds = Some(parsed_keybinds);
     }
 }

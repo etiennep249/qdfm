@@ -2,6 +2,7 @@ use i_slint_backend_winit::{EventResult, WinitWindowAccessor};
 use qdfm::callbacks::utils::format_size_detailed;
 use qdfm::core::generate_files_for_path;
 use qdfm::globals::config_lock;
+use qdfm::keybinds::handle_key_press;
 use qdfm::ui::*;
 use qdfm::utils::drag_and_drop::{dnd_move, dnd_press, dnd_release, move_file, xdnd_init};
 use qdfm::utils::error_handling::log_error_str;
@@ -73,7 +74,7 @@ fn main() {
         //TODO use config
         qdfm::sort::sort_by_name(&w, true, true);
 
-        conf.init_mappings();
+        conf.init();
     }
 
     // Listen to window events
@@ -132,6 +133,7 @@ fn main() {
 
     //Callbacks
     {
+        w.on_handle_key_press(|key| handle_key_press(key));
         let sidebaritems = w.global::<SidebarItems>();
         sidebaritems.on_drive_clicked(|i| sidebar::sidebar_item_clicked(i));
         sidebaritems.on_left_arrow_clicked(|| sidebar::left_arrow_clicked());

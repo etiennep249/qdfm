@@ -99,4 +99,15 @@ export component MainWindow inherits Window {
         y: 0;
         height: parent.height - Theme.current.main-padding-bot;
     }
+
+    callback handle_key_press(KeyEvent) -> bool;
+    FocusScope {
+        key-pressed(ev) => {
+            if handle_key_press(ev) {
+                accept
+            } else {
+                reject
+            }
+        }
+    }
 }

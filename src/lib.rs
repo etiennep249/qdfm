@@ -13,7 +13,7 @@ pub mod core;
 pub mod drives;
 pub mod file_properties;
 pub mod globals;
-pub mod key_events;
+pub mod keybinds;
 pub mod manage_open_with;
 pub mod progress_window;
 mod rename_window;
