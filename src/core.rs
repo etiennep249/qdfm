@@ -63,6 +63,7 @@ pub fn generate_files_for_path(path: &str) -> Vec<FileItem> {
                             .and_then(OsStr::to_str)
                             .unwrap_or("")
                             .into(),
+                        selected: false,
                     }
                 } else {
                     bad_file()
@@ -182,6 +183,7 @@ pub fn bad_file() -> FileItem {
         file_type: "Unknown / Bad file".into(),
         is_link: false,
         extension: "".into(),
+        selected: false,
     }
 }
 pub fn empty_file() -> FileItem {
@@ -194,6 +196,7 @@ pub fn empty_file() -> FileItem {
         file_type: "Unknown / Bad file".into(),
         is_link: false,
         extension: "".into(),
+        selected: false,
     }
 }
 pub fn empty_file_with_path(path: &str) -> FileItem {
@@ -206,6 +209,7 @@ pub fn empty_file_with_path(path: &str) -> FileItem {
         file_type: "Unknown / Bad file".into(),
         is_link: false,
         extension: "".into(),
+        selected: false,
     }
 }
 pub fn run_command(command: &str) {

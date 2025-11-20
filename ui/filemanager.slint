@@ -12,21 +12,19 @@ export struct FileItem {
     file_type: string, 
     is_link: bool,
     extension: string,
+    selected: bool,
 }
 //For current tab only
 export global FileManager {
     in-out property <string> path;
 
     /*Allows higher performance when seleting single files*/
-    /*DO NOT USE TO CHECK IF A FILE IS SELECTED, IT'S VISUAL ONLY AND MIGHT BE WRONG*/
-    /*It may also use visual_selected even when it's a single selection.*/
     /*This index also corresponds to the last selected index in a multi selection*/
     in-out property <int> single_selected_index: -1;
     in-out property <bool> is_single_selected: false;
 
     in-out property <[FileItem]> files;
     in-out property <int> files_len;
-    in-out property <[bool]> visual_selected;
     callback fileitem_doubleclicked(FileItem, int);
     callback pressed();
     callback released();
@@ -44,6 +42,10 @@ export global FileManager {
 
     public function get_file(i: int) -> FileItem {
         files[i]
+    }
+
+    public function set_selected(i: int, val: bool) {
+        files[i].selected = val;
     }
 }
 
@@ -106,7 +108,7 @@ export component FileWidget inherits Rectangle {
     in property <FileItem> file;
     in property <int> self_index;
     private property <bool> selected: 
-    FileManager.is_single_selected ? FileManager.single_selected_index == self_index : FileManager.visual_selected[self_index];
+    FileManager.is_single_selected ? FileManager.single_selected_index == self_index : file.selected;
     callback context-menu(length, length);
     background: selected ? Theme.current.selected-file-color : (touch.has-hover ? Theme.current.file-hover-color : transparent);
     border-radius: 2px;

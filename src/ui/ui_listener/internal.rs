@@ -38,7 +38,6 @@ pub fn set_current_tab_file(mut item: Option<TabItem>, remember: bool, mw: MainW
     filemanager.set_files(Rc::new(VecModel::from(files)).into());
     call_current_sort(&mw);
     selection::clear_selection();
-    selection::init_selected_visual(&mw, files_len);
 
     //If the current path is also a drive in the sidebar, make it appear selected
     let sidebar_items = mw.global::<SidebarItems>();

@@ -1,6 +1,7 @@
 use crate::ui::{self, *};
-use slint::{Model, VecModel};
+use slint::{Model, ModelExt, VecModel};
 use std::{
+    borrow::BorrowMut,
     collections::HashMap,
     rc::Rc,
     sync::{OnceLock, RwLock, RwLockReadGuard, RwLockWriteGuard},
@@ -73,11 +74,17 @@ pub fn clear_selection() {
     ui::run_with_main_window(|mw| {
         let fm = mw.global::<FileManager>();
         fm.set_is_single_selected(false);
-        let visual_selected = fm.get_visual_selected();
-        for i in 0..visual_selected.row_count() {
-            visual_selected.set_row_data(i, false);
-        }
+        clear_selection_visual(&mw);
     });
+}
+
+///This function resets the visual selection state
+fn clear_selection_visual(mw: &MainWindow) {
+    let fm = mw.global::<FileManager>();
+    let files = fm.get_files();
+    for i in 0..files.row_count() {
+        fm.invoke_set_selected(i as i32, false);
+    }
 }
 
 ///Adds a file and its index to the selection while keeping what was previously selected
@@ -120,7 +127,6 @@ pub fn shift_select(i: i32) {
         let mut sel_files = selected_files_write();
         let fm = mw.global::<FileManager>();
         let last_selected_index = fm.get_single_selected_index();
-        let visual_selected = fm.get_visual_selected();
 
         let was_clicked_selected = sel_files.contains_key(&i);
 
@@ -137,10 +143,10 @@ pub fn shift_select(i: i32) {
         for i in range {
             if !was_clicked_selected {
                 sel_files.insert(i, fm.get_files().row_data(i as usize).unwrap());
-                visual_selected.set_row_data(i as usize, true);
+                fm.invoke_set_selected(i, true);
             } else {
                 sel_files.remove(&i);
-                visual_selected.set_row_data(i as usize, false);
+                fm.invoke_set_selected(i, false);
             }
         }
         fm.set_is_single_selected(false);
@@ -167,19 +173,10 @@ pub fn select_down(discard_previous: bool) {
             }
         };
 
-        println!(
-            "Moving to: {}, from: {} sellen: {}",
-            i,
-            current_i,
-            sel_files.len()
-        );
         if discard_previous {
             //Single select
             sel_files.clear();
-            let visual_selected = fm.get_visual_selected();
-            for i in 0..visual_selected.row_count() {
-                visual_selected.set_row_data(i, false);
-            }
+            clear_selection_visual(&mw);
             fm.set_is_single_selected(true);
             sel_files.insert(i, fm.invoke_get_file(i));
             set_selected_visual(&mw, i, true);
@@ -221,19 +218,11 @@ pub fn select_up(discard_previous: bool) {
                 current_i - 1
             }
         };
-        println!(
-            "Moving to: {}, from: {} sellen: {}",
-            i,
-            current_i,
-            sel_files.len()
-        );
+
         if discard_previous {
             //Single select
             sel_files.clear();
-            let visual_selected = fm.get_visual_selected();
-            for i in 0..visual_selected.row_count() {
-                visual_selected.set_row_data(i, false);
-            }
+            clear_selection_visual(&mw);
             fm.set_is_single_selected(true);
             sel_files.insert(i, fm.invoke_get_file(i));
             set_selected_visual(&mw, i, true);
@@ -287,19 +276,7 @@ pub fn only_one_selected() -> bool {
 
 ///Makes the file visually selected
 pub fn set_selected_visual(mw: &MainWindow, i: i32, val: bool) {
-    println!("Setting selected: {} - {}", i, val);
-    mw.global::<FileManager>()
-        .get_visual_selected()
-        .set_row_data(i as usize, val);
-}
-
-///Initialises the selected visual array to a new one (based on the row count)
-///Usually called when the current directory changes
-///
-///TODO: Necessary?
-pub fn init_selected_visual(mw: &MainWindow, row_count: usize) {
-    mw.global::<FileManager>()
-        .set_visual_selected(Rc::new(VecModel::from(vec![false; row_count])).into());
+    mw.global::<FileManager>().invoke_set_selected(i, val);
 }
 
 ///If all selected files are indeed files AND they share an extension, return that extension.

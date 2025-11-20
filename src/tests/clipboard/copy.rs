@@ -30,6 +30,7 @@ pub fn test_copy_file() {
             is_link: false,
             size: _i64 { a: 0, b: 0 },
             path: path1.into(),
+            selected: false,
         },
         FileItem {
             date: _i64 { a: 0, b: 0 },
@@ -40,6 +41,7 @@ pub fn test_copy_file() {
             is_link: false,
             size: _i64 { a: 0, b: 0 },
             path: path2.into(),
+            selected: false,
         },
     ];
     copy_file(files, false);

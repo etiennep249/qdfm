@@ -20,6 +20,7 @@ pub fn test_cut() {
         is_link: false,
         size: _i64 { a: 0, b: 0 },
         path: path1.into(),
+        selected: false,
     };
     let item2 = FileItem {
         date: _i64 { a: 0, b: 0 },
@@ -30,6 +31,7 @@ pub fn test_cut() {
         is_link: false,
         size: _i64 { a: 0, b: 0 },
         path: path2.into(),
+        selected: false,
     };
     let files = vec![item1.clone(), item2.clone()];
 
