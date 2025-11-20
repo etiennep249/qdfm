@@ -7,7 +7,6 @@ use std::{
 use slint::{ComponentHandle, LogicalPosition, SharedString, Weak};
 
 use crate::{
-    enclose,
     ui::{self, *},
     utils::error_handling::log_error_str,
 };
@@ -42,8 +41,9 @@ pub fn show_progress_window(recv: Receiver<(f32, String, f64, bool)>, interval: 
 
         //Channel for cancel/pause to notify the thread
         let (progress_tx, progress_rx) = channel::<bool>();
-        adp.on_close(enclose! {(weak) move || cancel(weak.clone(), progress_tx.clone())});
-        adp.on_pause(move || pause(weak.clone()));
+        let weak2 = weak.clone();
+        adp.on_close(move || cancel(weak.clone(), progress_tx.clone()));
+        adp.on_pause(move || pause(weak2.clone()));
 
         let weak = win.as_weak();
 

@@ -4,11 +4,11 @@ import { Icons } from "icons.slint";
 
 export struct SidebarItem {
     text: string,
-    internal_path: string,
-}
+    internal_path: string}
 
 export global SidebarItems {
     in property <[SidebarItem]> drive_list: [];
+    in-out property <int> selected_drive: -1;
     callback drive_clicked(SidebarItem);
     callback left_arrow_clicked();
     callback right_arrow_clicked();
@@ -17,13 +17,14 @@ export global SidebarItems {
 export component DriveListItem {
     in property <string> text;
     callback clicked <=> touch.clicked;
-
+    in property <int> index;
     min-height: 30px;
 
     rect := Rectangle {
         border-radius: 5px;
-        background: Theme.current.background-color-sidebar; // TODO: Selected
+        background: index == SidebarItems.selected_drive ? Theme.current.selected-drive-color : (touch.has-hover ? Theme.current.drive-hover-color : Theme.current.background-color-sidebar);
     }
+
     HorizontalLayout {
         padding-left: 2px;
         padding-top: 2px;
@@ -39,15 +40,17 @@ export component DriveListItem {
             height: Theme.current.font-size-sidebar-item + 10px;
             width: Theme.current.font-size-sidebar-item + 10px;
         }
+
         Text {
             horizontal-stretch: 1;
             font-size: Theme.current.font-size-sidebar-item;
             text: text;
             color: Theme.current.text-color-main;
             vertical-alignment: center;
-        }      
+        }
     }
-    touch := TouchArea {}
+
+    touch := TouchArea { }
 }
 
 export component DriveList {
@@ -58,10 +61,11 @@ export component DriveList {
         VerticalLayout {
             alignment: start;
             spacing: 2px;
-            for item[i] in model : DriveListItem {
+            for item[i] in model: DriveListItem {
                 clicked => {
                     SidebarItems.drive-clicked(item);
                 }
+                index: i;
                 private property <length> offset: scrollview.viewport-y + i * (self.height + parent.spacing);
                 text: item.text;
             }
@@ -73,8 +77,9 @@ export component NavArrows {
     in property <length> _height;
     private property <length> _padding_left: 2px;
     private property <length> spacing: 5px;
-    height: _height + 3px;//padding
-    x: -Theme.current.main-padding-left/2 + _padding-left;
+    height: _height + 3px;
+    //padding
+    x: -Theme.current.main-padding-left / 2 + _padding-left;
     Rectangle {
         x: parent.x;
         y: parent.y;
@@ -86,10 +91,14 @@ export component NavArrows {
             height: Theme.current.font-size-sidebar-header + 10px;
             width: Theme.current.font-size-sidebar-header + 10px;
         }
+
         TouchArea {
-            clicked => { SidebarItems.left-arrow-clicked();}
+            clicked => {
+                SidebarItems.left-arrow-clicked();
+            }
         }
     }
+
     Rectangle {
         x: parent.x + _height + spacing;
         y: parent.y;
@@ -103,7 +112,9 @@ export component NavArrows {
         }
 
         TouchArea {
-            clicked => { SidebarItems.right-arrow-clicked(); }
+            clicked => {
+                SidebarItems.right-arrow-clicked();
+            }
         }
     }
 }

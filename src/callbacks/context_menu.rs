@@ -2,10 +2,10 @@ use crate::context_menus::context_items::{get_ci, get_ci_capacity};
 use crate::globals::config_lock;
 use crate::ui::*;
 use crate::{context_menus as cm, ui};
-use slint::{ComponentHandle, Image, SharedPixelBuffer, VecModel, Weak};
+use slint::{ComponentHandle, VecModel, Weak};
 use std::rc::Rc;
 
-use super::filemanager::selection;
+use super::filemanager::selection::{self, is_nothing_selected};
 
 pub enum ContextCallback {
     OpenWithDefault,
@@ -60,6 +60,7 @@ pub fn menuitem_hover(context_item: ContextItem) {
     });
 }
 
+///Builds the context menu for the selected files at (x,y) and shows it.
 pub fn show_context_menu(x: f32, y: f32) {
     ui::run_with_main_window(move |mw| {
         let mut menu: Vec<ContextItem> = Vec::with_capacity(get_ci_capacity());
@@ -78,14 +79,20 @@ pub fn show_context_menu(x: f32, y: f32) {
             menu.push(get_ci("open_with"));
         }
 
-        menu.push(get_ci("cut"));
-        menu.push(get_ci("copy"));
+        let is_nothing_selected = selection::is_nothing_selected();
+
+        if !is_nothing_selected {
+            menu.push(get_ci("cut"));
+            menu.push(get_ci("copy"));
+        }
         if selection::is_single_selected_directory() {
             menu.push(get_ci("paste_into"));
         } else {
             menu.push(get_ci("paste_here"));
         }
-        menu.push(get_ci("delete"));
+        if !is_nothing_selected {
+            menu.push(get_ci("delete"));
+        }
         menu.push(get_ci("properties"));
 
         let ctx_adapter = mw.global::<ContextAdapter>();

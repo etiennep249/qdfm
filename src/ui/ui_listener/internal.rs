@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use slint::VecModel;
+use slint::{Model, VecModel};
 
 use crate::{
     callbacks::{
@@ -11,8 +11,8 @@ use crate::{
     ui::*,
 };
 
-//TODO: Better refresh. Perhaps a queue? Don't want UI to abruptly refresh when background
-//operations finish. That or make this function non-distruptive, maintain selected files.
+///This function is used to set what directory the current tab is showing.
+///It can also be used to refresh it.
 pub fn set_current_tab_file(mut item: Option<TabItem>, remember: bool, mw: MainWindow) {
     //If no tab item is provided, assume a refresh
     if item.is_none() {
@@ -32,12 +32,21 @@ pub fn set_current_tab_file(mut item: Option<TabItem>, remember: bool, mw: MainW
     }
 
     tabs.set_breadcrumbs(Rc::new(VecModel::from(get_breadcrumbs_for(&item))).into());
-    tabs.invoke_set_current_tab(item);
+    tabs.invoke_set_current_tab(item.clone());
     let filemanager = mw.global::<FileManager>();
     filemanager.set_files(Rc::new(VecModel::from(files)).into());
     call_current_sort(&mw);
     selection::clear_selection();
     selection::init_selected_visual(&mw, files_len);
+
+    //If the current path is also a drive in the sidebar, make it appear selected
+    let sidebar_items = mw.global::<SidebarItems>();
+    sidebar_items.set_selected_drive(-1);
+    for (i, drive) in sidebar_items.get_drive_list().iter().enumerate() {
+        if drive.internal_path == item.internal_path {
+            sidebar_items.set_selected_drive(i as i32);
+        }
+    }
 }
 
 pub fn refresh_ui(mw: MainWindow) {

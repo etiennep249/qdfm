@@ -3,10 +3,9 @@ use std::sync::{
     Arc, Mutex,
 };
 
-use slint::{invoke_from_event_loop, ComponentHandle, LogicalPosition, SharedString, Weak};
+use slint::{ComponentHandle, LogicalPosition, SharedString, Weak};
 
 use crate::{
-    enclose,
     ui::{self, RenameAdapter, RenameWindow as RenameWindowUI},
     utils::error_handling::log_error_str,
 };
@@ -69,9 +68,20 @@ pub fn setup_rename_window() -> RenameWindow {
                     - (adp.get_win_height() as f32 / 2.3);
                 win.window().set_position(LogicalPosition { x, y });
 
-                adp.on_ignore(enclose! { (send) move |b| on_ignore(send.clone(), b)});
-                adp.on_rename(enclose! { (send) move |s, b| on_rename(send.clone(), s, b)});
-                adp.on_overwrite(enclose! { (send) move |b| on_overwrite(send.clone(), b)});
+                adp.on_ignore({
+                    let send = send.clone();
+                    move |b| on_ignore(send.clone(), b)
+                });
+
+                adp.on_rename({
+                    let send = send.clone();
+                    move |s, b| on_rename(send.clone(), s, b)
+                });
+
+                adp.on_overwrite({
+                    let send = send.clone();
+                    move |b| on_overwrite(send.clone(), b)
+                });
                 *lock = Some(win.as_weak());
 
                 //Turn the window into a raw pointer, even cast it as usize, to bypass

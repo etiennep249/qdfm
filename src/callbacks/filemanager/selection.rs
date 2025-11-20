@@ -177,6 +177,9 @@ pub fn init_selected_visual(mw: &MainWindow, row_count: usize) {
 ///This is mostly used to allow opening multiple files at the same time with the same program.
 pub fn get_common_extension() -> Option<String> {
     let files = selected_files_read();
+    if files.is_empty() {
+        return None;
+    }
     let mut iter = files.iter();
     let first = iter.next().unwrap().1;
     let mut same_file_type = true;

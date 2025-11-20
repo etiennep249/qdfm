@@ -103,11 +103,11 @@ export component FileWidget inherits Rectangle {
     private property <bool> selected: 
     FileManager.is_single_selected ? FileManager.single_selected_index == self_index : FileManager.visual_selected[self_index];
     callback context-menu(length, length);
-    background: selected ? Theme.current.selected-file-color : transparent;
+    background: selected ? Theme.current.selected-file-color : (touch.has-hover ? Theme.current.file-hover-color : transparent);
     border-radius: 2px;
-    height: file.date.b == -1 ? 0 : 30px;
+    height: file.date.b == -1 ? 0 : Theme.current.file-item-height;
     private property <length> rowh: self.height;
-    if file.date.b != -1: touch := TouchArea {
+    touch := TouchArea {
         HorizontalLayout {
             padding-left: 2px;
             padding-top: 2px;

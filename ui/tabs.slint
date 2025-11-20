@@ -138,6 +138,7 @@ export component TabWidgetBody inherits Rectangle {
         ColumnHeaders { }
 
         ListView {
+            height: FileManager.files.length * Theme.current.file-item-height;
             for item[i] in FileManager.files: FileWidget {
                 context-menu(x, y) => {
                     root.context-menu(x,y);
@@ -148,8 +149,15 @@ export component TabWidgetBody inherits Rectangle {
         }
 
         TouchArea {
-            clicked => {
-                FileManager.clear_selection();
+            pointer-event(e) => {
+                if (e.kind == PointerEventKind.down) {
+                    FileManager.clear_selection();
+                }
+                if (e.button == PointerEventButton.right && e.kind == PointerEventKind.down) {
+                    //Right click
+                    //Pass absolute x and y for the context menu
+                    root.context-menu(self.absolute-position.x + self.mouse-x, self.absolute-position.y + self.mouse-y);
+                }
             }
         }
     }
@@ -160,6 +168,7 @@ export component TabWidget_ {
     in-out property <int> current_tab;
     callback context-menu(length, length);
     VerticalLayout {
+        padding-left: Theme.current.main-padding-left;
         HorizontalLayout {
             height: Theme.current.tab-height;
             for item[i] in tabs: TabWidgetItem {

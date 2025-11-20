@@ -58,13 +58,14 @@ export component MainWindow inherits Window {
         ctx_popup.visible = true;
         fullscreen-area.visible = true;
     }
-    HorizontalLayout {
+    h := HorizontalLayout {
         padding-left: Theme.current.main-padding-left;
         padding-top: Theme.current.main-padding-top;
         padding-right: Theme.current.main-padding-right;
         padding-bottom: Theme.current.main-padding-bot;
+        spacing: 5px;
         l := VerticalLayout {
-            width: Theme.current.sidebar-width;
+            width: Theme.current.sidebar-width - parent.padding-right - parent.padding-left;
             spacing: 5px;
             NavArrows {
                 _height: nav_arrows_height;
