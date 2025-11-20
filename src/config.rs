@@ -72,10 +72,16 @@ impl Config {
                     }"#
                 .into(),
             ),
+            //Multiple keybinds for the same feature is allowed
             (
                 "keybinds",
                 r#"{
-                        "ctrl a": "select_all"
+                        "ctrl a": "select_all",
+                        "up": "select_up",
+                        "down": "select_down",
+                        "shift down": "shift_select_down",
+                        "shift up": "shift_select_up",
+                        "return": "enter"
                     }"#
                 .into(),
             ),
@@ -199,8 +205,8 @@ impl Config {
     ///Returns a string representation of what to do when a given keybind is pressed
     ///This is used to check if a particular key combination being pressed has a keybind,
     ///and if so, what to do.
-    pub fn get_keybind_function(&mut self, keybind: KeyBind) -> Option<&String> {
-        if let Some(ref mut keybinds) = self.keybinds {
+    pub fn get_keybind_function(&self, keybind: KeyBind) -> Option<&String> {
+        if let Some(ref keybinds) = self.keybinds {
             keybinds.get(&keybind)
         } else {
             None

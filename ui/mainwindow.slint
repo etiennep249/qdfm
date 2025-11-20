@@ -102,6 +102,9 @@ export component MainWindow inherits Window {
 
     callback handle_key_press(KeyEvent) -> bool;
     FocusScope {
+        init => {
+            self.focus();
+        }
         key-pressed(ev) => {
             if handle_key_press(ev) {
                 accept

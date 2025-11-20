@@ -34,6 +34,7 @@ pub fn set_current_tab_file(mut item: Option<TabItem>, remember: bool, mw: MainW
     tabs.set_breadcrumbs(Rc::new(VecModel::from(get_breadcrumbs_for(&item))).into());
     tabs.invoke_set_current_tab(item.clone());
     let filemanager = mw.global::<FileManager>();
+    filemanager.set_files_len(files.len() as i32);
     filemanager.set_files(Rc::new(VecModel::from(files)).into());
     call_current_sort(&mw);
     selection::clear_selection();

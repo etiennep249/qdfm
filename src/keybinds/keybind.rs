@@ -2,7 +2,7 @@ use std::hash::Hash;
 
 use i_slint_core::items::{KeyEvent, KeyboardModifiers};
 
-use crate::{globals::config_lock, utils::error_handling::log_error_str};
+use crate::{globals::config_read, utils::error_handling::log_error_str};
 
 use super::{keybind_callbacks::call_keybind_callback, keys::get_key};
 
@@ -48,7 +48,7 @@ impl Eq for KeyBind {}
 ///
 ///Returns true if the key led to something, false if it did not have a keybind.
 pub fn use_keybind(key: KeyEvent) -> bool {
-    let mut conf = config_lock();
+    let conf = config_read();
 
     let keybind_function = conf.get_keybind_function(KeyBind::new(
         key.text.chars().next().unwrap(),

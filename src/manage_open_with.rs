@@ -5,7 +5,7 @@ use slint::{ComponentHandle, Model, SharedString, VecModel, Weak};
 use crate::{
     config::Mapping,
     core::run_command,
-    globals::config_lock,
+    globals::{config_read, config_write},
     ui::*,
     utils::{
         error_handling::{log_error_str, user_notice},
@@ -14,7 +14,7 @@ use crate::{
 };
 
 pub fn setup_manage_open_with(adp: ManageOpenWithAdapter, files: Rc<Vec<FileItem>>) {
-    let conf = config_lock();
+    let conf = config_write();
     let ext = adp.get_extension();
 
     //If there is one file or all the files have the same extension
@@ -48,7 +48,7 @@ pub fn setup_manage_open_with(adp: ManageOpenWithAdapter, files: Rc<Vec<FileItem
 pub fn ok(win: Rc<Weak<ManageOpenWithWindow>>, ext: SharedString) {
     let win = win.unwrap();
     let adp = win.global::<ManageOpenWithAdapter>();
-    let mut conf = config_lock();
+    let mut conf = config_write();
     conf.set_mappings_quick(
         &ext,
         adp.get_mappings()
@@ -75,7 +75,7 @@ pub fn open_with(win: Rc<Weak<ManageOpenWithWindow>>, with_term: bool, files: Rc
             let cmd = if !with_term {
                 file_chosen.to_owned() + " " + &file.file_name
             } else {
-                if let Some(term) = config_lock().get::<String>("terminal") {
+                if let Some(term) = config_read().get::<String>("terminal") {
                     term + " " + &file_chosen + " " + &file.file_name
                 } else {
                     log_error_str("No valid terminal. Fix your config.");
@@ -91,7 +91,7 @@ pub fn open_with(win: Rc<Weak<ManageOpenWithWindow>>, with_term: bool, files: Rc
 }
 
 pub fn set_default(ext: SharedString, s: SharedString) {
-    let mut conf = config_lock();
+    let mut conf = config_write();
     conf.set_default_for(&ext, &s);
 }
 

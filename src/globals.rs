@@ -1,4 +1,4 @@
-use std::sync::{Mutex, MutexGuard, OnceLock};
+use std::sync::{Mutex, MutexGuard, OnceLock, RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 use crate::config::Config;
 use sysinfo::{System, SystemExt};
@@ -16,9 +16,17 @@ pub fn sysinfo_lock() -> MutexGuard<'static, System> {
         }
     }
 }
-static CONFIG: OnceLock<Mutex<Config>> = OnceLock::new();
-pub fn config_lock() -> MutexGuard<'static, Config> {
-    match CONFIG.get_or_init(|| Mutex::new(Config::new())).lock() {
+static CONFIG: OnceLock<RwLock<Config>> = OnceLock::new();
+pub fn config_read() -> RwLockReadGuard<'static, Config> {
+    match CONFIG.get_or_init(|| RwLock::new(Config::new())).read() {
+        Ok(e) => e,
+        Err(_) => {
+            panic!("Could not get SYSINFO lock.");
+        }
+    }
+}
+pub fn config_write() -> RwLockWriteGuard<'static, Config> {
+    match CONFIG.get_or_init(|| RwLock::new(Config::new())).write() {
         Ok(e) => e,
         Err(_) => {
             panic!("Could not get SYSINFO lock.");

@@ -1,5 +1,5 @@
 use crate::context_menus::files::open_with_default;
-use crate::globals::config_lock;
+use crate::globals::config_read;
 use crate::ui;
 use crate::ui::*;
 use crate::utils::types;
@@ -15,7 +15,7 @@ pub mod selection;
 
 ///When a file is double clicked, it is opened with the default mapping.
 ///When a directory is double clicked, it is "moved into" or set as the new current directory.
-pub fn fileitem_doubleclicked(item: FileItem, _i: i32) {
+pub fn fileitem_doubleclicked(item: FileItem) {
     if item.is_dir {
         ui::send_message(UIMessage::SetCurrentTabFile(
             TabItem {
@@ -27,9 +27,8 @@ pub fn fileitem_doubleclicked(item: FileItem, _i: i32) {
             true,
         ));
     } else {
-        //Care with config lock, needs to be dropped before call to open_with_default
         let is_some = {
-            let conf = config_lock();
+            let conf = config_read();
             let default_mapping = conf.get_mapping_default(&item.extension);
             default_mapping.is_some()
         };
@@ -68,7 +67,7 @@ static NAV_HISTORY: OnceLock<Mutex<(VecDeque<TabItem>, VecDeque<TabItem>)>> = On
 pub fn get_history() -> MutexGuard<'static, (VecDeque<TabItem>, VecDeque<TabItem>)> {
     NAV_HISTORY
         .get_or_init(|| {
-            let conf = config_lock();
+            let conf = config_read();
             Mutex::new((
                 VecDeque::with_capacity(conf.get("max_nav_history").unwrap()),
                 VecDeque::with_capacity(conf.get("max_nav_history").unwrap()),
@@ -79,7 +78,7 @@ pub fn get_history() -> MutexGuard<'static, (VecDeque<TabItem>, VecDeque<TabItem
 }
 pub fn add_to_history(item: TabItem) {
     let mut hist = get_history();
-    if hist.0.len() >= config_lock().get("max_nav_history").unwrap() {
+    if hist.0.len() >= config_read().get("max_nav_history").unwrap() {
         hist.0.pop_front();
     }
     hist.0.push_back(item);

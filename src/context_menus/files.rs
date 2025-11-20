@@ -7,7 +7,7 @@ use crate::{
     core::run_command,
     enclose,
     file_properties::setup_properties,
-    globals::config_lock,
+    globals::config_read,
     manage_open_with,
     ui::{self, *},
 };
@@ -15,7 +15,7 @@ use slint::{ComponentHandle, Image, LogicalPosition, Model, SharedPixelBuffer, V
 use std::{path::PathBuf, rc::Rc};
 
 pub fn open_with_default(files: Vec<FileItem>) {
-    let conf = config_lock();
+    let conf = config_read();
 
     if let Some(default) = conf.get_mapping_default(&files[0].extension) {
         if let Some(cmd) = conf
@@ -42,7 +42,7 @@ pub fn open_with() {
         /* If all files in the selection have the same extension, then show the mappings for that
          * extension. Otherwise mappings are not displayed but the user can still choose a one-time
          * mapping to open all the selected files with.*/
-        let conf = config_lock();
+        let conf = config_read();
         let extension = {
             let files = selected_files_read();
             let mut iter = files.iter();
@@ -109,7 +109,7 @@ pub fn open_with_quick(context_item: &ContextItem) {
     let mut cmd_set = false;
     for (_, file) in files.iter() {
         if !cmd_set {
-            cmd = config_lock().get_mappings_quick(&file.extension)
+            cmd = config_read().get_mappings_quick(&file.extension)
                 [context_item.internal_id as usize]
                 .command
                 .clone();

@@ -25,6 +25,7 @@ export global FileManager {
     in-out property <bool> is_single_selected: false;
 
     in-out property <[FileItem]> files;
+    in-out property <int> files_len;
     in-out property <[bool]> visual_selected;
     callback fileitem_doubleclicked(FileItem, int);
     callback pressed();
@@ -40,6 +41,10 @@ export global FileManager {
     callback is_nothing_selected() -> bool;
     callback shift_select(int);
     callback clear_selection();
+
+    public function get_file(i: int) -> FileItem {
+        files[i]
+    }
 }
 
 export component NameWithIcon inherits Rectangle {

@@ -1,7 +1,7 @@
 use i_slint_backend_winit::{EventResult, WinitWindowAccessor};
 use qdfm::callbacks::utils::format_size_detailed;
 use qdfm::core::generate_files_for_path;
-use qdfm::globals::config_lock;
+use qdfm::globals::config_write;
 use qdfm::keybinds::handle_key_press;
 use qdfm::ui::*;
 use qdfm::utils::drag_and_drop::{dnd_move, dnd_press, dnd_release, move_file, xdnd_init};
@@ -35,7 +35,7 @@ fn main() {
     //Initialization sequence
     //TODO: Optimize this
     {
-        let mut conf = config_lock();
+        let mut conf = config_write();
         let drives = drives::get_drives();
         w.global::<SidebarItems>().set_drive_list(drives.into());
         w.global::<FileManager>().set_files(
@@ -139,7 +139,7 @@ fn main() {
         sidebaritems.on_left_arrow_clicked(|| sidebar::left_arrow_clicked());
         sidebaritems.on_right_arrow_clicked(|| sidebar::right_arrow_clicked());
         w.global::<FileManager>()
-            .on_fileitem_doubleclicked(|file, i| filemanager::fileitem_doubleclicked(file, i));
+            .on_fileitem_doubleclicked(|file, _| filemanager::fileitem_doubleclicked(file));
         let tabs_adapter = w.global::<TabsAdapter>();
         tabs_adapter.on_breadcrumb_clicked(|i| tabs::breadcrumb_clicked(i));
         tabs_adapter.on_breadcrumb_accepted(|s| tabs::breadcrumb_accepted(s));

@@ -69,7 +69,7 @@ pub fn is_index_selected(i: i32) -> bool {
 ///Requires a handle to the MainWindow to update the UI accordingly
 pub fn clear_selection() {
     let mut sel_files = selected_files_write();
-    sel_files.drain();
+    sel_files.clear();
     ui::run_with_main_window(|mw| {
         let fm = mw.global::<FileManager>();
         fm.set_is_single_selected(false);
@@ -93,6 +93,25 @@ pub fn add_to_selected(i: i32, file: FileItem) {
             fm.set_is_single_selected(true);
         }
         fm.set_single_selected_index(i);
+    });
+}
+
+///Selects all files in the current directory.
+pub fn select_all() {
+    ui::run_with_main_window(move |mw| {
+        let mut sel_files = selected_files_write();
+        let fm = mw.global::<FileManager>();
+        for (i, file) in fm.get_files().iter().enumerate() {
+            sel_files.insert(i as i32, file.clone());
+            set_selected_visual(&mw, i as i32, true);
+        }
+        if sel_files.len() > 1 {
+            fm.set_is_single_selected(false);
+            fm.set_single_selected_index(sel_files.len() as i32 - 1);
+        } else if sel_files.len() == 1 {
+            fm.set_is_single_selected(true);
+            fm.set_single_selected_index(0);
+        }
     });
 }
 
@@ -129,6 +148,115 @@ pub fn shift_select(i: i32) {
     });
 }
 
+///Usually when pressing arrow down on the keyboard.
+///Selection moves down by one from the last.
+pub fn select_down(discard_previous: bool) {
+    ui::run_with_main_window(move |mw| {
+        let mut sel_files = selected_files_write();
+        let fm = mw.global::<FileManager>();
+
+        let current_i = fm.get_single_selected_index();
+        let i = if sel_files.len() == 0 {
+            0
+        } else {
+            if current_i == fm.get_files_len() - 1 {
+                //Last index, do nothing
+                return;
+            } else {
+                current_i + 1
+            }
+        };
+
+        println!(
+            "Moving to: {}, from: {} sellen: {}",
+            i,
+            current_i,
+            sel_files.len()
+        );
+        if discard_previous {
+            //Single select
+            sel_files.clear();
+            let visual_selected = fm.get_visual_selected();
+            for i in 0..visual_selected.row_count() {
+                visual_selected.set_row_data(i, false);
+            }
+            fm.set_is_single_selected(true);
+            sel_files.insert(i, fm.invoke_get_file(i));
+            set_selected_visual(&mw, i, true);
+            fm.set_single_selected_index(i);
+        } else {
+            //Logic for shift_select
+            if sel_files.contains_key(&i) {
+                sel_files.remove(&current_i);
+                set_selected_visual(&mw, current_i, false);
+            } else {
+                sel_files.insert(i, fm.invoke_get_file(i));
+                set_selected_visual(&mw, i, true);
+            }
+            fm.set_single_selected_index(i);
+            if sel_files.len() == 1 {
+                fm.set_is_single_selected(true);
+            } else {
+                fm.set_is_single_selected(false);
+            }
+        }
+    });
+}
+
+///Usually when pressing arrow up on the keyboard.
+///Selection moves up by one from the last.
+pub fn select_up(discard_previous: bool) {
+    ui::run_with_main_window(move |mw| {
+        let mut sel_files = selected_files_write();
+        let fm = mw.global::<FileManager>();
+
+        let current_i = fm.get_single_selected_index();
+        let i = if sel_files.len() == 0 {
+            fm.get_files_len() - 1
+        } else {
+            if current_i == 0 {
+                //Last index, do nothing
+                return;
+            } else {
+                current_i - 1
+            }
+        };
+        println!(
+            "Moving to: {}, from: {} sellen: {}",
+            i,
+            current_i,
+            sel_files.len()
+        );
+        if discard_previous {
+            //Single select
+            sel_files.clear();
+            let visual_selected = fm.get_visual_selected();
+            for i in 0..visual_selected.row_count() {
+                visual_selected.set_row_data(i, false);
+            }
+            fm.set_is_single_selected(true);
+            sel_files.insert(i, fm.invoke_get_file(i));
+            set_selected_visual(&mw, i, true);
+            fm.set_single_selected_index(i);
+        } else {
+            //Logic for shift_select
+            if sel_files.contains_key(&i) {
+                sel_files.remove(&current_i);
+                set_selected_visual(&mw, current_i, false);
+            } else {
+                sel_files.insert(i, fm.invoke_get_file(i));
+                set_selected_visual(&mw, i, true);
+            }
+            fm.set_single_selected_index(i);
+            if sel_files.len() == 1 {
+                fm.set_is_single_selected(true);
+            } else {
+                fm.set_is_single_selected(false);
+            }
+        }
+    });
+}
+
 ///Removes the file at this index from the selection
 pub fn remove_from_selected(i: i32) {
     ui::run_with_main_window(move |mw| {
@@ -159,6 +287,7 @@ pub fn only_one_selected() -> bool {
 
 ///Makes the file visually selected
 pub fn set_selected_visual(mw: &MainWindow, i: i32, val: bool) {
+    println!("Setting selected: {} - {}", i, val);
     mw.global::<FileManager>()
         .get_visual_selected()
         .set_row_data(i as usize, val);
@@ -182,17 +311,19 @@ pub fn get_common_extension() -> Option<String> {
     }
     let mut iter = files.iter();
     let first = iter.next().unwrap().1;
-    let mut same_file_type = true;
+    if first.is_dir {
+        return None;
+    }
     let mut same_extension = true;
     for f in iter {
         if f.1.extension != first.extension {
             same_extension = false;
         }
-        if f.1.is_dir != first.is_dir {
-            same_file_type = false;
+        if f.1.is_dir {
+            return None;
         }
     }
-    if same_file_type && same_extension {
+    if same_extension {
         return Some(first.extension.clone().into());
     } else {
         return None;

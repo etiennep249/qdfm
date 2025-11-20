@@ -1,11 +1,11 @@
 use crate::context_menus::context_items::{get_ci, get_ci_capacity};
-use crate::globals::config_lock;
+use crate::globals::config_read;
 use crate::ui::*;
 use crate::{context_menus as cm, ui};
 use slint::{ComponentHandle, VecModel, Weak};
 use std::rc::Rc;
 
-use super::filemanager::selection::{self, is_nothing_selected};
+use super::filemanager::selection::{self};
 
 pub enum ContextCallback {
     OpenWithDefault,
@@ -65,7 +65,7 @@ pub fn show_context_menu(x: f32, y: f32) {
     ui::run_with_main_window(move |mw| {
         let mut menu: Vec<ContextItem> = Vec::with_capacity(get_ci_capacity());
 
-        let conf = config_lock();
+        let conf = config_read();
 
         let default_mapping =
             selection::get_common_extension().and_then(|f| conf.get_mapping_default(&f));
