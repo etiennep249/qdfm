@@ -15,7 +15,7 @@ pub fn get_key(key: &str) -> Option<char> {
             "right" => Key::RightArrow,
             "backspace" => Key::Backspace,
             "tab" => Key::Tab,
-            "return" => Key::Return,
+            "enter" => Key::Return,
             "escape" => Key::Escape,
             "backtab" => Key::Backtab,
             "delete" => Key::Delete,

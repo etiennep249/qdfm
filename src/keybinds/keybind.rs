@@ -1,23 +1,28 @@
-use std::hash::Hash;
+use std::{collections::HashSet, hash::Hash};
 
 use i_slint_core::items::{KeyEvent, KeyboardModifiers};
 
-use crate::{globals::config_read, utils::error_handling::log_error_str};
+use crate::{
+    globals::config_read,
+    utils::{capitalize_first, error_handling::log_error_str},
+};
 
 use super::{keybind_callbacks::call_keybind_callback, keys::get_key};
 
 pub struct KeyBind {
     _key: char,
     _modifiers: KeyboardModifiers,
-    internal_id: u32, //For hashmap indexing
+    original_string: String, //The config string
+    internal_id: u32,        //For hashmap indexing
 }
 
 impl KeyBind {
-    pub fn new(key: char, modifiers: KeyboardModifiers) -> KeyBind {
+    pub fn new(key: char, modifiers: KeyboardModifiers, original_string: String) -> KeyBind {
         Self {
             internal_id: ((Self::flatten_modifiers(&modifiers) as u32) << 16) | (key as u32),
             _key: key,
             _modifiers: modifiers,
+            original_string,
         }
     }
     fn flatten_modifiers(mods: &KeyboardModifiers) -> u8 {
@@ -41,6 +46,34 @@ impl PartialEq for KeyBind {
 }
 impl Eq for KeyBind {}
 
+static FORMAT_PRIORITY: [&str; 4] = ["Ctrl", "Shift", "Alt", "Meta"];
+///This function formats the original string into a cleaner verison fit for
+///display, eg. in the context menu. Not super fast, should not run often.
+pub fn format_keybind(function: &str) -> String {
+    //TODO: Don't loop every time...
+    let mut kb = None;
+    let conf = config_read();
+    let keybinds = conf.keybinds.as_ref().unwrap();
+    for (k, v) in keybinds {
+        if v == function {
+            kb = Some(k);
+            break;
+        }
+    }
+    let Some(kb) = kb else { return String::new() };
+    let source = kb.original_string.to_lowercase();
+    //Hashset of unique modifiers, in lowercase, unordered.
+    let words: HashSet<&str> = source.split_whitespace().collect();
+    let mut words_vec: Vec<String> = words.into_iter().map(|s| capitalize_first(s)).collect();
+    words_vec.sort_by_key(|s| {
+        FORMAT_PRIORITY
+            .iter()
+            .position(|p| p == s)
+            .unwrap_or(usize::MAX)
+    });
+    words_vec.join("+")
+}
+
 ///Looks up the keybind in the configuration.
 ///If it exists and has an associated callback, it is called.
 ///Otherwise nothing happens. An error will be logged in case
@@ -53,6 +86,7 @@ pub fn use_keybind(key: KeyEvent) -> bool {
     let keybind_function = conf.get_keybind_function(KeyBind::new(
         key.text.chars().next().unwrap(),
         key.modifiers,
+        "".into(),
     ));
     if let Some(callback) = keybind_function {
         call_keybind_callback(&callback);
@@ -82,9 +116,9 @@ pub fn get_keybind(str: &str) -> Option<KeyBind> {
         shift: false,
     };
     let mut key = '\0';
-    for s in str.split(" ") {
+    for s in str.split_whitespace() {
         match s {
-            "ctrl" | "control" => {
+            "ctrl" => {
                 modifiers.control = true;
             }
             "alt" => {
@@ -108,7 +142,7 @@ pub fn get_keybind(str: &str) -> Option<KeyBind> {
     }
 
     if key != '\0' {
-        Some(KeyBind::new(key, modifiers))
+        Some(KeyBind::new(key, modifiers, str.to_string()))
     } else {
         None
     }

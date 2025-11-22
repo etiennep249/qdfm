@@ -1,6 +1,9 @@
 use slint::{Image, SharedPixelBuffer};
 
-use crate::{callbacks::context_menu::ContextCallback, ui::ContextItem};
+use crate::{
+    callbacks::context_menu::ContextCallback, globals::config_read,
+    keybinds::keybind::format_keybind, ui::ContextItem,
+};
 use std::{cell::UnsafeCell, collections::HashMap, sync::Once};
 
 struct StaticContextItems {
@@ -36,7 +39,7 @@ fn init_context_items() {
         ContextItem {
             display: "".into(),
             callback_id: ContextCallback::OpenWithDefault as i32,
-            shortcut: "".into(),
+            shortcut: format_keybind("enter").into(),
             icon: Image::from_rgb8(SharedPixelBuffer::new(0, 0)),
             has_separator: true,
             click_on_hover: false,
@@ -60,7 +63,7 @@ fn init_context_items() {
         ContextItem {
             display: "Cut".into(),
             callback_id: ContextCallback::Cut as i32,
-            shortcut: "".into(),
+            shortcut: format_keybind("cut").into(),
             icon: Image::from_rgb8(SharedPixelBuffer::new(0, 0)),
             has_separator: false,
             click_on_hover: false,
@@ -72,7 +75,7 @@ fn init_context_items() {
         ContextItem {
             display: "Copy".into(),
             callback_id: ContextCallback::Copy as i32,
-            shortcut: "".into(),
+            shortcut: format_keybind("copy").into(),
             icon: Image::from_rgb8(SharedPixelBuffer::new(0, 0)),
             has_separator: false,
             click_on_hover: false,
@@ -85,7 +88,9 @@ fn init_context_items() {
         ContextItem {
             display: "Paste Into".into(),
             callback_id: ContextCallback::PasteIntoSelected as i32,
-            shortcut: "".into(),
+            shortcut: format_keybind("paste_into").into(), //TODO: Somewhat dynamic paste keybind
+            //(eg. depends if you have something
+            //selected or not.)
             icon: Image::from_rgb8(SharedPixelBuffer::new(0, 0)),
             has_separator: true,
             click_on_hover: false,
@@ -97,7 +102,7 @@ fn init_context_items() {
         ContextItem {
             display: "Paste Here".into(),
             callback_id: ContextCallback::PasteHere as i32,
-            shortcut: "".into(),
+            shortcut: format_keybind("paste_here").into(),
             icon: Image::from_rgb8(SharedPixelBuffer::new(0, 0)),
             has_separator: true,
             click_on_hover: false,
@@ -110,7 +115,7 @@ fn init_context_items() {
         ContextItem {
             display: "Delete".into(),
             callback_id: ContextCallback::Delete as i32,
-            shortcut: "".into(),
+            shortcut: format_keybind("delete").into(),
             icon: Image::from_rgb8(SharedPixelBuffer::new(0, 0)),
             has_separator: true,
             click_on_hover: false,
@@ -122,7 +127,7 @@ fn init_context_items() {
         ContextItem {
             display: "Properties".into(),
             callback_id: ContextCallback::ShowProperties as i32,
-            shortcut: "".into(),
+            shortcut: format_keybind("properties").into(),
             icon: Image::from_rgb8(SharedPixelBuffer::new(0, 0)),
             has_separator: false,
             click_on_hover: false,

@@ -24,3 +24,11 @@ pub fn rand() -> u64 {
         u64::from_be_bytes(buf)
     }
 }
+
+pub fn capitalize_first(s: &str) -> String {
+    let mut c = s.chars();
+    match c.next() {
+        None => String::new(),
+        Some(f) => f.to_uppercase().collect::<String>() + c.as_str(),
+    }
+}

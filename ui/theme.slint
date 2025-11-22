@@ -35,6 +35,7 @@ export struct ThemeImpl {
     selected_drive_color: brush,
     file_hover_color: brush,
     drive_hover_color: brush,
+    context_menu_shortcut_color: brush,
     
     //Padding
     main_padding_left: length,
@@ -49,6 +50,7 @@ export struct ThemeImpl {
     file_item_height: length,
 
     //Context menu
+    context_menu_width: length,
     context_menu_border_color: brush,
     context_menu_separator_color: brush,
     context_menu_background_color: brush,
@@ -56,8 +58,10 @@ export struct ThemeImpl {
     context_menu_font_size: length,
     context_menu_font_color: brush,
     context_menu_entry_height: length,
-    context_menu_left_padding: length,
-    context_menu_top_padding: length, //Bug workaround: Actual padding will always be 1px more
+    context_menu_horizontal_padding: length,
+    context_menu_text_padding: length,
+    context_menu_vertical_padding: length, //Bug workaround: Actual padding will always be 1px more
+
 }
 
 export global Theme {
@@ -101,9 +105,12 @@ export global Theme {
         context_menu_font_size: 12px,
         context_menu_font_color: #FFFFFF,
         context_menu_entry_height: 30px,
-        context_menu_left_padding: 4px,
-        context_menu_top_padding: 4px,
+        context_menu_horizontal_padding: 4px,
+        context_menu_vertical_padding: 4px,
+        context_menu_text_padding: 4px,
+        context_menu_shortcut_color: #4e5155,
         file_item_height: 30px,
+        context_menu_width: 320px,
     };
     in property <ThemeImpl> light: {
         background_color_main: #FFFFFF,

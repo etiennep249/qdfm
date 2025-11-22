@@ -28,26 +28,36 @@ export global ContextAdapter {
 export component ContextMenuItem inherits Rectangle {
     in property <length> menu_width;
     in property <bool> has_separator;
-    in property <string> display;
     in property <image> icon;
-    in property <string> shortcut;
     in property <bool> is_secondary: false;
     in property <ContextItem> context_item;
     height: Theme.current.context-menu-entry-height;
-    width: menu_width - 2px - (Theme.current.context-menu-left-padding * 2);
+    width: menu_width - (Theme.current.context-menu-horizontal-padding * 2);
     background: Theme.current.context-menu-background-color;
 
     touch := TouchArea {
         text := Text {
             overflow: elide;
-            x: parent.x + 1px + Theme.current.context-menu-left-padding;
-            width: parent.width - 2px - Theme.current.context-menu-left-padding;
+            x: parent.x + Theme.current.context-menu-horizontal-padding;
+            width: parent.width - (Theme.current.context-menu-horizontal-padding * 2);
             height: Theme.current.context-menu-entry-height;
-            text: display;
+            text: context_item.display;
             font-size: Theme.current.context-menu-font-size;
             color: Theme.current.context-menu-font-color;
             vertical-alignment: center;
             horizontal-alignment: left;
+        }
+
+        shortcut_text := Text {
+            overflow: elide;
+            x: parent.x + Theme.current.context-menu-horizontal-padding;
+            width: parent.width - (Theme.current.context-menu-horizontal-padding * 2);
+            height: Theme.current.context-menu-entry-height;
+            text: context_item.shortcut;
+            font-size: Theme.current.context-menu-font-size;
+            color: Theme.current.context-menu-shortcut-color;
+            vertical-alignment: center;
+            horizontal-alignment: right;
         }
 
         clicked => {
@@ -76,44 +86,42 @@ export component ContextMenuItem inherits Rectangle {
 }
 
 export component ContextMenu inherits Rectangle {
-    private property <length> menu_width: 200px;
+    private property <length> menu_width: Theme.current.context-menu-width;
     background: Theme.current.context-menu-background-color;
     border-color: Theme.current.context-menu-border-color;
     border-width: 1px;
     border-radius: 2px;
     width: menu_width;
-    height: (Theme.current.context-menu-entry-height * ContextAdapter.items.length) + (Theme.current.context-menu-top-padding * 2);
+    height: (Theme.current.context-menu-entry-height * ContextAdapter.items.length) + (Theme.current.context-menu-vertical-padding * 2);
     x: ContextAdapter.x-pos;
     y: ContextAdapter.y-pos;
 
     for item[i] in ContextAdapter.items: ContextMenuItem {
         context_item: item;
-        display: item.display;
         icon: item.icon;
         has_separator: item.has_separator;
         menu_width: menu_width;
-        y: (i * Theme.current.context-menu-entry-height) + parent.border-width + Theme.current.context-menu-top-padding;
+        y: (i * Theme.current.context-menu-entry-height) + parent.border-width + Theme.current.context-menu-vertical-padding;
     }
 }
 
 export component SecondaryContextMenu inherits Rectangle {
-    private property <length> menu_width: 200px;
+    private property <length> menu_width: Theme.current.context-menu-width;
     background: Theme.current.context-menu-background-color;
     border-color: Theme.current.context-menu-border-color;
     border-width: 1px;
     border-radius: 2px;
     width: menu_width;
-    height: (Theme.current.context-menu-entry-height * ContextAdapter.secondary-items.length) + (Theme.current.context-menu-top-padding * 2);
+    height: (Theme.current.context-menu-entry-height * ContextAdapter.secondary-items.length) + (Theme.current.context-menu-vertical-padding * 2);
     x: ContextAdapter.secondary-x-pos;
     y: ContextAdapter.secondary-y-pos;
 
     for item[i] in ContextAdapter.secondary-items: ContextMenuItem {
         context_item: item;
-        display: item.display;
         icon: item.icon;
         has_separator: item.has_separator;
         menu_width: menu_width;
         is_secondary: true;
-        y: (i * Theme.current.context-menu-entry-height) + parent.border-width + Theme.current.context-menu-top-padding;
+        y: (i * Theme.current.context-menu-entry-height) + parent.border-width + Theme.current.context-menu-vertical-padding;
     }
 }

@@ -14,7 +14,7 @@ pub struct Config {
     map: HashMap<&'static str, String>,
     extension_mappings_default: Option<HashMap<String, String>>,
     extension_mappings_quick: Option<HashMap<String, Vec<Mapping>>>,
-    keybinds: Option<HashMap<KeyBind, String>>,
+    pub keybinds: Option<HashMap<KeyBind, String>>,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -81,7 +81,12 @@ impl Config {
                         "down": "select_down",
                         "shift down": "shift_select_down",
                         "shift up": "shift_select_up",
-                        "return": "enter"
+                        "enter": "enter",
+                        "ctrl c": "copy",
+                        "ctrl v": "paste",
+                        "ctrl x": "cut",
+                        "alt enter": "properties",
+                        "delete": "delete"
                     }"#
                 .into(),
             ),

@@ -90,7 +90,7 @@ pub fn open_with() {
         //Show the secondary menu where it needs to be
         let theme = mw.global::<Theme>().get_current();
         ctx_adapter.set_secondary_items(Rc::new(VecModel::from(menu)).into());
-        ctx_adapter.set_secondary_x_pos(ctx_adapter.get_x_pos() + 200.0);
+        ctx_adapter.set_secondary_x_pos(ctx_adapter.get_x_pos() + theme.context_menu_width);
         ctx_adapter.set_secondary_y_pos(
             ctx_adapter.get_y_pos()
                 + (get_index(&ctx_adapter) as f32 * theme.context_menu_entry_height)

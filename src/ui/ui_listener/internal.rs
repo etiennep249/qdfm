@@ -23,7 +23,6 @@ pub fn set_current_tab_file(mut item: Option<TabItem>, remember: bool, mw: MainW
     if item.internal_path == "/" {
         item.text = "/".into();
     }
-    let files_len = files.len();
 
     let tabs = mw.global::<TabsAdapter>();
     tabs.set_path_shown(false);
