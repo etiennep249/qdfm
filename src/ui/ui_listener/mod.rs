@@ -1,7 +1,6 @@
-use internal::{refresh_ui, set_current_tab_file};
-use slint::Weak;
-
 use crate::ui::*;
+use internal::{refresh_ui, set_current_tab_file};
+use main_window::run_with_main_window;
 use std::{
     sync::{
         mpsc::{channel, Sender},
@@ -29,24 +28,14 @@ pub fn send_message(msg: UIMessage) {
     SENDER.get().unwrap().send(msg).ok();
 }
 
-///Runs the given closure with the main window.
-pub fn run_with_main_window(func: impl FnOnce(MainWindow) + Send + 'static) {
-    if let Some(mw) = MAINWINDOW.get() {
-        if let Some(mw) = mw.upgrade() {
-            func(mw);
-        } else {
-            mw.upgrade_in_event_loop(|mw| func(mw)).ok();
-        }
-    }
-}
-
 static SENDER: OnceLock<Sender<UIMessage>> = OnceLock::new();
-static MAINWINDOW: OnceLock<Weak<MainWindow>> = OnceLock::new();
 
-pub fn start_ui_listener(mw: Weak<MainWindow>) {
+unsafe impl Send for MainWindow {}
+unsafe impl Sync for MainWindow {}
+
+pub fn start_ui_listener() {
     let (send, recv) = channel();
     SENDER.set(send).ok();
-    MAINWINDOW.set(mw).ok();
 
     thread::spawn(move || {
         while let Ok(msg) = recv.recv() {

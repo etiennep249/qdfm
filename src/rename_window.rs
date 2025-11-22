@@ -6,7 +6,7 @@ use std::sync::{
 use slint::{ComponentHandle, LogicalPosition, SharedString, Weak};
 
 use crate::{
-    ui::{self, RenameAdapter, RenameWindow as RenameWindowUI},
+    ui::{self, main_window::run_with_main_window, RenameAdapter, RenameWindow as RenameWindowUI},
     utils::error_handling::log_error_str,
 };
 
@@ -55,7 +55,7 @@ pub fn setup_rename_window() -> RenameWindow {
         _raw_window_ptr: ptr_mtx.clone(),
     };
 
-    ui::run_with_main_window(move |main_win| {
+    run_with_main_window(move |main_win| {
         if let Ok(win) = RenameWindowUI::new() {
             if let Ok(mut lock) = win_mtx.lock() {
                 let adp = win.global::<RenameAdapter>();

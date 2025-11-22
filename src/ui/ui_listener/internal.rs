@@ -13,7 +13,7 @@ use crate::{
 
 ///This function is used to set what directory the current tab is showing.
 ///It can also be used to refresh it.
-pub fn set_current_tab_file(mut item: Option<TabItem>, remember: bool, mw: MainWindow) {
+pub fn set_current_tab_file(mut item: Option<TabItem>, remember: bool, mw: &MainWindow) {
     //If no tab item is provided, assume a refresh
     if item.is_none() {
         item = Some(mw.global::<TabsAdapter>().invoke_get_current_tab());
@@ -48,6 +48,6 @@ pub fn set_current_tab_file(mut item: Option<TabItem>, remember: bool, mw: MainW
     }
 }
 
-pub fn refresh_ui(mw: MainWindow) {
+pub fn refresh_ui(mw: &MainWindow) {
     set_current_tab_file(None, false, mw);
 }

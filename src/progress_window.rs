@@ -4,6 +4,7 @@ use std::{
     time::{Duration, Instant},
 };
 
+use main_window::run_with_main_window;
 use slint::{ComponentHandle, LogicalPosition, SharedString, Weak};
 
 use crate::{
@@ -27,7 +28,7 @@ use crate::{
 pub fn show_progress_window(recv: Receiver<(f32, String, f64, bool)>, interval: Duration) {
     //Unwrap everything. If it panics, no big deal, we just get no progress bar.
     //This will often be called in other threads, so need this invoke_from_event_loop
-    ui::run_with_main_window(move |main_win| {
+    run_with_main_window(move |main_win| {
         let win = ProgressWindow::new().unwrap();
 
         let pos = main_win.window().position();

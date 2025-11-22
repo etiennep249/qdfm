@@ -1,4 +1,5 @@
-use slint::{ComponentHandle, Model, SharedString, VecModel, Weak};
+use prop_window::run_with_prop_window;
+use slint::{ComponentHandle, Model, SharedString, VecModel};
 use std::{
     cmp::Ordering,
     fs::{set_permissions, Metadata, Permissions},
@@ -25,11 +26,7 @@ use crate::{
     },
 };
 
-pub fn setup_properties(
-    items: Vec<FileItem>,
-    prop_adp: PropertiesAdapter,
-    prop_win: Weak<PropertiesWindow>,
-) {
+pub fn setup_properties(items: Vec<FileItem>, prop_adp: PropertiesAdapter) {
     /*
      *      Setup the data to show
      * */
@@ -67,7 +64,7 @@ pub fn setup_properties(
     //calculate_directory_size also calculates multiple files
     //Still overkill for a single file though.
     if (metadata.is_some() && metadata.unwrap().is_dir()) || metadata.is_none() {
-        calculate_directory_size(&items, &prop_adp, prop_win);
+        calculate_directory_size(&items, &prop_adp);
     }
 
     /*Reset State*/
@@ -420,22 +417,17 @@ pub fn setup_properties_advanced(prop_adp: &PropertiesAdapter, metadata: Option<
  *  the size and notify the first.
  * */
 
-pub fn calculate_directory_size(
-    files: &Vec<FileItem>,
-    prop_adp: &PropertiesAdapter,
-    window: Weak<PropertiesWindow>,
-) {
+pub fn calculate_directory_size(files: &Vec<FileItem>, prop_adp: &PropertiesAdapter) {
     prop_adp.set_is_directory_calculated(false);
     prop_adp.set_directory_size(_i64 { a: 0, b: 0 });
 
     let (send_a, recv_a) = channel();
     let (send_b, recv_b) = channel();
-    let window_clone = window.clone();
     std::thread::spawn(move || {
         let delay = Duration::from_millis(500); //UI update frequency
         while let Ok(data) = recv_a.recv() {
             if data != 0 {
-                let _ = window_clone.upgrade_in_event_loop(move |w| {
+                run_with_prop_window(move |w| {
                     let (a, b) = i64_to_i32(data);
                     w.global::<PropertiesAdapter>()
                         .set_directory_size(_i64 { a, b });
@@ -478,98 +470,100 @@ pub fn calculate_directory_size(
         }
 
         //Final update so we get it instantly without waiting 500ms
-        window
-            .upgrade_in_event_loop(move |w| {
-                let (a, b) = i64_to_i32(total);
-                w.global::<PropertiesAdapter>()
-                    .set_directory_size(_i64 { a, b });
-                w.global::<PropertiesAdapter>()
-                    .set_is_directory_calculated(true)
-            })
-            .ok();
+        run_with_prop_window(move |w| {
+            let (a, b) = i64_to_i32(total);
+            w.global::<PropertiesAdapter>()
+                .set_directory_size(_i64 { a, b });
+            w.global::<PropertiesAdapter>()
+                .set_is_directory_calculated(true)
+        });
     });
 }
 
 /*
  *  Save and close
  * */
-pub fn save(prop_win: Rc<Weak<PropertiesWindow>>) {
-    let w = prop_win.unwrap();
-    let prop_adp = w.global::<PropertiesAdapter>();
+pub fn save() {
+    run_with_prop_window(|w| {
+        let prop_adp = w.global::<PropertiesAdapter>();
 
-    let files = prop_adp.get_files();
-    let single_file = files.row_count() == 1;
-    for f in files.iter() {
-        let path_str = f.path.to_string();
-        let mut path = PathBuf::from(&path_str);
+        let files = prop_adp.get_files();
+        let single_file = files.row_count() == 1;
+        for f in files.iter() {
+            let path_str = f.path.to_string();
+            let mut path = PathBuf::from(&path_str);
 
-        if single_file {
-            let new_filename = prop_adp.get_filename().to_string();
-            let new_path = path.with_file_name(&new_filename);
+            if single_file {
+                let new_filename = prop_adp.get_filename().to_string();
+                let new_path = path.with_file_name(&new_filename);
 
-            //Update file name
-            if f.file_name != new_filename {
-                let ret = rename_file(&path, &new_path);
-                if ret.is_err() {
-                    log_error_str("Could not rename file"); //TODO:
-                } else {
-                    path = new_path;
+                //Update file name
+                if f.file_name != new_filename {
+                    let ret = rename_file(&path, &new_path);
+                    if ret.is_err() {
+                        log_error_str("Could not rename file"); //TODO:
+                    } else {
+                        path = new_path;
+                    }
                 }
             }
-        }
 
-        //Chown uid
-        if prop_adp.get_uid_dirty() {
-            let owner_str = prop_adp.get_owner_value().to_string();
-            if let Ok(users) = get_all_users() {
-                if let Some((k, _)) = users.iter().find(|(_, v)| **v == owner_str) {
-                    let ret = lchown(path.clone(), Some(*k), None);
+            //Chown uid
+            if prop_adp.get_uid_dirty() {
+                let owner_str = prop_adp.get_owner_value().to_string();
+                if let Ok(users) = get_all_users() {
+                    if let Some((k, _)) = users.iter().find(|(_, v)| **v == owner_str) {
+                        let ret = lchown(path.clone(), Some(*k), None);
+                        if ret.is_err() {
+                            log_error(ret.err().unwrap());
+                        }
+                    } else {
+                        log_error_str("The target user does not exist.")
+                    }
+                } else {
+                    log_error_str(
+                        "Could not get users. Does /etc/passwd have the right permissions?",
+                    );
+                }
+            }
+
+            //Chown gid
+            if prop_adp.get_gid_dirty() {
+                let group_str = prop_adp.get_group_value().to_string();
+                if let Ok(groups) = get_all_groups() {
+                    if let Some((k, _)) = groups.iter().find(|(_, v)| v.name == group_str) {
+                        let ret = lchown(path.clone(), None, Some(*k));
+                        if ret.is_err() {
+                            log_error(ret.err().unwrap());
+                        }
+                    } else {
+                        log_error_str("The target group does not exist.")
+                    }
+                } else {
+                    log_error_str(
+                        "Could not get groups. Does /etc/group have the right permissions?",
+                    );
+                }
+            }
+
+            //Permissions
+            if prop_adp.get_perm_bits_dirty() {
+                if let Ok(new_mode) =
+                    u32::from_str_radix(&(prop_adp.get_perm_bits_str().to_string()), 8)
+                {
+                    let ret = set_permissions(path, Permissions::from_mode(new_mode));
                     if ret.is_err() {
                         log_error(ret.err().unwrap());
                     }
                 } else {
-                    log_error_str("The target user does not exist.")
+                    log_error_str("Could not parse the permission mode.")
                 }
-            } else {
-                log_error_str("Could not get users. Does /etc/passwd have the right permissions?");
             }
         }
-
-        //Chown gid
-        if prop_adp.get_gid_dirty() {
-            let group_str = prop_adp.get_group_value().to_string();
-            if let Ok(groups) = get_all_groups() {
-                if let Some((k, _)) = groups.iter().find(|(_, v)| v.name == group_str) {
-                    let ret = lchown(path.clone(), None, Some(*k));
-                    if ret.is_err() {
-                        log_error(ret.err().unwrap());
-                    }
-                } else {
-                    log_error_str("The target group does not exist.")
-                }
-            } else {
-                log_error_str("Could not get groups. Does /etc/group have the right permissions?");
-            }
-        }
-
-        //Permissions
-        if prop_adp.get_perm_bits_dirty() {
-            if let Ok(new_mode) =
-                u32::from_str_radix(&(prop_adp.get_perm_bits_str().to_string()), 8)
-            {
-                let ret = set_permissions(path, Permissions::from_mode(new_mode));
-                if ret.is_err() {
-                    log_error(ret.err().unwrap());
-                }
-            } else {
-                log_error_str("Could not parse the permission mode.")
-            }
-        }
-    }
-
-    //Refresh UI
-    ui::send_message(UIMessage::Refresh);
-    w.hide().unwrap();
+        //Refresh UI
+        ui::send_message(UIMessage::Refresh);
+        w.hide().unwrap();
+    });
 }
 
 pub fn rename_file(from: &Path, to: &Path) -> Result<(), Error> {

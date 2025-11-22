@@ -1,4 +1,6 @@
 pub mod ui {
+    pub mod main_window;
+    pub mod prop_window;
     pub mod ui_listener;
     pub use ui_listener::*;
     slint::include_modules!();

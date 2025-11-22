@@ -1,9 +1,7 @@
+use main_window::run_with_main_window;
 use slint::{Model, ModelRc};
 
-use crate::{
-    sort,
-    ui::{self, *},
-};
+use crate::{sort, ui::*};
 
 pub fn on_header_click(header: Header) {
     let new_sort = if header.sort == 0 {
@@ -17,7 +15,7 @@ pub fn on_header_click(header: Header) {
     };
 
     //Sort
-    ui::run_with_main_window(move |mw| {
+    run_with_main_window(move |mw| {
         //TODO: Consider not sorting in main thread. Could be bad though, since it could lead to
         //actions happening during a sort.
         match header.inner_value {
@@ -56,7 +54,7 @@ pub fn on_header_resize(header: Header, size_offset: f32, original_size: f32) {
         return;
     }
 
-    ui::run_with_main_window(move |mw| {
+    run_with_main_window(move |mw| {
         let headers_rc = mw.global::<ColumnHeadersAdapter>().get_headers();
 
         //Get the header index - avoids nesing the rest of all this

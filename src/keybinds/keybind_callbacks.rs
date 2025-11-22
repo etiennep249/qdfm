@@ -1,5 +1,7 @@
 use crate::{
-    callbacks::filemanager::selection, context_menus::files::open_with_default, ui,
+    callbacks::filemanager::selection,
+    context_menus::{self, files::open_with_default},
+    ui,
     utils::error_handling::log_error_str,
 };
 
@@ -32,6 +34,13 @@ pub fn call_keybind_callback(name: &str) {
                 ));
             }
         }
+        "delete" => context_menus::files::delete(),
+
+        "copy" => context_menus::files::copy(),
+
+        "paste" => context_menus::files::paste(true /*TODO*/),
+        "cut" => context_menus::files::cut(),
+        "properties" => context_menus::files::show_properties(),
         _ => {
             log_error_str(&format!(
                 "Invalid function for keybind! You may want to verify that you typed it correctly. '{}'",name

@@ -1,9 +1,8 @@
-use crate::ui::{self, *};
-use slint::{Model, ModelExt, VecModel};
+use crate::ui::*;
+use main_window::run_with_main_window;
+use slint::Model;
 use std::{
-    borrow::BorrowMut,
     collections::HashMap,
-    rc::Rc,
     sync::{OnceLock, RwLock, RwLockReadGuard, RwLockWriteGuard},
 };
 
@@ -71,7 +70,7 @@ pub fn is_index_selected(i: i32) -> bool {
 pub fn clear_selection() {
     let mut sel_files = selected_files_write();
     sel_files.clear();
-    ui::run_with_main_window(|mw| {
+    run_with_main_window(|mw| {
         let fm = mw.global::<FileManager>();
         fm.set_is_single_selected(false);
         clear_selection_visual(&mw);
@@ -89,7 +88,7 @@ fn clear_selection_visual(mw: &MainWindow) {
 
 ///Adds a file and its index to the selection while keeping what was previously selected
 pub fn add_to_selected(i: i32, file: FileItem) {
-    ui::run_with_main_window(move |mw| {
+    run_with_main_window(move |mw| {
         let mut sel_files = selected_files_write();
         sel_files.insert(i, file.clone());
         set_selected_visual(&mw, i, true);
@@ -105,7 +104,7 @@ pub fn add_to_selected(i: i32, file: FileItem) {
 
 ///Selects all files in the current directory.
 pub fn select_all() {
-    ui::run_with_main_window(move |mw| {
+    run_with_main_window(move |mw| {
         let mut sel_files = selected_files_write();
         let fm = mw.global::<FileManager>();
         for (i, file) in fm.get_files().iter().enumerate() {
@@ -123,7 +122,7 @@ pub fn select_all() {
 }
 
 pub fn shift_select(i: i32) {
-    ui::run_with_main_window(move |mw| {
+    run_with_main_window(move |mw| {
         let mut sel_files = selected_files_write();
         let fm = mw.global::<FileManager>();
         let last_selected_index = fm.get_single_selected_index();
@@ -157,7 +156,7 @@ pub fn shift_select(i: i32) {
 ///Usually when pressing arrow down on the keyboard.
 ///Selection moves down by one from the last.
 pub fn select_down(discard_previous: bool) {
-    ui::run_with_main_window(move |mw| {
+    run_with_main_window(move |mw| {
         let mut sel_files = selected_files_write();
         let fm = mw.global::<FileManager>();
 
@@ -203,7 +202,7 @@ pub fn select_down(discard_previous: bool) {
 ///Usually when pressing arrow up on the keyboard.
 ///Selection moves up by one from the last.
 pub fn select_up(discard_previous: bool) {
-    ui::run_with_main_window(move |mw| {
+    run_with_main_window(move |mw| {
         let mut sel_files = selected_files_write();
         let fm = mw.global::<FileManager>();
 
@@ -248,7 +247,7 @@ pub fn select_up(discard_previous: bool) {
 
 ///Removes the file at this index from the selection
 pub fn remove_from_selected(i: i32) {
-    ui::run_with_main_window(move |mw| {
+    run_with_main_window(move |mw| {
         let mut sel_files = selected_files_write();
         if sel_files.len() > 1 {
             mw.global::<FileManager>().set_is_single_selected(false);

@@ -2,7 +2,8 @@ use crate::context_menus::context_items::{get_ci, get_ci_capacity};
 use crate::globals::config_read;
 use crate::ui::*;
 use crate::{context_menus as cm, ui};
-use slint::{ComponentHandle, VecModel, Weak};
+use main_window::run_with_main_window;
+use slint::{ComponentHandle, VecModel};
 use std::rc::Rc;
 
 use super::filemanager::selection::{self};
@@ -23,9 +24,9 @@ pub enum ContextCallback {
 ///Triggered when a certain menu item is clicked.
 ///Redirects the call to the proper callback based on the callback_id of the context item.
 ///It also hides the context menu afterwards.
-pub fn menuitem_click(context_item: ContextItem, prop_win: Weak<PropertiesWindow>) {
+pub fn menuitem_click(context_item: ContextItem) {
     match context_item.callback_id {
-        c if c == ContextCallback::ShowProperties as i32 => cm::files::show_properties(prop_win),
+        c if c == ContextCallback::ShowProperties as i32 => cm::files::show_properties(),
         c if c == ContextCallback::OpenWithDefault as i32 => {
             cm::files::open_with_default(selection::selected_files_clone())
         }
@@ -52,7 +53,7 @@ pub fn menuitem_click(context_item: ContextItem, prop_win: Weak<PropertiesWindow
 
 ///Code to run when any context item in a context menu is hovered.
 pub fn menuitem_hover(context_item: ContextItem) {
-    ui::run_with_main_window(move |mw| {
+    run_with_main_window(move |mw| {
         let ctx_adapter = mw.global::<ContextAdapter>();
         if context_item.callback_id != ctx_adapter.get_current_hover_callback_id() {
             ctx_adapter.set_is_secondary_visible(false);
@@ -62,7 +63,7 @@ pub fn menuitem_hover(context_item: ContextItem) {
 
 ///Builds the context menu for the selected files at (x,y) and shows it.
 pub fn show_context_menu(x: f32, y: f32) {
-    ui::run_with_main_window(move |mw| {
+    run_with_main_window(move |mw| {
         let mut menu: Vec<ContextItem> = Vec::with_capacity(get_ci_capacity());
 
         let conf = config_read();

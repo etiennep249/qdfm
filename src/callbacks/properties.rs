@@ -2,31 +2,29 @@ use crate::{
     file_properties::{self},
     ui::*,
 };
-use slint::{ComponentHandle, Weak};
-use std::rc::Rc;
+use prop_window::run_with_prop_window;
+use slint::ComponentHandle;
 
 /*
  *  Save and close
  * */
-pub fn ok(prop_win: Rc<Weak<PropertiesWindow>>) {
-    file_properties::save(prop_win);
+pub fn ok() {
+    file_properties::save();
 }
-pub fn cancel(prop_win: Rc<Weak<PropertiesWindow>>) {
-    let w = prop_win.unwrap();
-    w.hide().unwrap();
+pub fn cancel() {
+    run_with_prop_window(|w| w.hide().unwrap());
 }
 
 ///Flips the bit corresponding to mask
-pub fn recalculate_bitmask(prop_win_: Rc<Weak<PropertiesWindow>>) {
-    let prop_win = prop_win_.unwrap();
-    let prop_adp = prop_win.global::<PropertiesAdapter>();
-
-    prop_adp.set_perm_bits_str(format!("{:o}", get_merged_bitmask(prop_win_)).into());
+pub fn recalculate_bitmask() {
+    run_with_prop_window(|prop_win| {
+        let prop_adp = prop_win.global::<PropertiesAdapter>();
+        prop_adp.set_perm_bits_str(format!("{:o}", get_merged_bitmask(&prop_win)).into());
+    });
 }
 ///To update the UI, bits must be stored in their own variable.
 ///This merges them back to an i32 to actually be able to do something with it.
-pub fn get_merged_bitmask(prop_win: Rc<Weak<PropertiesWindow>>) -> i32 {
-    let prop_win = prop_win.unwrap();
+pub fn get_merged_bitmask(prop_win: &PropertiesWindow) -> i32 {
     let prop_adp = prop_win.global::<PropertiesAdapter>();
 
     let a_x = if prop_adp.get_a_x() { 1 } else { 0 };

@@ -9,9 +9,11 @@ use crate::{
     file_properties::setup_properties,
     globals::config_read,
     manage_open_with,
-    ui::{self, *},
+    ui::*,
 };
-use slint::{ComponentHandle, Image, LogicalPosition, Model, SharedPixelBuffer, VecModel, Weak};
+use main_window::run_with_main_window;
+use prop_window::unwrap_prop_window;
+use slint::{ComponentHandle, Image, LogicalPosition, Model, SharedPixelBuffer, VecModel};
 use std::{path::PathBuf, rc::Rc};
 
 pub fn open_with_default(files: Vec<FileItem>) {
@@ -32,7 +34,7 @@ pub fn open_with_default(files: Vec<FileItem>) {
 
 ///Shows a secondary context menu on the right
 pub fn open_with() {
-    ui::run_with_main_window(|mw| {
+    run_with_main_window(|mw| {
         let ctx_adapter = mw.global::<ContextAdapter>();
 
         let mut menu: Vec<ContextItem> = Vec::new();
@@ -149,30 +151,30 @@ pub fn paste(here: bool) {
 pub fn delete() {
     clipboard::delete::delete();
 }
-pub fn show_properties(prop_win_rc: Weak<PropertiesWindow>) {
+pub fn show_properties() {
     /*
      *      Create the properties window centered on top of the other window.
      *      With a fixed position, this will be a floating window even on tiling WMs without hints.
      * */
 
-    ui::run_with_main_window(|main_win| {
-        let prop_win = prop_win_rc.unwrap();
+    run_with_main_window(|main_win| {
         let pos = main_win.window().position();
-        let x = pos.x as f32 + (main_win.get_win_width() / 2.0) - (prop_win.get_win_width() / 2.0);
-        let y =
-            pos.y as f32 + (main_win.get_win_height() / 2.0) - (prop_win.get_win_height() / 2.0);
+        let main_width = main_win.get_win_width();
+        let main_height = main_win.get_win_height();
+        let prop_win = unwrap_prop_window();
+        let x = pos.x as f32 + (main_width / 2.0) - (prop_win.get_win_width() / 2.0);
+        let y = pos.y as f32 + (main_height / 2.0) - (prop_win.get_win_height() / 2.0);
         prop_win.window().set_position(LogicalPosition { x, y });
         setup_properties(
             selection::selected_files_clone(),
             prop_win.global::<PropertiesAdapter>(),
-            prop_win_rc,
         );
         prop_win.show().unwrap();
     });
 }
 
 pub fn manage_quick() {
-    ui::run_with_main_window(|main_win| {
+    run_with_main_window(|main_win| {
         let win = ManageOpenWithWindow::new().unwrap();
         let pos = main_win.window().position();
         let x = pos.x as f32 + (main_win.get_win_width() / 2.0) - (win.get_win_width() / 2.0);

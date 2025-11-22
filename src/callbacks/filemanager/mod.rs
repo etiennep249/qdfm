@@ -4,6 +4,7 @@ use crate::ui;
 use crate::ui::*;
 use crate::utils::types;
 use crate::utils::types::i32_to_i64;
+use main_window::run_with_main_window;
 use slint::ComponentHandle;
 use slint::SharedString;
 use std::collections::VecDeque;
@@ -90,7 +91,7 @@ pub fn get_prev_history() -> Option<TabItem> {
         Some(e) => {
             drop(hist);
             /*Push the path we were on to RHISTORY*/
-            ui::run_with_main_window(|mw| {
+            run_with_main_window(|mw| {
                 get_history()
                     .1
                     .push_back(mw.global::<TabsAdapter>().invoke_get_current_tab());
@@ -107,7 +108,7 @@ pub fn get_next_history() -> Option<TabItem> {
         Some(e) => {
             drop(hist);
             /*Push the path we were on to LHISTORY*/
-            ui::run_with_main_window(|mw| {
+            run_with_main_window(|mw| {
                 get_history()
                     .1
                     .push_back(mw.global::<TabsAdapter>().invoke_get_current_tab());

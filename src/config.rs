@@ -26,12 +26,14 @@ pub struct Mapping {
 
 impl Config {
     pub fn new() -> Self {
-        Self {
+        let mut ret = Self {
             map: Config::default_config(),
             extension_mappings_default: None,
             extension_mappings_quick: None,
             keybinds: None,
-        }
+        };
+        ret.init();
+        ret
     }
     pub fn init(&mut self) {
         self.init_mappings();
