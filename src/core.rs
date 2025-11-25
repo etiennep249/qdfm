@@ -3,12 +3,16 @@ use syscalls::syscall0;
 
 use crate::{
     ui::*,
-    utils::{error_handling::log_error, types::i64_to_i32},
+    utils::{
+        error_handling::{log_error, log_error_str},
+        types::i64_to_i32,
+    },
 };
 use std::{
     collections::HashMap,
     ffi::OsStr,
-    fs::{self, Metadata},
+    fs::{self, File, Metadata},
+    path::PathBuf,
     process::Command,
     time::SystemTime,
 };
@@ -217,4 +221,38 @@ pub fn run_command(command: &str) {
         .args(command.split(" ").collect::<Vec<&str>>())
         .spawn()
         .expect("failed to execute process");
+}
+
+///Simple utility to verify the state of a file and return a suitable warning or error
+///in string format. This is most commonly used when creating a new file.
+///None is returned if there is nothing to complain about the file can safely be created.
+///
+///This assumes we have permissions. It should be checked beforehand.
+pub fn verify_file(path: &str, name: &str) -> Option<String> {
+    let mut path = PathBuf::from(path);
+    path.push(name);
+    if name.is_empty() {
+        Some("File name cannot be empty.".into())
+    } else if !is_valid_filename(name) {
+        Some("This file name is not valid.".into())
+    } else if path.symlink_metadata().is_ok() {
+        Some("A file, directory, or symlink with this name already exists.".into())
+    } else {
+        None
+    }
+}
+
+///Simple utility to verify if a given filename is valid
+///Or in other words, if it can be created properly (mostly prevents slashes)
+pub fn is_valid_filename(name: &str) -> bool {
+    !name.contains('/') && !name.contains('\0')
+}
+
+///Creates a file from a given pathbuf.
+///Currently just File::create and some error handling
+///Used in create new file in the context menu.
+pub fn create_file(path: PathBuf) {
+    if let Err(e) = File::create(path) {
+        log_error_str(&format!("Could not create the file: {}", e));
+    }
 }

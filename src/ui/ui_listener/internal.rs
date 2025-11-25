@@ -1,5 +1,6 @@
-use std::rc::Rc;
+use std::{rc::Rc, sync::RwLock};
 
+use main_window::SELECTED_TABITEM;
 use slint::{Model, VecModel};
 
 use crate::{
@@ -19,23 +20,39 @@ pub fn set_current_tab_file(mut item: Option<TabItem>, remember: bool, mw: &Main
         item = Some(mw.global::<TabsAdapter>().invoke_get_current_tab());
     }
     let mut item = item.unwrap();
-    let files = crate::core::generate_files_for_path(item.internal_path.as_str());
     if item.internal_path == "/" {
         item.text = "/".into();
     }
 
     let tabs = mw.global::<TabsAdapter>();
     tabs.set_path_shown(false);
+
+    //History
     if remember {
         add_to_history(tabs.invoke_get_current_tab());
     }
 
+    //Breadcrumbs
     tabs.set_breadcrumbs(Rc::new(VecModel::from(get_breadcrumbs_for(&item))).into());
+
+    //Set items both in the UI and in rust
     tabs.invoke_set_current_tab(item.clone());
+    let mut rust_tabitem = SELECTED_TABITEM
+        .get_or_init(|| RwLock::new(None))
+        .write()
+        .unwrap();
+    *rust_tabitem = Some(item.clone());
+
+    //Set files
     let filemanager = mw.global::<FileManager>();
+    let files = crate::core::generate_files_for_path(item.internal_path.as_str());
     filemanager.set_files_len(files.len() as i32);
     filemanager.set_files(Rc::new(VecModel::from(files)).into());
+
+    //Sort
     call_current_sort(&mw);
+
+    //Selection
     selection::clear_selection();
 
     //If the current path is also a drive in the sidebar, make it appear selected
@@ -48,6 +65,7 @@ pub fn set_current_tab_file(mut item: Option<TabItem>, remember: bool, mw: &Main
     }
 }
 
+///Refreshes the UI (immediately)
 pub fn refresh_ui(mw: &MainWindow) {
     set_current_tab_file(None, false, mw);
 }

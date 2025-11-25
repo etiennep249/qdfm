@@ -10,7 +10,7 @@ use walkdir::WalkDir;
 use super::{format_size_and_filecount_progress_status, PROGRESS_WINDOW_BYTE_THRESHOLD};
 
 pub fn delete() {
-    let thread = thread::spawn(move || {
+    let _thread = thread::spawn(move || {
         let (progress, recv) = channel();
         let selected_files_lock = selected_files_read();
         let selected_files = selected_files_lock.values();
@@ -42,7 +42,7 @@ pub fn delete() {
                 }
             }
         }
-        if total_size == 0 || total_files == 0 {
+        if total_size == 0 && total_files == 0 {
             log_error_str("Error calculating the total size to delete. You will not know the status, but the operation should proceed.");
             return;
         }
@@ -165,5 +165,5 @@ pub fn delete() {
         }
     });
     #[cfg(test)]
-    thread.join().unwrap();
+    _thread.join().unwrap();
 }

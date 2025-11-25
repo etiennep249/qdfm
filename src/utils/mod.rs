@@ -1,5 +1,7 @@
 use std::{fs::File, io::Read};
 
+use slint::{LogicalPosition, PhysicalPosition};
+
 pub mod drag_and_drop;
 pub mod error_handling;
 pub mod file_picker;
@@ -31,4 +33,17 @@ pub fn capitalize_first(s: &str) -> String {
         None => String::new(),
         Some(f) => f.to_uppercase().collect::<String>() + c.as_str(),
     }
+}
+
+///Simple utility to center a window (win2) on top of another (win1)
+pub fn center_window_on_another(
+    win1_position: PhysicalPosition,
+    win1_width: f32,
+    win1_height: f32,
+    win2_width: f32,
+    win2_height: f32,
+) -> LogicalPosition {
+    let x = win1_position.x as f32 + (win1_width / 2.0) - (win2_width / 2.0);
+    let y = win1_position.y as f32 + (win1_height / 2.0) - (win2_height / 2.0);
+    LogicalPosition { x, y }
 }

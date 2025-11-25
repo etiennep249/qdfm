@@ -21,7 +21,7 @@ export global ContextAdapter {
     in property <int> current_hover_callback_id;
     in-out property <bool> is_secondary_visible: false;
     callback show_context_menu(length, length);
-    callback menuitem_click(ContextItem);
+    callback menuitem_click(ContextItem, int);
     callback menuitem_hover(ContextItem);
 }
 
@@ -31,6 +31,7 @@ export component ContextMenuItem inherits Rectangle {
     in property <image> icon;
     in property <bool> is_secondary: false;
     in property <ContextItem> context_item;
+    in property <int> index;
     height: Theme.current.context-menu-entry-height;
     width: menu_width - (Theme.current.context-menu-horizontal-padding * 2);
     background: Theme.current.context-menu-background-color;
@@ -61,11 +62,11 @@ export component ContextMenuItem inherits Rectangle {
         }
 
         clicked => {
-            ContextAdapter.menuitem_click(context_item);
+            ContextAdapter.menuitem_click(context_item, index);
         }
         changed has-hover => {
             if context_item.click-on-hover {
-                ContextAdapter.menuitem_click(context_item);
+                ContextAdapter.menuitem_click(context_item, index);
             } else if !is_secondary {
                 ContextAdapter.menuitem_hover(context_item);
             }
@@ -101,6 +102,7 @@ export component ContextMenu inherits Rectangle {
         icon: item.icon;
         has_separator: item.has_separator;
         menu_width: menu_width;
+        index: i;
         y: (i * Theme.current.context-menu-entry-height) + parent.border-width + Theme.current.context-menu-vertical-padding;
     }
 }

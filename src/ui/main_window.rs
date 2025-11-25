@@ -8,12 +8,16 @@ use crate::{core::generate_files_for_path, drives, globals::config_write, ui::*}
 use i_slint_backend_winit::{EventResult, WinitWindowAccessor};
 use slint::ComponentHandle;
 use slint::{invoke_from_event_loop, VecModel};
-use std::sync::Once;
+use std::sync::{Once, RwLock};
 use std::{rc::Rc, sync::OnceLock};
 use winit::event::WindowEvent;
 use winit::raw_window_handle::{HasWindowHandle, RawWindowHandle};
 
 static MAINWINDOW: OnceLock<MainWindow> = OnceLock::new();
+
+///This is used for when we want to know what the selected tab is but can't go into the main thread
+///to access the filemanager.
+pub static SELECTED_TABITEM: OnceLock<RwLock<Option<TabItem>>> = OnceLock::new();
 
 ///Runs the given closure with the main window.
 pub fn run_with_main_window(func: impl FnOnce(&MainWindow) + Send + 'static) {
@@ -134,8 +138,8 @@ fn get_or_init_main_window() -> &'static MainWindow {
 
             let ctx_adp = w.global::<ContextAdapter>();
             ctx_adp.on_show_context_menu(|x, y| context_menu::show_context_menu(x, y));
-            ctx_adp.on_menuitem_click(move |callback_item| {
-                context_menu::menuitem_click(callback_item)
+            ctx_adp.on_menuitem_click(move |callback_item, index| {
+                context_menu::menuitem_click(callback_item, index)
             });
             ctx_adp.on_menuitem_hover(|callback_item| context_menu::menuitem_hover(callback_item));
         }
@@ -151,4 +155,13 @@ fn get_or_init_main_window() -> &'static MainWindow {
 ///Runs the main window. Intended to run in the main thread.
 pub fn run_main_window() {
     get_or_init_main_window().run().unwrap();
+}
+
+///Returns the selected tab item (clone)
+pub fn get_selected_tab_file() -> Option<TabItem> {
+    SELECTED_TABITEM
+        .get_or_init(|| RwLock::new(None))
+        .read()
+        .unwrap()
+        .clone()
 }

@@ -10,11 +10,14 @@ use crate::{
     globals::config_read,
     manage_open_with,
     ui::*,
+    utils::center_window_on_another,
 };
 use main_window::run_with_main_window;
 use prop_window::unwrap_prop_window;
-use slint::{ComponentHandle, Image, LogicalPosition, Model, SharedPixelBuffer, VecModel};
+use slint::{ComponentHandle, Image, SharedPixelBuffer};
 use std::{path::PathBuf, rc::Rc};
+
+use super::secondary_context_menu::show_secondary_context_menu;
 
 pub fn open_with_default(files: Vec<FileItem>) {
     let conf = config_read();
@@ -33,74 +36,58 @@ pub fn open_with_default(files: Vec<FileItem>) {
 }
 
 ///Shows a secondary context menu on the right
-pub fn open_with() {
-    run_with_main_window(|mw| {
-        let ctx_adapter = mw.global::<ContextAdapter>();
+pub fn open_with(parent_index: i32) {
+    let mut menu: Vec<ContextItem> = Vec::new();
 
-        let mut menu: Vec<ContextItem> = Vec::new();
-
-        //TODO: Get shortcuts from config file
-
-        /* If all files in the selection have the same extension, then show the mappings for that
-         * extension. Otherwise mappings are not displayed but the user can still choose a one-time
-         * mapping to open all the selected files with.*/
-        let conf = config_read();
-        let extension = {
-            let files = selected_files_read();
-            let mut iter = files.iter();
-            if files.len() == 1 {
-                Some(iter.next().unwrap().1.extension.clone())
-            } else if files.len() > 1 {
-                let ext = iter.next().unwrap().1.extension.clone();
-                if iter.all(|v| v.1.extension == ext) {
-                    Some(ext)
-                } else {
-                    None
-                }
+    /* If all files in the selection have the same extension, then show the mappings for that
+     * extension. Otherwise mappings are not displayed but the user can still choose a one-time
+     * mapping to open all the selected files with.*/
+    let conf = config_read();
+    let extension = {
+        let files = selected_files_read();
+        let mut iter = files.iter();
+        if files.len() == 1 {
+            Some(iter.next().unwrap().1.extension.clone())
+        } else if files.len() > 1 {
+            let ext = iter.next().unwrap().1.extension.clone();
+            if iter.all(|v| v.1.extension == ext) {
+                Some(ext)
             } else {
                 None
             }
-        };
-        if let Some(ext) = extension {
-            let quick_mapping = conf.get_mappings_quick(&ext);
-            for (i, mapping) in quick_mapping.iter().enumerate() {
-                menu.push(ContextItem {
-                    display: (&mapping.display_name).into(),
-                    callback_id: ContextCallback::OpenWithQuick as i32,
-                    shortcut: "".into(),
-                    icon: Image::from_rgb8(SharedPixelBuffer::new(0, 0)),
-                    has_separator: if i == quick_mapping.len() - 1 {
-                        true
-                    } else {
-                        false
-                    },
-                    click_on_hover: false,
-                    internal_id: i as i32,
-                });
-            }
+        } else {
+            None
         }
-        menu.push(ContextItem {
-            display: ("More").into(),
-            callback_id: ContextCallback::ManageQuick as i32,
-            shortcut: "".into(),
-            icon: Image::from_rgb8(SharedPixelBuffer::new(0, 0)),
-            has_separator: false,
-            click_on_hover: false,
-            internal_id: 0,
-        });
-
-        //Show the secondary menu where it needs to be
-        let theme = mw.global::<Theme>().get_current();
-        ctx_adapter.set_secondary_items(Rc::new(VecModel::from(menu)).into());
-        ctx_adapter.set_secondary_x_pos(ctx_adapter.get_x_pos() + theme.context_menu_width);
-        ctx_adapter.set_secondary_y_pos(
-            ctx_adapter.get_y_pos()
-                + (get_index(&ctx_adapter) as f32 * theme.context_menu_entry_height)
-                + 1.0,
-        );
-        ctx_adapter.set_current_hover_callback_id(ContextCallback::OpenWith as i32);
-        ctx_adapter.set_is_secondary_visible(true);
+    };
+    if let Some(ext) = extension {
+        let quick_mapping = conf.get_mappings_quick(&ext);
+        for (i, mapping) in quick_mapping.iter().enumerate() {
+            menu.push(ContextItem {
+                display: (&mapping.display_name).into(),
+                callback_id: ContextCallback::OpenWithQuick as i32,
+                shortcut: "".into(),
+                icon: Image::from_rgb8(SharedPixelBuffer::new(0, 0)),
+                has_separator: if i == quick_mapping.len() - 1 {
+                    true
+                } else {
+                    false
+                },
+                click_on_hover: false,
+                internal_id: i as i32,
+            });
+        }
+    }
+    menu.push(ContextItem {
+        display: ("More").into(),
+        callback_id: ContextCallback::ManageQuick as i32,
+        shortcut: "".into(),
+        icon: Image::from_rgb8(SharedPixelBuffer::new(0, 0)),
+        has_separator: false,
+        click_on_hover: false,
+        internal_id: 0,
     });
+
+    show_secondary_context_menu(menu, parent_index);
 }
 
 ///Runs the command associated with the selected files extension
@@ -119,13 +106,6 @@ pub fn open_with_quick(context_item: &ContextItem) {
         }
         run_command(&(cmd.to_owned() + " " + &file.path));
     }
-}
-fn get_index(ctx_adapter: &ContextAdapter) -> i32 {
-    ctx_adapter
-        .get_items()
-        .iter()
-        .position(|f| f.callback_id == ContextCallback::OpenWith as i32)
-        .unwrap() as i32
 }
 
 ///See clipboard::copy
@@ -158,13 +138,14 @@ pub fn show_properties() {
      * */
 
     run_with_main_window(|main_win| {
-        let pos = main_win.window().position();
-        let main_width = main_win.get_win_width();
-        let main_height = main_win.get_win_height();
         let prop_win = unwrap_prop_window();
-        let x = pos.x as f32 + (main_width / 2.0) - (prop_win.get_win_width() / 2.0);
-        let y = pos.y as f32 + (main_height / 2.0) - (prop_win.get_win_height() / 2.0);
-        prop_win.window().set_position(LogicalPosition { x, y });
+        prop_win.window().set_position(center_window_on_another(
+            main_win.window().position(),
+            main_win.get_win_width(),
+            main_win.get_win_height(),
+            prop_win.get_win_width(),
+            prop_win.get_win_height(),
+        ));
         setup_properties(
             selection::selected_files_clone(),
             prop_win.global::<PropertiesAdapter>(),
@@ -176,11 +157,14 @@ pub fn show_properties() {
 pub fn manage_quick() {
     run_with_main_window(|main_win| {
         let win = ManageOpenWithWindow::new().unwrap();
-        let pos = main_win.window().position();
-        let x = pos.x as f32 + (main_win.get_win_width() / 2.0) - (win.get_win_width() / 2.0);
-        let y = pos.y as f32 + (main_win.get_win_height() / 2.0) - (win.get_win_height() / 2.0);
 
-        win.window().set_position(LogicalPosition { x, y });
+        win.window().set_position(center_window_on_another(
+            main_win.window().position(),
+            main_win.get_win_width(),
+            main_win.get_win_height(),
+            win.get_win_width(),
+            win.get_win_height(),
+        ));
 
         let adp = win.global::<ManageOpenWithAdapter>();
         let rc = Rc::new(win.as_weak());

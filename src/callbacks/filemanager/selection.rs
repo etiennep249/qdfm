@@ -1,5 +1,5 @@
 use crate::ui::*;
-use main_window::run_with_main_window;
+use main_window::{get_selected_tab_file, run_with_main_window};
 use slint::Model;
 use std::{
     collections::HashMap,
@@ -314,4 +314,30 @@ pub fn is_single_selected_directory() -> bool {
     } else {
         return false;
     }
+}
+
+///TODO: Name might not be representative
+///
+///This function returns the base path of a selected item
+///If nothing is selected, this corresponds to the current directory
+///If a single directory is selected, this corresponds to the directory selected
+///If more than one file/directory is selected, this returns None.
+///
+///This should be used for actions that can be done in a directory, eg creating a file
+pub fn get_selected_path() -> Option<String> {
+    let files = selected_files_read();
+    let selected_tabitem = get_selected_tab_file();
+
+    //Nothing selected -> Current dir
+    if files.len() == 0 {
+        return selected_tabitem.map(|tab| tab.internal_path.to_string());
+    } else if files.len() == 1 {
+        if let Some(selected_file) = get_selected_file() {
+            //One dir selected -> that dir's path
+            if selected_file.is_dir {
+                return Some(selected_file.path.to_string());
+            }
+        }
+    }
+    None
 }

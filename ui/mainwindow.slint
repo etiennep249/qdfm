@@ -10,8 +10,9 @@ import { PropertiesWindow, PropertiesAdapter } from "properties.slint";
 import { ManageOpenWithAdapter, ManageOpenWithWindow } from "manage_open_with.slint";
 import { ProgressWindow, ProgressAdapter } from "progress_window.slint";
 import { RenameWindow, RenameAdapter } from "rename_window.slint";
+import { CreateNewFile,CreateNewAdapter } from "create_new/file.slint";
 
-export { FileManager, SidebarItems, TabsAdapter, Theme, ColumnHeadersAdapter, ContextAdapter, ContextItem, PropertiesWindow, PropertiesAdapter , ManageOpenWithWindow, ManageOpenWithAdapter, ProgressWindow, ProgressAdapter, RenameWindow, RenameAdapter }
+export { FileManager, SidebarItems, TabsAdapter, Theme, ColumnHeadersAdapter, ContextAdapter, ContextItem, PropertiesWindow, PropertiesAdapter , ManageOpenWithWindow, ManageOpenWithAdapter, ProgressWindow, ProgressAdapter, RenameWindow, RenameAdapter, CreateNewFile, CreateNewAdapter }
 
 export component MainWindow inherits Window {
     in-out property <length> win_height <=> self.height;

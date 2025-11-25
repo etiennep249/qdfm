@@ -19,18 +19,23 @@ pub enum ContextCallback {
     PasteIntoSelected,
     PasteHere,
     Delete,
+    CreateNew,
+    CreateNewFile,
+    CreateNewDirectory,
+    CreateNewLink,
 }
 
 ///Triggered when a certain menu item is clicked.
 ///Redirects the call to the proper callback based on the callback_id of the context item.
 ///It also hides the context menu afterwards.
-pub fn menuitem_click(context_item: ContextItem) {
+///index is the index of the item clicked in the Vec, useful for knowing where to show secondary menus
+pub fn menuitem_click(context_item: ContextItem, index: i32) {
     match context_item.callback_id {
         c if c == ContextCallback::ShowProperties as i32 => cm::files::show_properties(),
         c if c == ContextCallback::OpenWithDefault as i32 => {
             cm::files::open_with_default(selection::selected_files_clone())
         }
-        c if c == ContextCallback::OpenWith as i32 => cm::files::open_with(),
+        c if c == ContextCallback::OpenWith as i32 => cm::files::open_with(index),
         c if c == ContextCallback::Copy as i32 => cm::files::copy(),
         c if c == ContextCallback::Cut as i32 => cm::files::cut(),
         c if c == ContextCallback::PasteIntoSelected as i32 => cm::files::paste(false),
@@ -44,6 +49,10 @@ pub fn menuitem_click(context_item: ContextItem) {
             cm::files::open_with_quick(&context_item)
         }
         c if c == ContextCallback::ManageQuick as i32 => cm::files::manage_quick(),
+        c if c == ContextCallback::CreateNew as i32 => cm::create_new::create_new_hover(index),
+        c if c == ContextCallback::CreateNewFile as i32 => cm::create_new::create_new_file(),
+        c if c == ContextCallback::CreateNewDirectory as i32 => cm::create_new::create_new_dir(),
+        c if c == ContextCallback::CreateNewLink as i32 => cm::create_new::create_new_link(),
         _ => (),
     }
     if !context_item.click_on_hover {
@@ -68,8 +77,13 @@ pub fn show_context_menu(x: f32, y: f32) {
 
         let conf = config_read();
 
+        //TODO: check permissions and don't show what we don't have permissions to do
         let default_mapping =
             selection::get_common_extension().and_then(|f| conf.get_mapping_default(&f));
+
+        if selection::is_single_selected_directory() || selection::is_nothing_selected() {
+            menu.push(get_ci("create_new"));
+        }
 
         //Only offer 'open with' if we have mappings for the file's extension
         if default_mapping.is_some() {

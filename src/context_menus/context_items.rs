@@ -1,16 +1,20 @@
 use slint::{Image, SharedPixelBuffer};
 
 use crate::{
-    callbacks::context_menu::ContextCallback, globals::config_read,
-    keybinds::keybind::format_keybind, ui::ContextItem,
+    callbacks::context_menu::ContextCallback, keybinds::keybind::format_keybind, ui::ContextItem,
 };
 use std::{cell::UnsafeCell, collections::HashMap, sync::Once};
 
+//TODO: WTF is that
 struct StaticContextItems {
     inner: UnsafeCell<Option<HashMap<&'static str, ContextItem>>>,
 }
 
 unsafe impl Sync for StaticContextItems {}
+
+//I'm not a fan of this, but generally inner problematic non Sends (images) are only
+//ever created for the item only and never reused elsewhere. So this makes that safe.
+unsafe impl Send for ContextItem {}
 
 static INIT: Once = Once::new();
 static CONTEXT_ITEMS: StaticContextItems = StaticContextItems {
@@ -34,6 +38,18 @@ pub fn get_ci_capacity() -> usize {
 
 fn init_context_items() {
     let mut map = HashMap::new();
+    map.insert(
+        "create_new",
+        ContextItem {
+            display: ("Create New").into(),
+            callback_id: ContextCallback::CreateNew as i32,
+            shortcut: "▶".into(),
+            icon: Image::from_rgb8(SharedPixelBuffer::new(0, 0)),
+            has_separator: true,
+            click_on_hover: true,
+            internal_id: 0,
+        },
+    );
     map.insert(
         "open_with_default",
         ContextItem {
